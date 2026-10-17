@@ -1,4 +1,4 @@
-import { Member, Transaction, SyndicateExpense, PlotProject, ReminderLog, UserSession, MemberDueSummary, MonthDueItem } from '../types';
+import { Member, Transaction, SyndicateExpense, PlotProject, ReminderLog, UserSession, MemberDueSummary, MonthDueItem, ThemeMode } from '../types';
 import { INITIAL_MEMBERS, INITIAL_TRANSACTIONS, INITIAL_EXPENSES, INITIAL_PLOT_PROJECT } from '../data/initialData';
 
 const STORAGE_KEYS = {
@@ -7,7 +7,25 @@ const STORAGE_KEYS = {
   EXPENSES: 'aristo_initiative_v3_expenses',
   PROJECT: 'aristo_initiative_v3_project',
   REMINDERS: 'aristo_initiative_v3_reminders',
-  SESSION: 'aristo_initiative_v3_session'
+  SESSION: 'aristo_initiative_v3_session',
+  THEME: 'aristo_theme_mode'
+};
+
+export const getStoredTheme = (): ThemeMode => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.THEME);
+    return (raw === 'light' || raw === 'dark') ? raw : 'dark';
+  } catch {
+    return 'dark';
+  }
+};
+
+export const saveStoredTheme = (theme: ThemeMode): void => {
+  try {
+    localStorage.setItem(STORAGE_KEYS.THEME, theme);
+  } catch (e) {
+    console.error('Error saving theme:', e);
+  }
 };
 
 export const getStoredMembers = (): Member[] => {

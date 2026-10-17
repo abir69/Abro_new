@@ -106,15 +106,28 @@
     }
 
     @media print {
-      body {
+      body * {
+        visibility: hidden !important;
+      }
+      #printable-member-statement,
+      #printable-member-statement * {
+        visibility: visible !important;
+      }
+      #printable-member-statement {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        padding: 16px !important;
+        margin: 0 !important;
         background: white !important;
         color: black !important;
-      }
-      .no-print {
-        display: none !important;
-      }
-      .print-only {
         display: block !important;
+        border: none !important;
+      }
+      .no-print,
+      #app-shell-main {
+        display: none !important;
       }
     }
   </style>
@@ -717,8 +730,10 @@
       return h("div", { className: "min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans" },
         toastMessage && h("div", { className: "fixed bottom-5 right-5 z-50 bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-lg animate-bounce" }, toastMessage),
 
-        // Header
-        h("header", { className: "sticky top-0 z-30 bg-slate-950/95 backdrop-blur-md border-b border-emerald-900/40" },
+        // Water-tight Print Isolation: hide all app navigation and background screens during print
+        h("div", { id: "app-shell-main", className: "flex-1 flex flex-col no-print" },
+          // Header
+          h("header", { className: "sticky top-0 z-30 bg-slate-950/95 backdrop-blur-md border-b border-emerald-900/40" },
           h("div", { className: "border-b border-slate-800 bg-slate-900/60 px-4 py-1 text-xs text-slate-300 flex flex-wrap justify-between items-center gap-2" },
             h("div", { className: "flex items-center gap-2" },
               h("span", { className: "w-2 h-2 rounded-full bg-emerald-400 animate-pulse" }),
@@ -841,7 +856,7 @@
               showToast(`Profile updated for ${updatedMem.name}`);
             }
           })
-        ),
+        )),
 
         // --- MODALS ---
         isGoogleFormModalOpen && h(GoogleFormModal, {
@@ -1328,12 +1343,58 @@
       const summary = useMemo(() => calculateMemberSummary(member, transactions, project), [member, transactions, project]);
 
       const handleExportPdf = () => {
-        const prevTitle = document.title;
-        document.title = `Aristo_Plot_Statement_${member.name.replace(/\s+/g, '_')}`;
-        window.print();
-        setTimeout(() => {
-          document.title = prevTitle;
-        }, 1000);
+        const printableElem = document.getElementById("printable-member-statement");
+        if (!printableElem) {
+          window.print();
+          return;
+        }
+        const iframe = document.createElement("iframe");
+        iframe.style.position = "fixed";
+        iframe.style.right = "0";
+        iframe.style.bottom = "0";
+        iframe.style.width = "0";
+        iframe.style.height = "0";
+        iframe.style.border = "0";
+        iframe.style.zIndex = "-9999";
+        document.body.appendChild(iframe);
+        const doc = iframe.contentWindow?.document || iframe.contentDocument;
+        if (doc) {
+          doc.open();
+          doc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Aristo_Plot_Statement_' + member.name.replace(/\s+/g, '_') + '</title><style>@page{size:A4 portrait;margin:12mm;}*{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;box-sizing:border-box;}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#0f172a;background:#ffffff;margin:0;padding:16px;font-size:11px;}table{width:100%;border-collapse:collapse;}th,td{padding:6px 8px;border-bottom:1px solid #cbd5e1;text-align:left;}</style></head><body>' + printableElem.innerHTML + '</body></html>');
+          doc.close();
+          const prevTitle = document.title;
+          document.title = 'Aristo_Plot_Statement_' + member.name.replace(/\s+/g, '_');
+          setTimeout(() => {
+            try {
+              iframe.contentWindow?.focus();
+              iframe.contentWindow?.print();
+            } catch(err) {
+              window.print();
+            } finally {
+              setTimeout(() => {
+                document.title = prevTitle;
+                if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+              }, 1500);
+            }
+          }, 300);
+        } else {
+          window.print();
+        }
+      };
+
+      const handleDownloadHtml = () => {
+        const printableElem = document.getElementById("printable-member-statement");
+        if (!printableElem) return;
+        const htmlDoc = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Aristo_Plot_Statement_' + member.name.replace(/\s+/g, '_') + '</title><style>@page{size:A4 portrait;margin:12mm;}*{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box;}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#0f172a;background:#ffffff;margin:0;padding:20px;font-size:11px;}</style></head><body>' + printableElem.innerHTML + '</body></html>';
+        const blob = new Blob([htmlDoc], { type: "text/html;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "Aristo_Plot_Statement_" + member.name.replace(/\s+/g, "_") + ".html";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
       };
 
       const canViewPrivateDetails = isAdmin || currentMemberId === member.id;
@@ -1350,6 +1411,14 @@
               )
             ),
             h("div", { className: "flex items-center gap-2" },
+              h("button", {
+                onClick: handleDownloadHtml,
+                className: "px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-slate-700 cursor-pointer",
+                title: "Download standalone statement file"
+              },
+                h(IconDownload, { className: "w-3.5 h-3.5 text-emerald-400" }),
+                h("span", null, "Download File")
+              ),
               h("button", {
                 onClick: handleExportPdf,
                 className: "px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer",

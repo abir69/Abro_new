@@ -19,16 +19,16 @@ import firebaseConfig from '../../firebase-applet-config.json';
 // Initialize Firebase App
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// Initialize Firestore targeting the provisioned database ID
-export const db = firebaseConfig.firestoreDatabaseId 
-  ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
+// Initialize Firestore targeting the project database
+export const db = (firebaseConfig as any).firestoreDatabaseId 
+  ? getFirestore(app, (firebaseConfig as any).firestoreDatabaseId)
   : getFirestore(app);
 
 // Connection test as required by skill instructions
 export async function testFirestoreConnection(): Promise<boolean> {
   try {
     await getDocFromServer(doc(db, '_test_connection_', 'ping'));
-    console.log('[Firestore] Connected successfully to live database:', firebaseConfig.firestoreDatabaseId);
+    console.log('[Firestore] Connected successfully to live database:', firebaseConfig.projectId);
     return true;
   } catch (error) {
     if (error instanceof Error && error.message.includes('the client is offline')) {

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Member, Transaction, PlotProject } from '../types';
 import { formatCurrency, formatDate, calculateMemberDueSummary } from '../services/storageService';
-import { X, Printer, CheckCircle2, Building2, Edit3, Trash2, ShieldCheck, UserCheck, Calculator, AlertTriangle } from 'lucide-react';
+import { exportMemberStatementPDF, downloadMemberStatementHtml } from '../services/pdfExportService';
+import { X, Printer, CheckCircle2, Building2, Edit3, Trash2, ShieldCheck, UserCheck, Calculator, AlertTriangle, Download, FileText } from 'lucide-react';
 
 interface MemberStatementModalProps {
   isOpen: boolean;
@@ -57,8 +58,28 @@ export const MemberStatementModal: React.FC<MemberStatementModalProps> = ({
   const grossDeposited = memberTxs.reduce((sum, t) => sum + t.amount, 0);
   const dueSummary = calculateMemberDueSummary(member, transactions, project, 'October 2026');
 
-  const handlePrint = () => {
-    window.print();
+  const handleExportPdf = () => {
+    exportMemberStatementPDF({
+      member,
+      transactions,
+      project,
+      leadName,
+      leadDesignation,
+      syndicateName,
+      syndicateDesignation
+    });
+  };
+
+  const handleDownloadHtml = () => {
+    downloadMemberStatementHtml({
+      member,
+      transactions,
+      project,
+      leadName,
+      leadDesignation,
+      syndicateName,
+      syndicateDesignation
+    });
   };
 
   const handleSaveSignatories = (e?: React.FormEvent) => {
@@ -80,7 +101,39 @@ export const MemberStatementModal: React.FC<MemberStatementModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn print:p-0 print:bg-white print:static">
+    <div id="statement-print-modal" className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn print:p-0 print:bg-white print:static print:block">
+      <style>{`
+        @media print {
+          /* Enforce ONLY showing selected member's statement in PDF/Print */
+          body * {
+            visibility: hidden !important;
+          }
+          #printable-statement,
+          #printable-statement * {
+            visibility: visible !important;
+          }
+          #printable-statement {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            padding: 20px !important;
+            margin: 0 !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            display: block !important;
+          }
+          #app-main-content,
+          header,
+          nav,
+          main,
+          footer,
+          .print\\:hidden,
+          .no-print {
+            display: none !important;
+          }
+        }
+      `}</style>
       <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-100 max-h-[94vh] flex flex-col print:max-h-none print:border-none print:shadow-none print:bg-white print:text-black">
         {/* Modal Toolbar - Hidden on Print */}
         <div className="p-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 bg-slate-950/70 print:hidden">
@@ -88,10 +141,10 @@ export const MemberStatementModal: React.FC<MemberStatementModalProps> = ({
             <Building2 className="w-5 h-5 text-emerald-400" />
             <div>
               <span className="text-sm font-bold text-white block">Official Member Deposit Statement</span>
-              <span className="text-xs text-slate-400 block">{member.name} · All Monthly Installments</span>
+              <span className="text-xs text-slate-400 block">{member.name} · Selected Member Transaction Details</span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Edit Lead & Syndicate Admin Button */}
             <button
               type="button"
@@ -106,24 +159,29 @@ export const MemberStatementModal: React.FC<MemberStatementModalProps> = ({
               <span>{isEditingSignatories ? 'Close Admin Editor' : 'Edit Admin & Designation'}</span>
             </button>
 
+            {/* Download Statement HTML / Offline */}
             <button
-              onClick={() => {
-                const prevTitle = document.title;
-                document.title = `Aristo_Plot_Statement_${member.name.replace(/\s+/g, '_')}`;
-                window.print();
-                setTimeout(() => {
-                  document.title = prevTitle;
-                }, 1000);
-              }}
+              onClick={handleDownloadHtml}
+              className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Download standalone statement file for offline use"
+            >
+              <Download className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Download File</span>
+            </button>
+
+            {/* Export PDF Statement - Guaranteed Single Member Isolated Print */}
+            <button
+              onClick={handleExportPdf}
               className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
-              title="Export as PDF or print official statement"
+              title="Generate and print/save clean single member PDF statement"
             >
               <Printer className="w-4 h-4" />
               <span>Export PDF Statement</span>
             </button>
+
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-800 transition-colors"
+              className="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -357,7 +415,8 @@ export const MemberStatementModal: React.FC<MemberStatementModalProps> = ({
                 <tbody className="divide-y divide-slate-800 print:divide-gray-200 font-mono text-[11px]">
                   {memberTxs.map((tx) => (
                     <tr key={tx.id} className="hover:bg-slate-800/40 print:hover:bg-transparent">
-                      <td className="py-2.5 px-3 text-slate-300 print:text-black">{formatDate(tx.date)}</td>
+                      <td className="py-2.5 px-3 text-slate-300 print:text-black font-mono text-[10px]">{formatDate(tx.date)}</td>
+                      <td className="py-2.5 px-3 text-slate-200 print:text-black font-semibold font-sans">{tx.monthPeriod || 'Monthly Deposit'}</td>
                       <td className="py-2.5 px-3 text-slate-400 print:text-black font-sans">
                         <div>
                           <span className="font-medium text-slate-200 print:text-black">{tx.bankOrChannel || tx.method}</span>
@@ -366,12 +425,14 @@ export const MemberStatementModal: React.FC<MemberStatementModalProps> = ({
                           </span>
                         </div>
                       </td>
-                      <td className="py-2.5 px-3 text-slate-400 print:text-gray-700">{tx.referenceNumber}</td>
-                      <td className="py-2.5 px-3 text-right text-emerald-400 print:text-black font-bold">
+                      <td className="py-2.5 px-3 text-slate-400 print:text-gray-700 font-mono text-[10px]">{tx.referenceNumber || 'N/A'}</td>
+                      <td className="py-2.5 px-3 text-right text-emerald-400 print:text-black font-bold font-mono">
                         {formatCurrency(tx.amount, project.symbol)}
                       </td>
-                      <td className="py-2.5 px-3">
-                        <span className="text-emerald-400 print:text-black font-medium">{tx.status}</span>
+                      <td className="py-2.5 px-3 text-center">
+                        <span className="inline-block px-2 py-0.5 rounded-full text-[10px] bg-emerald-950/80 text-emerald-400 print:bg-gray-100 print:text-black font-semibold">
+                          {tx.status}
+                        </span>
                       </td>
                       {isAdmin && (
                         <td className="py-2.5 px-3 text-right print:hidden font-sans">

@@ -15,7 +15,10 @@ import {
   Receipt,
   FileSpreadsheet,
   ArrowUpDown,
-  Check
+  Check,
+  FileText,
+  Users,
+  X
 } from 'lucide-react';
 
 interface LedgerTableProps {
@@ -28,6 +31,7 @@ interface LedgerTableProps {
   onDeleteTransaction: (transactionId: string) => void;
   onViewReceipt: (transaction: Transaction) => void;
   onExportCSV: () => void;
+  onViewMemberStatement?: (member: Member) => void;
   onSelectMember?: (member: Member) => void;
   onSendWhatsAppCongrats?: (transaction: Transaction) => void;
   onOpenDepositForm?: () => void;
@@ -44,6 +48,7 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
   onDeleteTransaction,
   onViewReceipt,
   onExportCSV,
+  onViewMemberStatement,
   onSelectMember,
   onSendWhatsAppCongrats,
   onOpenDepositForm,
@@ -56,6 +61,11 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
   const [sortField, setSortField] = useState<'date' | 'amount' | 'memberName'>('date');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [confirmDeleteTxId, setConfirmDeleteTxId] = useState<string | null>(null);
+  const [isStatementPickerOpen, setIsStatementPickerOpen] = useState(false);
+
+  const selectedMemberObj = useMemo(() => {
+    return members.find(m => m.id === selectedMemberFilter);
+  }, [members, selectedMemberFilter]);
 
   // Month periods present in records
   const availableMonths = useMemo(() => {
@@ -137,6 +147,29 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
                 <FileSpreadsheet className="w-4 h-4 text-indigo-400 group-hover:text-white" />
                 <span>Submit Deposit Form</span>
               </button>
+            )}
+
+            {/* Export Single Member Statement Button */}
+            {onViewMemberStatement && (
+              selectedMemberObj ? (
+                <button
+                  onClick={() => onViewMemberStatement(selectedMemberObj)}
+                  className="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white text-xs font-semibold px-3 py-2 rounded-xl border border-emerald-500/40 flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                  title={`Export clean single member PDF statement for ${selectedMemberObj.name}`}
+                >
+                  <FileText className="w-4 h-4 text-emerald-400" />
+                  <span>PDF Statement ({selectedMemberObj.name.split(' ')[0]})</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setIsStatementPickerOpen(true)}
+                  className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-xl border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
+                  title="Export single member PDF statement"
+                >
+                  <FileText className="w-4 h-4 text-emerald-400" />
+                  <span>Member PDF Statement</span>
+                </button>
+              )
             )}
 
             <button
@@ -387,6 +420,17 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
                       <span>Receipt</span>
                     </button>
 
+                    {onViewMemberStatement && member && (
+                      <button
+                        onClick={() => onViewMemberStatement(member)}
+                        className="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg flex items-center gap-1 border border-slate-700 cursor-pointer"
+                        title={`Export PDF Statement for ${member.name}`}
+                      >
+                        <FileText className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Statement</span>
+                      </button>
+                    )}
+
                     {isAdmin && (
                       <>
                         <button
@@ -626,6 +670,16 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
                             <Eye className="w-3.5 h-3.5" />
                           </button>
 
+                          {onViewMemberStatement && member && (
+                            <button
+                              onClick={() => onViewMemberStatement(member)}
+                              title={`Export single member PDF statement for ${member.name}`}
+                              className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <FileText className="w-3.5 h-3.5 text-emerald-400" />
+                            </button>
+                          )}
+
                           {isAdmin && (
                             <>
                               <button
@@ -678,6 +732,87 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
           </table>
         </div>
       </div>
+
+      {/* Member Statement Picker Modal - Ensures only selected member transaction statement is exported */}
+      {isStatementPickerOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-emerald-950 border border-emerald-800 flex items-center justify-center text-emerald-400">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-sm">Export Single Member Statement</h3>
+                  <p className="text-xs text-slate-400">Select a member to export their individual PDF statement</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsStatementPickerOpen(false)}
+                className="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-1.5 max-h-80 overflow-y-auto pr-1">
+              {members.map((mem) => {
+                const memTxs = transactions.filter(t => t.memberId === mem.id && (t.status === 'Verified' || !t.status));
+                const memGross = memTxs.reduce((sum, t) => sum + t.amount, 0);
+                return (
+                  <button
+                    key={mem.id}
+                    onClick={() => {
+                      setIsStatementPickerOpen(false);
+                      if (onViewMemberStatement) onViewMemberStatement(mem);
+                    }}
+                    className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-800/80 border border-slate-800/60 hover:border-emerald-500/40 text-left transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      {mem.avatar ? (
+                        <img src={mem.avatar} alt={mem.name} className="w-8 h-8 rounded-full object-cover ring-1 ring-slate-700 group-hover:ring-emerald-400 shrink-0" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-emerald-950 text-emerald-400 flex items-center justify-center font-bold text-xs ring-1 ring-emerald-800">
+                          {mem.name.charAt(0)}
+                        </div>
+                      )}
+                      <div>
+                        <span className="font-semibold text-slate-200 group-hover:text-emerald-400 text-xs block transition-colors">
+                          {mem.name}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono block">
+                          {mem.mobile}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-mono text-emerald-400 text-xs font-bold block">
+                        {formatCurrency(memGross, project.symbol)}
+                      </span>
+                      <span className="text-[10px] text-slate-400 block font-sans">
+                        {memTxs.length} verified deposits
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+              <span className="flex items-center gap-1.5 text-emerald-400">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Exports ONLY selected member ledger</span>
+              </span>
+              <button
+                onClick={() => setIsStatementPickerOpen(false)}
+                className="text-slate-400 hover:text-slate-200 px-3 py-1 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

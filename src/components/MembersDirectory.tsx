@@ -15,7 +15,8 @@ import {
   AlertTriangle,
   Eye,
   ShieldCheck,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Lock
 } from 'lucide-react';
 
 interface MembersDirectoryProps {
@@ -323,14 +324,25 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({
                   <span>History & Monthly</span>
                 </button>
 
-                <button
-                  onClick={() => onViewMemberStatement(member)}
-                  className="bg-slate-800 hover:bg-slate-700 text-slate-200 py-1.5 px-2.5 rounded-xl text-xs font-medium border border-slate-700 transition-colors flex items-center justify-center gap-1 cursor-pointer"
-                  title="Export single member PDF statement"
-                >
-                  <FileText className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>PDF Statement</span>
-                </button>
+                {/* Role-based Statement Privacy: Admin can view all; Member can view ONLY their own statement */}
+                {(isAdmin || currentMemberId === member.id) ? (
+                  <button
+                    onClick={() => onViewMemberStatement(member)}
+                    className="bg-slate-800 hover:bg-slate-700 text-slate-200 py-1.5 px-2.5 rounded-xl text-xs font-medium border border-slate-700 transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                    title={isAdmin ? `Export PDF statement for ${member.name}` : "Export my official statement"}
+                  >
+                    <FileText className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>PDF Statement</span>
+                  </button>
+                ) : (
+                  <div
+                    className="bg-slate-950/60 text-slate-500 py-1.5 px-2 rounded-xl text-[11px] font-medium border border-slate-800/80 flex items-center justify-center gap-1 cursor-not-allowed opacity-60"
+                    title="Confidential: Only this member and administrators can access this statement"
+                  >
+                    <Lock className="w-3 h-3 text-slate-500" />
+                    <span>Private</span>
+                  </div>
+                )}
 
                 {onOpenDepositForm && (
                   <button

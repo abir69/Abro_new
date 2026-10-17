@@ -91,6 +91,10 @@ export interface PlotProject {
   currency: string;
   symbol: string;
   dueDayOfMonth: number; // e.g. 10th of every month
+  isMaintenanceMode?: boolean;
+  maintenanceMessage?: string;
+  maintenanceEstimatedTime?: string;
+  maintenanceStartedAt?: string;
   bankDetails: {
     bankName: string;
     accountName: string;
@@ -100,6 +104,8 @@ export interface PlotProject {
     mfsNumber: string;
   };
 }
+
+export type ThemeMode = 'dark' | 'light';
 
 export interface ReminderLog {
   id: string;

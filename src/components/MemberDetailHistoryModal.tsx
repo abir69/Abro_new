@@ -164,10 +164,10 @@ export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> =
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-100 max-h-[92vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-sm animate-fadeIn overflow-y-auto">
+      <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-100 max-h-[92vh] flex flex-col my-auto">
         {/* Top Header Bar */}
-        <div className="p-4 sm:p-5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-950/60">
+        <div className="p-4 sm:p-5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-950/60 shrink-0">
           <div className="flex items-center gap-3.5">
             <img
               src={member.avatar}
@@ -255,8 +255,10 @@ export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> =
           </div>
         </div>
 
-        {/* Emergency Contact & Privacy Protection Strip */}
-        <div className="bg-slate-950/90 px-4 py-2 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2.5 text-xs">
+        {/* Unified Scrollable Body for Member Profile */}
+        <div className="overflow-y-auto flex-1 min-h-0 flex flex-col">
+          {/* Emergency Contact & Privacy Protection Strip */}
+          <div className="bg-slate-950/90 px-4 py-2 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2.5 text-xs shrink-0">
           <div className="flex flex-wrap items-center gap-3">
             {canViewPrivateDetails ? (
               <>
@@ -487,8 +489,8 @@ export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> =
           </div>
         </div>
 
-        {/* Tab Selector */}
-        <div className="flex items-center border-b border-slate-800 bg-slate-950/40 px-5 pt-2.5 gap-2 text-xs">
+        {/* Tab Selector (Sticky when scrolling through profile) */}
+        <div className="sticky top-0 z-20 flex items-center border-y border-slate-800 bg-slate-950/95 backdrop-blur-md px-5 pt-2.5 gap-2 text-xs shrink-0">
           <button
             onClick={() => setActiveTab('history')}
             className={`pb-2.5 px-3 font-semibold flex items-center gap-1.5 border-b-2 transition-all cursor-pointer ${
@@ -519,7 +521,7 @@ export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> =
 
         {/* TAB 1: TOTAL TRANSACTION HISTORY */}
         {activeTab === 'history' && (
-          <div className="p-5 overflow-y-auto flex-1 space-y-3">
+          <div className="p-4 sm:p-5 space-y-3 flex-1">
             <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
               <span>All recorded deposits for {member.name}. You can edit or delete any transaction.</span>
               {isAdmin && (
@@ -648,7 +650,7 @@ export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> =
 
         {/* TAB 2: MANUALLY CONTROL MONTHLY DEPOSITS */}
         {activeTab === 'monthly_control' && (
-          <div className="p-5 overflow-y-auto flex-1 space-y-4">
+          <div className="p-4 sm:p-5 space-y-4 flex-1">
             <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div>
                 <h4 className="font-bold text-white text-xs flex items-center gap-2">
@@ -939,6 +941,7 @@ export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> =
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

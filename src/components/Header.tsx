@@ -1,5 +1,5 @@
 import React from 'react';
-import { Member, UserSession, PlotProject } from '../types';
+import { Member, UserSession, PlotProject, ThemeMode } from '../types';
 import { formatCurrency } from '../services/storageService';
 import { 
   Building2, 
@@ -13,7 +13,11 @@ import {
   ShieldCheck,
   FileSpreadsheet,
   Clock,
-  Share2
+  Share2,
+  Sun,
+  Moon,
+  Wrench,
+  AlertTriangle
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -27,6 +31,9 @@ interface HeaderProps {
   onEditMyProfile?: () => void;
   onOpenDepositForm: () => void;
   onOpenApprovalsQueue?: () => void;
+  onOpenMaintenanceModal?: () => void;
+  themeMode: ThemeMode;
+  onToggleThemeMode: () => void;
   pendingApprovalsCount?: number;
   grossTotal: number;
   netTotal: number;
@@ -45,6 +52,9 @@ export const Header: React.FC<HeaderProps> = ({
   onEditMyProfile,
   onOpenDepositForm,
   onOpenApprovalsQueue,
+  onOpenMaintenanceModal,
+  themeMode,
+  onToggleThemeMode,
   pendingApprovalsCount = 0,
   grossTotal,
   netTotal,
@@ -202,6 +212,46 @@ export const Header: React.FC<HeaderProps> = ({
               </span>
             </button>
           )}
+
+          {/* Admin Maintenance Mode Control */}
+          {session.role === 'admin' && onOpenMaintenanceModal && (
+            <button
+              onClick={onOpenMaintenanceModal}
+              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
+                project.isMaintenanceMode
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 hover:bg-amber-500 hover:text-slate-950 font-bold animate-pulse'
+                  : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-800'
+              }`}
+              title="Configure or Toggle System Maintenance Mode"
+            >
+              {project.isMaintenanceMode ? (
+                <>
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden sm:inline">Maintenance ON</span>
+                  <span className="sm:hidden">Maint</span>
+                </>
+              ) : (
+                <>
+                  <Wrench className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="hidden md:inline">Maintenance</span>
+                </>
+              )}
+            </button>
+          )}
+
+          {/* Theme Mode Toggle (Light / Dark) */}
+          <button
+            onClick={onToggleThemeMode}
+            className="p-1.5 sm:p-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-amber-400 transition-colors cursor-pointer"
+            title={themeMode === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            aria-label="Toggle theme mode"
+          >
+            {themeMode === 'dark' ? (
+              <Sun className="w-4 h-4 text-amber-400" />
+            ) : (
+              <Moon className="w-4 h-4 text-sky-400" />
+            )}
+          </button>
 
           {session.isLoggedIn ? (
             <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-900 border border-slate-800 pl-1.5 sm:pl-2 pr-2 sm:pr-3 py-1 sm:py-1.5 rounded-xl">

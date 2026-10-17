@@ -184,10 +184,10 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-100 max-h-[92vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-sm animate-fadeIn overflow-y-auto">
+      <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-100 max-h-[92vh] flex flex-col my-auto">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+        <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/60 shrink-0">
           <div className="flex items-center gap-3">
             <img
               src={avatar || member.avatar}
@@ -206,18 +206,18 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-800 transition-colors"
+            className="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Switcher: Profile vs Member Transactions */}
-        <div className="flex items-center border-b border-slate-800 bg-slate-950/40 px-5 pt-2 gap-2 text-xs">
+        <div className="flex items-center border-b border-slate-800 bg-slate-950/40 px-5 pt-2 gap-2 text-xs shrink-0">
           <button
             type="button"
             onClick={() => setActiveTab('profile')}
-            className={`pb-2.5 px-3 font-semibold flex items-center gap-1.5 border-b-2 transition-all ${
+            className={`pb-2.5 px-3 font-semibold flex items-center gap-1.5 border-b-2 transition-all cursor-pointer ${
               activeTab === 'profile'
                 ? 'border-emerald-500 text-emerald-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -230,7 +230,7 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('transactions')}
-            className={`pb-2.5 px-3 font-semibold flex items-center gap-1.5 border-b-2 transition-all ${
+            className={`pb-2.5 px-3 font-semibold flex items-center gap-1.5 border-b-2 transition-all cursor-pointer ${
               activeTab === 'transactions'
                 ? 'border-emerald-500 text-emerald-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -246,7 +246,8 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
 
         {/* TAB 1: Profile Information */}
         {activeTab === 'profile' && (
-          <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
+          <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
+            <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
             {/* Avatar Preview & Selection */}
             <div className="p-4 bg-slate-950/60 rounded-xl border border-slate-800">
               <div className="flex items-center gap-4 mb-3">
@@ -549,12 +550,14 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
               />
             </div>
 
-            {/* Submit */}
-            <div className="pt-3 border-t border-slate-800 flex items-center justify-end gap-2">
+            </div>
+
+            {/* Sticky Submit Bar */}
+            <div className="p-4 bg-slate-950/90 border-t border-slate-800 flex items-center justify-end gap-2 shrink-0">
               <button
                 type="button"
                 onClick={onClose}
-                className="py-2 px-4 rounded-xl text-xs text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="py-2 px-4 rounded-xl text-xs text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -571,7 +574,7 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
 
         {/* TAB 2: Manage Deposits & Functional Delete Transaction Button */}
         {activeTab === 'transactions' && (
-          <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
+          <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
             {/* Summary Cards */}
             <div className="grid grid-cols-2 gap-3 bg-slate-950/70 p-3.5 rounded-xl border border-slate-800 text-xs">
               <div>

@@ -579,8 +579,10 @@ export default function App() {
         </div>
       )}
 
-      {/* Main App Navigation Header */}
-      <Header
+      {/* Main Workspace & Navigation Shell (Completely Hidden on Print / PDF Export) */}
+      <div id="app-main-content" className="flex-1 flex flex-col print:hidden">
+        {/* Main App Navigation Header */}
+        <Header
         project={project}
         session={session}
         activeMember={activeMember}
@@ -652,6 +654,10 @@ export default function App() {
               setIsReceiptModalOpen(true);
             }}
             onExportCSV={handleExportCSV}
+            onViewMemberStatement={(member) => {
+              setSelectedStatementMember(member);
+              setIsStatementModalOpen(true);
+            }}
             onSelectMember={handleSelectMember}
             onSendWhatsAppCongrats={isAdmin ? handleOpenWhatsAppCongrats : undefined}
             onOpenDepositForm={() => handleOpenDepositForm()}
@@ -800,6 +806,7 @@ export default function App() {
           </div>
         </div>
       </footer>
+      </div>
 
       {/* Modals */}
       <AuthModal
