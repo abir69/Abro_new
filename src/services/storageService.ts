@@ -18,11 +18,17 @@ export const getStoredMembers = (): Member[] => {
       return INITIAL_MEMBERS;
     }
     const parsed: Member[] = JSON.parse(raw);
-    return parsed.map(m => ({
-      ...m,
-      name: m.name === 'Abir Mia' ? 'Md. Minhazul Islam Abir' : m.name,
-      approvalStatus: m.approvalStatus || 'approved'
-    }));
+    return parsed.map(m => {
+      const defaultMatch = INITIAL_MEMBERS.find(init => init.id === m.id);
+      return {
+        ...m,
+        name: m.name === 'Abir Mia' ? 'Md. Minhazul Islam Abir' : m.name,
+        approvalStatus: m.approvalStatus || 'approved',
+        emergencyContactName: m.emergencyContactName || defaultMatch?.emergencyContactName || '',
+        emergencyContactRelation: m.emergencyContactRelation || defaultMatch?.emergencyContactRelation || '',
+        emergencyContactPhone: m.emergencyContactPhone || defaultMatch?.emergencyContactPhone || ''
+      };
+    });
   } catch (e) {
     console.error('Error loading members:', e);
     return INITIAL_MEMBERS;

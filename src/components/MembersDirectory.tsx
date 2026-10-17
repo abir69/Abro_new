@@ -189,17 +189,47 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({
                     </span>
                   </div>
 
-                  {member.nomineeName && (
-                    <div className="flex items-center justify-between pt-1 border-t border-slate-800/60">
-                      <span className="text-slate-500 flex items-center gap-1.5">
-                        <Heart className="w-3.5 h-3.5 text-rose-400" />
-                        Nominee:
-                      </span>
-                      <span className="text-slate-200 font-medium truncate max-w-[170px]">
-                        {member.nomineeName} ({member.nomineeRelation})
-                      </span>
-                    </div>
-                  )}
+                  {/* Role-based privacy protection: Nominee and Emergency Contact visible ONLY to Admin and Self */}
+                  {(() => {
+                    const canViewPrivateDetails = isAdmin || currentMemberId === member.id;
+                    if (canViewPrivateDetails) {
+                      return (
+                        <>
+                          {member.nomineeName && (
+                            <div className="flex items-center justify-between pt-1 border-t border-slate-800/60">
+                              <span className="text-slate-500 flex items-center gap-1.5">
+                                <Heart className="w-3.5 h-3.5 text-rose-400" />
+                                Nominee:
+                              </span>
+                              <span className="text-slate-200 font-medium truncate max-w-[170px]">
+                                {member.nomineeName} ({member.nomineeRelation})
+                              </span>
+                            </div>
+                          )}
+                          {member.emergencyContactName && (
+                            <div className="flex items-center justify-between pt-1 border-t border-slate-800/60">
+                              <span className="text-slate-500 flex items-center gap-1.5">
+                                <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                                Emergency:
+                              </span>
+                              <span className="text-slate-200 font-medium truncate max-w-[170px]" title={`${member.emergencyContactName} (${member.emergencyContactRelation || 'Contact'}) - ${member.emergencyContactPhone || ''}`}>
+                                {member.emergencyContactName} ({member.emergencyContactRelation || 'Contact'})
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      );
+                    }
+                    return (
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-800/60 text-slate-500 text-[11px]">
+                        <span className="flex items-center gap-1.5">
+                          <ShieldCheck className="w-3.5 h-3.5 text-slate-500" />
+                          Nominee & Emergency:
+                        </span>
+                        <span className="italic">Protected (Member & Admin Only)</span>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Clean Financial Breakdown for Member: Total Deposited, Due Amount (March to Current Month), and Month Status */}
@@ -296,10 +326,10 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({
                 <button
                   onClick={() => onViewMemberStatement(member)}
                   className="bg-slate-800 hover:bg-slate-700 text-slate-200 py-1.5 px-2.5 rounded-xl text-xs font-medium border border-slate-700 transition-colors flex items-center justify-center gap-1 cursor-pointer"
-                  title="Print official statement"
+                  title="Export single member PDF statement"
                 >
-                  <FileText className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Statement</span>
+                  <FileText className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>PDF Statement</span>
                 </button>
 
                 {onOpenDepositForm && (

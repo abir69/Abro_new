@@ -10,6 +10,9 @@ export interface Member {
   shares?: number;
   nomineeName: string;
   nomineeRelation: string;
+  emergencyContactName?: string;
+  emergencyContactRelation?: string;
+  emergencyContactPhone?: string;
   nidOrId: string;
   joinedDate: string;
   pin: string; // 4-digit PIN for member login

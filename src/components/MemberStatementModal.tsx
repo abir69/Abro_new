@@ -107,11 +107,19 @@ export const MemberStatementModal: React.FC<MemberStatementModalProps> = ({
             </button>
 
             <button
-              onClick={handlePrint}
+              onClick={() => {
+                const prevTitle = document.title;
+                document.title = `Aristo_Plot_Statement_${member.name.replace(/\s+/g, '_')}`;
+                window.print();
+                setTimeout(() => {
+                  document.title = prevTitle;
+                }, 1000);
+              }}
               className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+              title="Export as PDF or print official statement"
             >
               <Printer className="w-4 h-4" />
-              <span>Print Statement</span>
+              <span>Export PDF Statement</span>
             </button>
             <button
               onClick={onClose}
@@ -311,6 +319,14 @@ export const MemberStatementModal: React.FC<MemberStatementModalProps> = ({
                 <span className="text-slate-500 print:text-gray-600 text-[10px] block uppercase font-semibold">Nominee</span>
                 <span className="text-slate-200 print:text-black font-medium">{member.nomineeName} ({member.nomineeRelation})</span>
               </div>
+              {member.emergencyContactName && (
+                <div>
+                  <span className="text-slate-500 print:text-gray-600 text-[10px] block uppercase font-semibold">Emergency Contact</span>
+                  <span className="text-slate-200 print:text-black font-medium">
+                    {member.emergencyContactName} ({member.emergencyContactRelation || 'Contact'}) · {member.emergencyContactPhone || ''}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 

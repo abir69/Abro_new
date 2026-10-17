@@ -24,7 +24,9 @@ import {
   SlidersHorizontal,
   AlertTriangle,
   ExternalLink,
-  Calculator
+  Calculator,
+  FileText,
+  Lock
 } from 'lucide-react';
 
 interface MemberDetailHistoryModalProps {
@@ -97,6 +99,8 @@ export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> =
   const effectiveCurrentMonth = currentMonth || 'October 2026';
   const currentExpectedMonthly = member.customMonthlyDeposit || project.monthlyPerMemberExpected || 2000;
 
+  const canViewPrivateDetails = isAdmin || currentMemberId === member.id;
+
   // Filter this member's transactions sorted descending
   const memberTxs = transactions
     .filter(t => t.memberId === member.id)
@@ -163,7 +167,7 @@ export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> =
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-sm animate-fadeIn">
       <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-100 max-h-[92vh] flex flex-col">
         {/* Top Header Bar */}
-        <div className="p-5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-950/60">
+        <div className="p-4 sm:p-5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-950/60">
           <div className="flex items-center gap-3.5">
             <img
               src={member.avatar}
@@ -193,12 +197,22 @@ export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> =
                   <Mail className="w-3 h-3 text-slate-500" />
                   {member.email}
                 </span>
-                {member.nomineeName && (
+                {canViewPrivateDetails ? (
+                  member.nomineeName && (
+                    <>
+                      <span>·</span>
+                      <span className="flex items-center gap-1 text-slate-300">
+                        <Heart className="w-3 h-3 text-rose-400" />
+                        Nominee: {member.nomineeName} ({member.nomineeRelation})
+                      </span>
+                    </>
+                  )
+                ) : (
                   <>
                     <span>·</span>
-                    <span className="flex items-center gap-1 text-slate-300">
-                      <Heart className="w-3 h-3 text-rose-400" />
-                      Nominee: {member.nomineeName} ({member.nomineeRelation})
+                    <span className="flex items-center gap-1 text-slate-500 italic">
+                      <Lock className="w-3 h-3 text-slate-500" />
+                      Nominee: Protected (Private)
                     </span>
                   </>
                 )}
@@ -212,10 +226,11 @@ export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> =
                 onClose();
                 onOpenPrintStatement(member);
               }}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-1.5 rounded-xl border border-emerald-500/40 flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+              title="Export single member PDF statement"
             >
-              <Printer className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Print Statement</span>
+              <FileText className="w-3.5 h-3.5" />
+              <span>Export PDF Statement</span>
             </button>
 
             {(isAdmin || currentMemberId === member.id) && (
@@ -238,6 +253,54 @@ export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> =
               <X className="w-5 h-5" />
             </button>
           </div>
+        </div>
+
+        {/* Emergency Contact & Privacy Protection Strip */}
+        <div className="bg-slate-950/90 px-4 py-2 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2.5 text-xs">
+          <div className="flex flex-wrap items-center gap-3">
+            {canViewPrivateDetails ? (
+              <>
+                <div className="flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span className="text-slate-400 text-[11px]">Emergency Contact:</span>
+                  <span className="font-semibold text-white">
+                    {member.emergencyContactName 
+                      ? `${member.emergencyContactName} (${member.emergencyContactRelation || 'Emergency'}) · ${member.emergencyContactPhone || 'No Phone'}`
+                      : 'Not configured'}
+                  </span>
+                </div>
+                {member.nomineeName && (
+                  <>
+                    <span className="text-slate-700 hidden sm:inline">|</span>
+                    <div className="flex items-center gap-1.5">
+                      <Heart className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                      <span className="text-slate-400 text-[11px]">Nominee:</span>
+                      <span className="font-semibold text-slate-200">
+                        {member.nomineeName} ({member.nomineeRelation})
+                      </span>
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <div className="flex items-center gap-1.5 text-slate-400 text-[11px]">
+                <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>Nominee and Emergency Contact details are protected by role privacy rules (Account Holder & Admin Only).</span>
+              </div>
+            )}
+          </div>
+
+          {canViewPrivateDetails && (
+            <button
+              onClick={() => {
+                onClose();
+                onOpenEditProfile(member);
+              }}
+              className="text-[11px] text-emerald-400 hover:text-emerald-300 underline font-medium cursor-pointer"
+            >
+              Update Emergency Details
+            </button>
+          )}
         </div>
 
         {/* Financial KPI Banner for Member (Clean: No bank charge deductions on individual member) */}

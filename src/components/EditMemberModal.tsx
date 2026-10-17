@@ -16,7 +16,8 @@ import {
   ReceiptText, 
   SlidersHorizontal,
   CheckCircle2,
-  Plus
+  Plus,
+  AlertCircle
 } from 'lucide-react';
 
 interface EditMemberModalProps {
@@ -68,6 +69,9 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
   const [avatar, setAvatar] = useState('');
   const [nomineeName, setNomineeName] = useState('');
   const [nomineeRelation, setNomineeRelation] = useState('');
+  const [emergencyContactName, setEmergencyContactName] = useState('');
+  const [emergencyContactRelation, setEmergencyContactRelation] = useState('');
+  const [emergencyContactPhone, setEmergencyContactPhone] = useState('');
   const [nidOrId, setNidOrId] = useState('');
   const [notes, setNotes] = useState('');
   const [role, setRole] = useState<'admin' | 'member'>('member');
@@ -85,6 +89,9 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
       setAvatar(member.avatar);
       setNomineeName(member.nomineeName || '');
       setNomineeRelation(member.nomineeRelation || '');
+      setEmergencyContactName(member.emergencyContactName || '');
+      setEmergencyContactRelation(member.emergencyContactRelation || '');
+      setEmergencyContactPhone(member.emergencyContactPhone || '');
       setNidOrId(member.nidOrId || '');
       setNotes(member.notes || '');
       setRole(member.role);
@@ -162,6 +169,9 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
       avatar: avatar.trim() || member.avatar,
       nomineeName: nomineeName.trim(),
       nomineeRelation: nomineeRelation.trim(),
+      emergencyContactName: emergencyContactName.trim(),
+      emergencyContactRelation: emergencyContactRelation.trim(),
+      emergencyContactPhone: emergencyContactPhone.trim(),
       nidOrId: nidOrId.trim(),
       notes: notes.trim(),
       role: isAdmin ? role : member.role,
@@ -405,6 +415,55 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
                   placeholder="e.g. Spouse / Mother / Son"
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
+              </div>
+            </div>
+
+            {/* Emergency Contact Section */}
+            <div className="bg-slate-950/70 p-3.5 rounded-xl border border-rose-900/40 space-y-2.5">
+              <div className="flex items-center gap-1.5 text-rose-400">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span className="text-xs font-bold uppercase tracking-wider">Emergency Contact (Strictly Confidential)</span>
+              </div>
+              <p className="text-[11px] text-slate-400">
+                Designated contact for urgent syndicate matters, medical, or legal verification. Only you and Lead Admin can view these details.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div>
+                  <label className="block text-[10px] uppercase font-semibold text-slate-400 mb-1">
+                    Contact Name
+                  </label>
+                  <input
+                    type="text"
+                    value={emergencyContactName}
+                    onChange={(e) => setEmergencyContactName(e.target.value)}
+                    placeholder="e.g. Kazi Farhana"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-rose-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-semibold text-slate-400 mb-1">
+                    Relationship
+                  </label>
+                  <input
+                    type="text"
+                    value={emergencyContactRelation}
+                    onChange={(e) => setEmergencyContactRelation(e.target.value)}
+                    placeholder="e.g. Sister / Brother"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-rose-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-semibold text-slate-400 mb-1">
+                    Emergency Phone
+                  </label>
+                  <input
+                    type="tel"
+                    value={emergencyContactPhone}
+                    onChange={(e) => setEmergencyContactPhone(e.target.value)}
+                    placeholder="+880 17..."
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:ring-1 focus:ring-rose-500"
+                  />
+                </div>
               </div>
             </div>
 
