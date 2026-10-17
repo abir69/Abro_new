@@ -1,0 +1,121 @@
+{
+  "entities": {
+    "Member": {
+      "title": "Member",
+      "description": "A participating syndicate member in the collaborative property initiative",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "mobile": { "type": "string" },
+        "avatar": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "member"] },
+        "shares": { "type": "number" },
+        "nomineeName": { "type": "string" },
+        "nomineeRelation": { "type": "string" },
+        "nidOrId": { "type": "string" },
+        "joinedDate": { "type": "string" },
+        "pin": { "type": "string" },
+        "manualNetAdjustment": { "type": "number" },
+        "customMonthlyDeposit": { "type": "number" },
+        "approvalStatus": { "type": "string", "enum": ["approved", "pending", "rejected"] },
+        "notes": { "type": "string" }
+      },
+      "required": ["id", "name", "email", "mobile", "role"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Monthly deposit voucher or transaction record in the syndicate ledger",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "memberId": { "type": "string" },
+        "memberName": { "type": "string" },
+        "date": { "type": "string" },
+        "amount": { "type": "number" },
+        "deductionOrFee": { "type": "number" },
+        "netAmount": { "type": "number" },
+        "manualNetOverride": { "type": "boolean" },
+        "method": { "type": "string" },
+        "referenceNumber": { "type": "string" },
+        "bankOrChannel": { "type": "string" },
+        "depositBank": { "type": "string" },
+        "depositAccountNumber": { "type": "string" },
+        "monthPeriod": { "type": "string" },
+        "status": { "type": "string", "enum": ["Verified", "Cleared", "Pending Review", "Flagged"] },
+        "notes": { "type": "string" },
+        "receiptUrl": { "type": "string" },
+        "depositorName": { "type": "string" },
+        "depositorPhone": { "type": "string" },
+        "submittedVia": { "type": "string", "enum": ["google_form", "admin_entry", "member_portal"] },
+        "verifiedAt": { "type": "string" },
+        "verifiedBy": { "type": "string" },
+        "rejectionReason": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "editedBy": { "type": "string" }
+      },
+      "required": ["id", "memberId", "memberName", "amount", "status"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "Plot initiative details, shared target goals, bank escrow account, and combined bank charge configurations",
+      "type": "object",
+      "properties": {
+        "initiativeName": { "type": "string" },
+        "plotTitle": { "type": "string" },
+        "sector": { "type": "string" },
+        "location": { "type": "string" },
+        "plotSize": { "type": "string" },
+        "totalTargetPrice": { "type": "number" },
+        "monthlyPerMemberExpected": { "type": "number" },
+        "totalCombinedBankCharge": { "type": "number" },
+        "combinedChargeNotes": { "type": "string" },
+        "leadAdminName": { "type": "string" },
+        "leadAdminDesignation": { "type": "string" },
+        "syndicateAdminName": { "type": "string" },
+        "syndicateAdminDesignation": { "type": "string" },
+        "currency": { "type": "string" },
+        "symbol": { "type": "string" },
+        "dueDayOfMonth": { "type": "number" }
+      },
+      "required": ["initiativeName", "monthlyPerMemberExpected"]
+    },
+    "ReminderLog": {
+      "title": "ReminderLog",
+      "description": "Log of monthly reminder messages dispatched to members",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "memberId": { "type": "string" },
+        "memberName": { "type": "string" },
+        "month": { "type": "string" },
+        "amountDue": { "type": "number" },
+        "channel": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "status": { "type": "string" },
+        "recipientContact": { "type": "string" }
+      },
+      "required": ["id", "memberId", "month", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/members/{memberId}": {
+      "schema": "Member",
+      "description": "Participating member profiles and security pins"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Collaborative ledger deposit transactions and vouchers"
+    },
+    "/project/{projectId}": {
+      "schema": "Project",
+      "description": "Initiative details, treasury settings, and banking configuration"
+    },
+    "/reminders/{reminderId}": {
+      "schema": "ReminderLog",
+      "description": "Audit log of reminders sent to members"
+    }
+  }
+}

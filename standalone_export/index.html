@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aristo Future Plot Initiative - Single File Standalone Syndicate Ledger</title>
+  <meta name="description" content="Collaborative land syndicate management platform tracking 11-member deposits, real-time Firestore sync, automated contribution reminders, transaction ledger, and member management." />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              500: '#10b981',
+              600: '#059669',
+              900: '#064e3b',
+              950: '#022c22',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- React 18 & ReactDOM CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+  <!-- Firebase v10 Modular SDK via ES Modules -->
+  <script type="module">
+    import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+    import { 
+      getFirestore, 
+      collection, 
+      doc, 
+      setDoc, 
+      getDoc, 
+      getDocs, 
+      deleteDoc, 
+      onSnapshot, 
+      writeBatch,
+      getDocFromServer
+    } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+
+    const firebaseConfig = {
+      projectId: "directed-hydra-v3kqt",
+      appId: "1:531509153426:web:f4d21498c9eee9fccc204b",
+      apiKey: "AIzaSyDryOZuMg2G-IfDdVogBQesasu8LXeRrOU",
+      authDomain: "directed-hydra-v3kqt.firebaseapp.com",
+      firestoreDatabaseId: "ai-studio-aristofutureplot-0bbb5f2e-2153-4594-b593-ae7568d3a361",
+      storageBucket: "directed-hydra-v3kqt.firebasestorage.app",
+      messagingSenderId: "531509153426",
+      measurementId: "",
+      oAuthClientId: "531509153426-rf1g065pejim4c6mti1aimso91mcek1h.apps.googleusercontent.com"
+    };
+
+    const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+    const db = firebaseConfig.firestoreDatabaseId 
+      ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
+      : getFirestore(app);
+
+    window.__FIREBASE__ = {
+      app,
+      db,
+      collection,
+      doc,
+      setDoc,
+      getDoc,
+      getDocs,
+      deleteDoc,
+      onSnapshot,
+      writeBatch,
+      getDocFromServer,
+      config: firebaseConfig
+    };
+
+    window.dispatchEvent(new CustomEvent('firebase-initialized'));
+  </script>
+
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.98); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .animate-fadeIn {
+      animation: fadeIn 0.15s ease-out forwards;
+    }
+    /* Custom scrollbar for dark theme */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090d16;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500 selection:text-white">
+  <div id="root">
+    <div class="min-h-screen flex items-center justify-center bg-slate-950 text-slate-300">
+      <div class="flex flex-col items-center gap-3">
+        <div class="w-10 h-10 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin"></div>
+        <p class="text-xs font-mono text-slate-400">Loading Aristo Syndicate Portal & Connecting Live Cloud Database...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pre-compiled Vanilla JavaScript Application Script (Instant Load, No Babel) -->
+  <script>
+const { useState, useEffect, useMemo, useRef } = React;
+const IconBuilding = ({ className = "w-5 h-5" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 2 }, /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" }));
+const IconShieldCheck = ({ className = "w-5 h-5" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 2 }, /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" }));
+const IconLandmark = ({ className = "w-5 h-5" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 2 }, /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" }));
+const IconCheckCircle = ({ className = "w-5 h-5" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 2 }, /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" }));
+const IconClock = ({ className = "w-5 h-5" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 2 }, /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" }));
+const IconFileSpreadsheet = ({ className = "w-5 h-5" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 2 }, /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" }));
+const IconShare = ({ className = "w-5 h-5" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 2 }, /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" }));
+const IconUser = ({ className = "w-5 h-5" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 2 }, /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" }));
+const IconUsers = ({ className = "w-5 h-5" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 2 }, /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" }));
+const IconBell = ({ className = "w-5 h-5" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 2 }, /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" }));
+const IconLock = ({ className = "w-5 h-5" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 2 }, /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" }));
+const IconX = ({ className = "w-5 h-5" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 2 }, /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M6 18L18 6M6 6l12 12" }));
+const IconEdit = ({ className = "w-5 h-5" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 2 }, /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" }));
+const IconCopy = ({ className = "w-5 h-5" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 2 }, /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" }));
+const IconCheck = ({ className = "w-5 h-5" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 2 }, /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M5 13l4 4L19 7" }));
+const IconEye = ({ className = "w-5 h-5" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 2 }, /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M15 12a3 3 0 11-6 0 3 3 0 016 0z" }), /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" }));
+const IconTrash = ({ className = "w-5 h-5" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 2 }, /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" }));
+const IconLogOut = ({ className = "w-5 h-5" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 2 }, /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" }));
+const IconWhatsApp = ({ className = "w-4 h-4" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "currentColor", viewBox: "0 0 24 24" }, /* @__PURE__ */ React.createElement("path", { d: "M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.007c.106.005.249-.04.39.299.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.087-.179.182-.077.357.101.174.452.747.969 1.208.666.593 1.228.777 1.402.864.173.087.275.072.376-.044.101-.116.433-.506.549-.679.116-.173.231-.144.39-.087s1.011.477 1.184.563c.173.087.289.13.332.202.043.073.043.419-.101.824zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.662 1.435 5.176L2 22l4.954-1.399C8.406 21.493 10.145 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18c-1.61 0-3.11-.476-4.377-1.293l-.314-.205-2.937.83.805-2.861-.219-.327C4.12 14.869 3.6 13.484 3.6 12c0-4.632 3.768-8.4 8.4-8.4s8.4 3.768 8.4 8.4-3.768 8.4-8.4 8.4z" }));
+const formatCurrency = (amount, symbol = "\u09F3") => {
+  const num = Number(amount) || 0;
+  return `${symbol} ${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+};
+const DEFAULT_DEPOSIT_BANK = "The City Bank PLC";
+const DEFAULT_DEPOSIT_ACCOUNT = "1781580054174";
+const INITIAL_PLOT_PROJECT = {
+  initiativeName: "Aristo Future Plot Initiative",
+  plotTitle: "Premium 5.0 Katha Syndicate Plot",
+  sector: "Sector 27",
+  location: "Block C, Purbachal Smart City, Dhaka",
+  plotSize: "5.0 Katha / 3,600 Sq Ft",
+  totalTargetPrice: 175e5,
+  monthlyPerMemberExpected: 2e3,
+  totalCombinedBankCharge: 0,
+  combinedChargeNotes: "The City Bank PLC ledger & account maintenance charge",
+  leadAdminName: "Md. Minhazul Islam Abir",
+  leadAdminDesignation: "Lead Admin & Chief Trustee",
+  syndicateAdminName: "Dr. Tariqul Islam",
+  syndicateAdminDesignation: "Syndicate Auditor & Co-Trustee",
+  currency: "BDT",
+  symbol: "\u09F3",
+  dueDayOfMonth: 10,
+  bankDetails: {
+    bankName: "The City Bank PLC",
+    accountName: "Aristo Future Initiative (Joint Escrow)",
+    accountNumber: "1781580054174",
+    routingNumber: "225275357",
+    branch: "Principal Branch, Dhaka",
+    mfsNumber: "+880 1711-000000"
+  }
+};
+const INITIAL_MEMBERS = [
+  { id: "m1", name: "Md. Minhazul Islam Abir", email: "miabir9927@gmail.com", mobile: "+880 1711-123456", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80", role: "admin", nomineeName: "Mrs. S. Sultana", nomineeRelation: "Mother", nidOrId: "19921234567890", joinedDate: "2025-01-15", pin: "2026", approvalStatus: "approved" },
+  { id: "m2", name: "Dr. Tariqul Islam", email: "dr.tariqul.islam@med.org", mobile: "+880 1711-234567", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80", role: "member", nomineeName: "Dr. Nusrat Jahan", nomineeRelation: "Spouse", nidOrId: "19882345678901", joinedDate: "2025-01-15", pin: "1234", approvalStatus: "approved" },
+  { id: "m3", name: "Engr. Shahriar Kabir", email: "shahriar.kabir.ce@gmail.com", mobile: "+880 1819-876543", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80", role: "member", nomineeName: "Farhana Kabir", nomineeRelation: "Spouse", nidOrId: "19903456789012", joinedDate: "2025-01-15", pin: "1234", approvalStatus: "approved" },
+  { id: "m4", name: "Kamrul Hassan", email: "kamrul.hassan.fin@gmail.com", mobile: "+880 1711-345678", avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80", role: "member", nomineeName: "Rasheda Hassan", nomineeRelation: "Spouse", nidOrId: "19874567890123", joinedDate: "2025-01-15", pin: "1234", approvalStatus: "approved" },
+  { id: "m5", name: "Mustafizur Rahman", email: "mustafiz.corporate@gmail.com", mobile: "+880 1912-456789", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80", role: "member", nomineeName: "Shaila Rahman", nomineeRelation: "Spouse", nidOrId: "19895678901234", joinedDate: "2025-01-15", pin: "1234", approvalStatus: "approved" },
+  { id: "m6", name: "Tanvir Ahmed", email: "tanvir.ahmed.dev@gmail.com", mobile: "+880 1611-567890", avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80", role: "member", nomineeName: "Shamima Akter", nomineeRelation: "Spouse", nidOrId: "19936789012345", joinedDate: "2025-01-15", pin: "1234", approvalStatus: "approved" },
+  { id: "m7", name: "Mahbubur Rahman", email: "mahbub.rahman.biz@gmail.com", mobile: "+880 1713-678901", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80", role: "member", nomineeName: "Nasrin Mahbub", nomineeRelation: "Spouse", nidOrId: "19867890123456", joinedDate: "2025-01-15", pin: "1234", approvalStatus: "approved" },
+  { id: "m8", name: "Zubair Al Mamun", email: "zubair.al.mamun@gmail.com", mobile: "+880 1811-789012", avatar: "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150&auto=format&fit=crop&q=80", role: "member", nomineeName: "Fatema Mamun", nomineeRelation: "Spouse", nidOrId: "19918901234567", joinedDate: "2025-01-15", pin: "1234", approvalStatus: "approved" },
+  { id: "m9", name: "Asif Chowdhury", email: "asif.chowdhury.mkt@gmail.com", mobile: "+880 1712-890123", avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80", role: "member", nomineeName: "Sabrina Chowdhury", nomineeRelation: "Spouse", nidOrId: "19929012345678", joinedDate: "2025-01-15", pin: "1234", approvalStatus: "approved" },
+  { id: "m10", name: "Nasimul Gani", email: "nasimul.gani.legal@gmail.com", mobile: "+880 1913-901234", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80", role: "member", nomineeName: "Afroza Gani", nomineeRelation: "Spouse", nidOrId: "19850123456789", joinedDate: "2025-01-15", pin: "1234", approvalStatus: "approved" },
+  { id: "m11", name: "Rezaul Karim", email: "rezaul.karim.trade@gmail.com", mobile: "+880 1714-012345", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80", role: "member", nomineeName: "Salma Karim", nomineeRelation: "Spouse", nidOrId: "19871234567890", joinedDate: "2025-01-15", pin: "1234", approvalStatus: "approved" }
+];
+const INITIATIVE_CYCLES = [
+  "March 2026",
+  "April 2026",
+  "May 2026",
+  "June 2026",
+  "July 2026",
+  "August 2026",
+  "September 2026",
+  "October 2026"
+];
+const generateInitialTransactions = () => {
+  const txs = [];
+  const cycleDates = {
+    "March 2026": "2026-03-08",
+    "April 2026": "2026-04-09",
+    "May 2026": "2026-05-07",
+    "June 2026": "2026-06-08",
+    "July 2026": "2026-07-09",
+    "August 2026": "2026-08-08",
+    "September 2026": "2026-09-07",
+    "October 2026": "2026-10-06"
+  };
+  INITIATIVE_CYCLES.forEach((cycle, cycleIdx) => {
+    INITIAL_MEMBERS.forEach((member, memberIdx) => {
+      const txId = `tx-c${cycleIdx + 1}-m${memberIdx + 1}`;
+      const ref = `CITY-${cycle.slice(0, 3).toUpperCase()}-${1e3 + memberIdx * 10 + cycleIdx}`;
+      txs.push({
+        id: txId,
+        memberId: member.id,
+        memberName: member.name,
+        date: cycleDates[cycle],
+        amount: 2e3,
+        deductionOrFee: 0,
+        netAmount: 2e3,
+        method: "Bank Transfer",
+        depositBank: DEFAULT_DEPOSIT_BANK,
+        depositAccountNumber: DEFAULT_DEPOSIT_ACCOUNT,
+        referenceNumber: ref,
+        bankOrChannel: DEFAULT_DEPOSIT_BANK,
+        monthPeriod: cycle,
+        status: "Verified",
+        notes: `${cycle} regular syndicate deposit to ${DEFAULT_DEPOSIT_BANK} (${DEFAULT_DEPOSIT_ACCOUNT})`,
+        createdAt: `${cycleDates[cycle]}T10:00:00Z`,
+        verifiedAt: `${cycleDates[cycle]}T12:00:00Z`,
+        verifiedBy: "Md. Minhazul Islam Abir"
+      });
+    });
+  });
+  return txs.reverse();
+};
+const INITIAL_TRANSACTIONS = generateInitialTransactions();
+function App() {
+  const [members, setMembers] = useState(INITIAL_MEMBERS);
+  const [transactions, setTransactions] = useState(INITIAL_TRANSACTIONS);
+  const [project, setProject] = useState(INITIAL_PLOT_PROJECT);
+  const [session, setSession] = useState({ isLoggedIn: false, role: "member" });
+  const [isCloudSynced, setIsCloudSynced] = useState(false);
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [toastMessage, setToastMessage] = useState(null);
+  const [isGoogleFormModalOpen, setIsGoogleFormModalOpen] = useState(false);
+  const [isApprovalsModalOpen, setIsApprovalsModalOpen] = useState(false);
+  const [preselectedFormMemberId, setPreselectedFormMemberId] = useState("");
+  const [selectedReceiptTx, setSelectedReceiptTx] = useState(null);
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+  useEffect(() => {
+    const setupFirebase = () => {
+      if (!window.__FIREBASE__) return;
+      const { db, collection, doc, setDoc, onSnapshot, getDocs, writeBatch } = window.__FIREBASE__;
+      getDocs(collection(db, "members")).then((snap) => {
+        if (snap.empty) {
+          const batch = writeBatch(db);
+          batch.set(doc(db, "project", "aristo_plot_main"), INITIAL_PLOT_PROJECT);
+          INITIAL_MEMBERS.forEach((m) => batch.set(doc(db, "members", m.id), m));
+          INITIAL_TRANSACTIONS.forEach((t) => batch.set(doc(db, "transactions", t.id), t));
+          batch.commit().then(() => {
+            setIsCloudSynced(true);
+            showToast("Connected to live Firestore. Data seeded.");
+          });
+        } else {
+          setIsCloudSynced(true);
+        }
+      }).catch((err) => console.log("Firestore connect:", err));
+      const unsubMembers = onSnapshot(collection(db, "members"), (snapshot) => {
+        if (!snapshot.empty) {
+          const list = [];
+          snapshot.forEach((d) => list.push(d.data()));
+          list.sort((a, b) => parseInt(a.id.replace(/\D/g, "") || 0) - parseInt(b.id.replace(/\D/g, "") || 0));
+          setMembers(list);
+          setIsCloudSynced(true);
+        }
+      });
+      const unsubTxs = onSnapshot(collection(db, "transactions"), (snapshot) => {
+        const list = [];
+        snapshot.forEach((d) => list.push(d.data()));
+        list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        setTransactions(list);
+        setIsCloudSynced(true);
+      });
+      const unsubProject = onSnapshot(doc(db, "project", "aristo_plot_main"), (docSnap) => {
+        if (docSnap.exists()) {
+          setProject(docSnap.data());
+          setIsCloudSynced(true);
+        }
+      });
+      return () => {
+        unsubMembers();
+        unsubTxs();
+        unsubProject();
+      };
+    };
+    if (window.__FIREBASE__) {
+      setupFirebase();
+    } else {
+      window.addEventListener("firebase-initialized", setupFirebase);
+      return () => window.removeEventListener("firebase-initialized", setupFirebase);
+    }
+  }, []);
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("form") === "deposit" || params.has("deposit")) {
+        setIsGoogleFormModalOpen(true);
+        const mId = params.get("member");
+        if (mId) setPreselectedFormMemberId(mId);
+      }
+    } catch (e) {
+    }
+  }, []);
+  const syncTxToCloud = (tx) => {
+    if (window.__FIREBASE__) {
+      const { db, doc, setDoc } = window.__FIREBASE__;
+      setDoc(doc(db, "transactions", tx.id), tx, { merge: true }).catch(console.error);
+    }
+  };
+  const deleteTxFromCloud = (txId) => {
+    if (window.__FIREBASE__) {
+      const { db, doc, deleteDoc } = window.__FIREBASE__;
+      deleteDoc(doc(db, "transactions", txId)).catch(console.error);
+    }
+  };
+  const syncMemberToCloud = (member) => {
+    if (window.__FIREBASE__) {
+      const { db, doc, setDoc } = window.__FIREBASE__;
+      setDoc(doc(db, "members", member.id), member, { merge: true }).catch(console.error);
+    }
+  };
+  const syncProjectToCloud = (proj) => {
+    if (window.__FIREBASE__) {
+      const { db, doc, setDoc } = window.__FIREBASE__;
+      setDoc(doc(db, "project", "aristo_plot_main"), proj, { merge: true }).catch(console.error);
+    }
+  };
+  const grossTotal = useMemo(() => transactions.reduce((sum, t) => sum + (Number(t.amount) || 0), 0), [transactions]);
+  const netTotal = useMemo(() => Math.max(0, grossTotal - (project.totalCombinedBankCharge || 0)), [grossTotal, project.totalCombinedBankCharge]);
+  const pendingTxs = useMemo(() => transactions.filter((t) => t.status === "Pending Review"), [transactions]);
+  const handleApproveDeposit = (tx) => {
+    const approved = { ...tx, status: "Verified", verifiedAt: (/* @__PURE__ */ new Date()).toISOString(), verifiedBy: session.memberName || "Md. Minhazul Islam Abir" };
+    setTransactions((prev) => prev.map((t) => t.id === tx.id ? approved : t));
+    syncTxToCloud(approved);
+    showToast(`Deposit of ${formatCurrency(tx.amount)} approved live!`);
+  };
+  const handleRejectDeposit = (txId) => {
+    const target = transactions.find((t) => t.id === txId);
+    if (target) {
+      const flagged = { ...target, status: "Flagged" };
+      setTransactions((prev) => prev.map((t) => t.id === txId ? flagged : t));
+      syncTxToCloud(flagged);
+      showToast("Deposit flagged.");
+    }
+  };
+  const handleGoogleFormSubmit = (newTx) => {
+    setTransactions((prev) => [newTx, ...prev]);
+    syncTxToCloud(newTx);
+    showToast(`Deposit submitted for ${newTx.memberName}. Awaiting Admin Approval.`);
+  };
+  const shareUrl = window.location.origin + window.location.pathname + "?form=deposit";
+  if (!session.isLoggedIn) {
+    return /* @__PURE__ */ React.createElement("div", { className: "min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between font-sans relative" }, toastMessage && /* @__PURE__ */ React.createElement("div", { className: "fixed bottom-5 right-5 z-50 bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-lg animate-bounce" }, toastMessage), /* @__PURE__ */ React.createElement("div", { className: "border-b border-emerald-900/50 bg-slate-900/80 px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-2" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement(IconLandmark, { className: "w-4 h-4 text-emerald-400" }), /* @__PURE__ */ React.createElement("span", null, "Bank: ", /* @__PURE__ */ React.createElement("strong", { className: "text-white" }, project.bankDetails.bankName), " \xB7 Acc: ", /* @__PURE__ */ React.createElement("strong", { className: "text-emerald-400 font-mono" }, project.bankDetails.accountNumber))), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2 text-[11px] text-emerald-400" }, /* @__PURE__ */ React.createElement("span", { className: "w-2 h-2 rounded-full bg-emerald-400 animate-pulse" }), /* @__PURE__ */ React.createElement("span", null, isCloudSynced ? "Live Cloud Synced (Firestore)" : "Connecting to Cloud..."))), /* @__PURE__ */ React.createElement("div", { className: "flex-1 flex items-center justify-center p-4" }, /* @__PURE__ */ React.createElement("div", { className: "w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-2xl shadow-2xl p-6 text-center space-y-4" }, /* @__PURE__ */ React.createElement("div", { className: "w-12 h-12 bg-emerald-600 rounded-2xl mx-auto flex items-center justify-center text-white shadow-lg shadow-emerald-950" }, /* @__PURE__ */ React.createElement(IconBuilding, { className: "w-6 h-6" })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", { className: "text-xl font-bold text-white" }, project.initiativeName), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-slate-400 mt-1" }, "11-Member Joint Trust Treasury \xB7 Sector 27, Purbachal")), /* @__PURE__ */ React.createElement("div", { className: "flex justify-center gap-2 pt-2" }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => setIsGoogleFormModalOpen(true),
+        className: "px-3 py-1.5 bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white rounded-xl text-xs font-semibold border border-indigo-500/40 transition-colors flex items-center gap-1.5 cursor-pointer"
+      },
+      /* @__PURE__ */ React.createElement(IconFileSpreadsheet, { className: "w-4 h-4 text-indigo-400" }),
+      /* @__PURE__ */ React.createElement("span", null, "Submit Deposit (Google Form)")
+    )), /* @__PURE__ */ React.createElement(
+      AuthCard,
+      {
+        members,
+        leadAdminName: project.leadAdminName,
+        onLogin: (user) => {
+          setSession(user);
+          showToast(`Signed in as ${user.memberName}`);
+        },
+        onRequestAccess: (newMem) => {
+          setMembers((prev) => [...prev, newMem]);
+          syncMemberToCloud(newMem);
+          showToast("Access request submitted to Admin.");
+        }
+      }
+    ))), isGoogleFormModalOpen && /* @__PURE__ */ React.createElement(
+      GoogleFormModal,
+      {
+        members,
+        project,
+        preselectedId: preselectedFormMemberId,
+        onClose: () => setIsGoogleFormModalOpen(false),
+        onSubmit: handleGoogleFormSubmit,
+        shareUrl
+      }
+    ));
+  }
+  const activeMember = members.find((m) => m.id === session.memberId) || members[0];
+  const isAdmin = session.role === "admin";
+  return /* @__PURE__ */ React.createElement("div", { className: "min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans" }, toastMessage && /* @__PURE__ */ React.createElement("div", { className: "fixed bottom-5 right-5 z-50 bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-lg animate-bounce" }, toastMessage), /* @__PURE__ */ React.createElement("header", { className: "sticky top-0 z-30 bg-slate-950/95 backdrop-blur-md border-b border-emerald-900/40" }, /* @__PURE__ */ React.createElement("div", { className: "border-b border-slate-800 bg-slate-900/60 px-4 py-1 text-xs text-slate-300 flex flex-wrap justify-between items-center gap-2" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement("span", { className: "w-2 h-2 rounded-full bg-emerald-400 animate-pulse" }), /* @__PURE__ */ React.createElement("span", { className: "text-emerald-400 font-semibold" }, isCloudSynced ? "Live Cloud Synced \xB7 Firebase Firestore" : "Local Storage Mode"), /* @__PURE__ */ React.createElement("span", { className: "text-slate-600" }, "|"), /* @__PURE__ */ React.createElement("span", null, "Bank: ", /* @__PURE__ */ React.createElement("strong", null, project.bankDetails.bankName), " (", project.bankDetails.accountNumber, ")")), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-3 font-mono text-xs" }, /* @__PURE__ */ React.createElement("span", null, "Gross: ", /* @__PURE__ */ React.createElement("strong", null, formatCurrency(grossTotal))), /* @__PURE__ */ React.createElement("span", { className: "text-emerald-400" }, "Net Treasury: ", /* @__PURE__ */ React.createElement("strong", null, formatCurrency(netTotal))))), /* @__PURE__ */ React.createElement("div", { className: "max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-3" }, /* @__PURE__ */ React.createElement("div", { className: "w-9 h-9 bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-md" }, /* @__PURE__ */ React.createElement(IconBuilding, { className: "w-5 h-5" })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", { className: "text-base font-bold text-white" }, project.initiativeName), /* @__PURE__ */ React.createElement("p", { className: "text-[11px] text-slate-400" }, "Collaborative Ledger \xB7 Sector 27, Purbachal"))), /* @__PURE__ */ React.createElement("nav", { className: "flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs font-medium" }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => setActiveTab("dashboard"),
+      className: `px-3 py-1.5 rounded-lg transition-all ${activeTab === "dashboard" ? "bg-emerald-600 text-white font-bold" : "text-slate-300 hover:text-white"}`
+    },
+    "Dashboard"
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => setActiveTab("transactions"),
+      className: `px-3 py-1.5 rounded-lg transition-all ${activeTab === "transactions" ? "bg-emerald-600 text-white font-bold" : "text-slate-300 hover:text-white"}`
+    },
+    "Transactions (",
+    transactions.length,
+    ")"
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => setActiveTab("members"),
+      className: `px-3 py-1.5 rounded-lg transition-all ${activeTab === "members" ? "bg-emerald-600 text-white font-bold" : "text-slate-300 hover:text-white"}`
+    },
+    "11 Members"
+  )), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => setIsGoogleFormModalOpen(true),
+      className: "px-2.5 py-1.5 bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white rounded-xl text-xs font-semibold border border-indigo-500/40 flex items-center gap-1 cursor-pointer transition-all",
+      title: "Open public deposit submission form"
+    },
+    /* @__PURE__ */ React.createElement(IconFileSpreadsheet, { className: "w-3.5 h-3.5" }),
+    /* @__PURE__ */ React.createElement("span", null, "Deposit Form")
+  ), isAdmin && pendingTxs.length > 0 && /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => setIsApprovalsModalOpen(true),
+      className: "px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-1 cursor-pointer shadow animate-pulse"
+    },
+    /* @__PURE__ */ React.createElement(IconClock, { className: "w-3.5 h-3.5" }),
+    /* @__PURE__ */ React.createElement("span", null, "Approvals (", pendingTxs.length, ")")
+  ), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-xl text-xs" }, /* @__PURE__ */ React.createElement("div", { className: "text-left" }, /* @__PURE__ */ React.createElement("span", { className: "font-bold text-white block leading-tight" }, session.memberName), /* @__PURE__ */ React.createElement("span", { className: "text-[10px] text-emerald-400 font-mono uppercase" }, session.role)), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => setSession({ isLoggedIn: false, role: "member" }),
+      title: "Sign Out",
+      className: "p-1 text-slate-400 hover:text-rose-400 transition-colors ml-1"
+    },
+    /* @__PURE__ */ React.createElement(IconLogOut, { className: "w-3.5 h-3.5" })
+  ))))), /* @__PURE__ */ React.createElement("main", { className: "max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6" }, activeTab === "dashboard" && /* @__PURE__ */ React.createElement(
+    DashboardView,
+    {
+      project,
+      members,
+      transactions,
+      grossTotal,
+      netTotal,
+      pendingTxs,
+      isAdmin,
+      onOpenDepositForm: () => setIsGoogleFormModalOpen(true),
+      onOpenApprovals: () => setIsApprovalsModalOpen(true),
+      onUpdateBankCharge: (newCharge) => {
+        const updated = { ...project, totalCombinedBankCharge: newCharge };
+        setProject(updated);
+        syncProjectToCloud(updated);
+        showToast("Bank charge updated live.");
+      }
+    }
+  ), activeTab === "transactions" && /* @__PURE__ */ React.createElement(
+    TransactionsView,
+    {
+      transactions,
+      members,
+      project,
+      isAdmin,
+      onApprove: handleApproveDeposit,
+      onViewReceipt: (tx) => setSelectedReceiptTx(tx),
+      onOpenDepositForm: () => setIsGoogleFormModalOpen(true),
+      onDelete: (txId) => {
+        if (confirm("Delete this transaction?")) {
+          setTransactions((prev) => prev.filter((t) => t.id !== txId));
+          deleteTxFromCloud(txId);
+          showToast("Transaction deleted.");
+        }
+      }
+    }
+  ), activeTab === "members" && /* @__PURE__ */ React.createElement(
+    MembersView,
+    {
+      members,
+      transactions,
+      project,
+      currentMemberId: session.memberId,
+      isAdmin,
+      onUpdateProfile: (updatedMem) => {
+        setMembers((prev) => prev.map((m) => m.id === updatedMem.id ? updatedMem : m));
+        syncMemberToCloud(updatedMem);
+        showToast(`Profile updated for ${updatedMem.name}.`);
+      }
+    }
+  )), isGoogleFormModalOpen && /* @__PURE__ */ React.createElement(
+    GoogleFormModal,
+    {
+      members,
+      project,
+      preselectedId: preselectedFormMemberId,
+      onClose: () => setIsGoogleFormModalOpen(false),
+      onSubmit: handleGoogleFormSubmit,
+      shareUrl
+    }
+  ), isApprovalsModalOpen && /* @__PURE__ */ React.createElement(
+    ApprovalsModal,
+    {
+      pendingTxs,
+      members,
+      project,
+      onClose: () => setIsApprovalsModalOpen(false),
+      onApprove: handleApproveDeposit,
+      onReject: handleRejectDeposit
+    }
+  ), selectedReceiptTx && /* @__PURE__ */ React.createElement(
+    ReceiptModal,
+    {
+      tx: selectedReceiptTx,
+      project,
+      onClose: () => setSelectedReceiptTx(null)
+    }
+  ), /* @__PURE__ */ React.createElement("footer", { className: "border-t border-slate-900 bg-slate-950 py-5 text-center text-xs text-slate-500" }, /* @__PURE__ */ React.createElement("div", { className: "max-w-7xl mx-auto px-4 flex flex-wrap justify-between items-center gap-2" }, /* @__PURE__ */ React.createElement("span", null, "\xA9 2026 ", project.initiativeName, " \xB7 Sector 27, Purbachal"), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-3" }, /* @__PURE__ */ React.createElement("span", { className: "text-emerald-400 font-mono" }, "Single-File Standalone Edition (CDN + Live Firestore)")))));
+}
+function AuthCard({ members, leadAdminName, onLogin, onRequestAccess }) {
+  const [tab, setTab] = useState("admin");
+  const [adminPin, setAdminPin] = useState("");
+  const [selectedMemberId, setSelectedMemberId] = useState(members[1]?.id || members[0]?.id || "");
+  const [memberPin, setMemberPin] = useState("");
+  const [regName, setRegName] = useState("");
+  const [regPhone, setRegPhone] = useState("");
+  const [error, setError] = useState("");
+  const handleAdminSubmit = (e) => {
+    e.preventDefault();
+    setError("");
+    if (adminPin === "2026" || adminPin === "1234") {
+      onLogin({ isLoggedIn: true, role: "admin", memberId: "m1", memberName: leadAdminName });
+    } else {
+      setError("Invalid Admin PIN. (Authorized PIN required for Md. Minhazul Islam Abir)");
+    }
+  };
+  const handleMemberSubmit = (e) => {
+    e.preventDefault();
+    setError("");
+    const mem = members.find((m) => m.id === selectedMemberId);
+    if (!mem) return;
+    if (mem.approvalStatus === "pending") {
+      setError(`Login Pending Approval: ${mem.name} is awaiting Lead Admin approval.`);
+      return;
+    }
+    if (memberPin === (mem.pin || "1234")) {
+      onLogin({ isLoggedIn: true, role: "member", memberId: mem.id, memberName: mem.name });
+    } else {
+      setError("Invalid Security PIN for this member.");
+    }
+  };
+  const handleRegisterSubmit = (e) => {
+    e.preventDefault();
+    if (!regName.trim() || !regPhone.trim()) {
+      setError("Please provide Name and Phone number.");
+      return;
+    }
+    const newMember = {
+      id: `m-req-${Date.now().toString().slice(-4)}`,
+      name: regName.trim(),
+      email: `${regName.toLowerCase().replace(/\s+/g, "")}@gmail.com`,
+      mobile: regPhone.trim(),
+      avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+      role: "member",
+      pin: "1234",
+      approvalStatus: "pending",
+      joinedDate: (/* @__PURE__ */ new Date()).toISOString().split("T")[0]
+    };
+    onRequestAccess(newMember);
+    setRegName("");
+    setRegPhone("");
+    setError("Request sent! Awaiting Lead Admin approval.");
+  };
+  return /* @__PURE__ */ React.createElement("div", { className: "space-y-4 pt-2" }, /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-3 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs" }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      onClick: () => {
+        setTab("admin");
+        setError("");
+      },
+      className: `py-1.5 rounded-lg font-semibold transition-all ${tab === "admin" ? "bg-emerald-600 text-white" : "text-slate-400"}`
+    },
+    "Admin"
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      onClick: () => {
+        setTab("member");
+        setError("");
+      },
+      className: `py-1.5 rounded-lg font-semibold transition-all ${tab === "member" ? "bg-emerald-600 text-white" : "text-slate-400"}`
+    },
+    "Member"
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      onClick: () => {
+        setTab("register");
+        setError("");
+      },
+      className: `py-1.5 rounded-lg font-semibold transition-all ${tab === "register" ? "bg-emerald-600 text-white" : "text-slate-400"}`
+    },
+    "Request"
+  )), error && /* @__PURE__ */ React.createElement("div", { className: "p-2.5 rounded-xl bg-rose-950/80 border border-rose-800 text-rose-300 text-xs" }, error), tab === "admin" && /* @__PURE__ */ React.createElement("form", { onSubmit: handleAdminSubmit, className: "space-y-3 text-left" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] text-slate-400 block mb-1" }, "Lead Admin: ", /* @__PURE__ */ React.createElement("strong", null, leadAdminName)), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "password",
+      value: adminPin,
+      onChange: (e) => setAdminPin(e.target.value),
+      placeholder: "Enter Security PIN (e.g. 2026)",
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
+    }
+  )), /* @__PURE__ */ React.createElement("button", { type: "submit", className: "w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer" }, "Enter Admin Console")), tab === "member" && /* @__PURE__ */ React.createElement("form", { onSubmit: handleMemberSubmit, className: "space-y-3 text-left" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] text-slate-400 block mb-1" }, "Select Member Account"), /* @__PURE__ */ React.createElement(
+    "select",
+    {
+      value: selectedMemberId,
+      onChange: (e) => setSelectedMemberId(e.target.value),
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+    },
+    members.map((m) => /* @__PURE__ */ React.createElement("option", { key: m.id, value: m.id }, m.name, " (", m.mobile, ")"))
+  )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] text-slate-400 block mb-1" }, "4-Digit Member PIN"), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "password",
+      value: memberPin,
+      onChange: (e) => setMemberPin(e.target.value),
+      placeholder: "PIN (Default: 1234)",
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
+    }
+  )), /* @__PURE__ */ React.createElement("button", { type: "submit", className: "w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer" }, "Sign In to Member Portal")), tab === "register" && /* @__PURE__ */ React.createElement("form", { onSubmit: handleRegisterSubmit, className: "space-y-3 text-left" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] text-slate-400 block mb-1" }, "Your Full Name"), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "text",
+      value: regName,
+      onChange: (e) => setRegName(e.target.value),
+      placeholder: "e.g. Shakil Chowdhury",
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+    }
+  )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] text-slate-400 block mb-1" }, "Mobile Contact"), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "text",
+      value: regPhone,
+      onChange: (e) => setRegPhone(e.target.value),
+      placeholder: "+880 1711-XXXXXX",
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+    }
+  )), /* @__PURE__ */ React.createElement("button", { type: "submit", className: "w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer" }, "Submit Request for Approval")));
+}
+function GoogleFormModal({ members, project, preselectedId, onClose, onSubmit, shareUrl }) {
+  const [selectedId, setSelectedId] = useState(preselectedId || members[0]?.id || "");
+  const [amount, setAmount] = useState("2000");
+  const [month, setMonth] = useState("October 2026");
+  const [method, setMethod] = useState("Bank Transfer");
+  const [refNo, setRefNo] = useState("");
+  const [notes, setNotes] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const targetMember = members.find((m) => m.id === selectedId) || members[0];
+  const handleCopy = () => {
+    navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+  const handleWhatsApp = () => {
+    const text = `Assalamu Alaikum. Please submit your monthly deposit voucher for ${project.initiativeName}:
+${shareUrl}
+
+Bank: ${project.bankDetails.bankName}
+Account: ${project.bankDetails.accountNumber}
+Name: ${project.bankDetails.accountName}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  };
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    const numAmount = parseFloat(amount) || 2e3;
+    const newTx = {
+      id: `tx-form-${Date.now()}`,
+      memberId: targetMember.id,
+      memberName: targetMember.name,
+      date: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
+      amount: numAmount,
+      deductionOrFee: 0,
+      netAmount: numAmount,
+      method,
+      depositBank: project.bankDetails.bankName,
+      depositAccountNumber: project.bankDetails.accountNumber,
+      referenceNumber: refNo.trim() || `CITY-FORM-${Date.now().toString().slice(-6)}`,
+      bankOrChannel: project.bankDetails.bankName,
+      monthPeriod: month,
+      status: "Pending Review",
+      notes: notes.trim() ? `[Google Form] ${notes.trim()}` : "[Submitted via Public Form]",
+      submittedVia: "google_form",
+      createdAt: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    onSubmit(newTx);
+    setSubmitted(true);
+  };
+  return /* @__PURE__ */ React.createElement("div", { className: "fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-fadeIn" }, /* @__PURE__ */ React.createElement("div", { className: "w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]" }, /* @__PURE__ */ React.createElement("div", { className: "bg-gradient-to-r from-emerald-700 via-teal-700 to-indigo-800 p-5 text-white flex justify-between items-center" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "text-[10px] uppercase font-bold tracking-wider bg-black/30 px-2 py-0.5 rounded-full border border-white/20" }, "Google Form \xB7 Public Deposit Portal"), /* @__PURE__ */ React.createElement("h2", { className: "text-lg font-bold mt-1" }, "Initiative Deposit Submission Form")), /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "p-1 rounded-lg hover:bg-white/20 cursor-pointer" }, /* @__PURE__ */ React.createElement(IconX, { className: "w-5 h-5 text-white" }))), /* @__PURE__ */ React.createElement("div", { className: "bg-slate-950 px-4 py-2 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-1.5 text-slate-300" }, /* @__PURE__ */ React.createElement(IconShare, { className: "w-4 h-4 text-emerald-400" }), /* @__PURE__ */ React.createElement("span", { className: "font-semibold text-white" }, "Shareable Link:"), /* @__PURE__ */ React.createElement("span", { className: "font-mono text-[11px] text-slate-400 truncate max-w-[150px]" }, shareUrl)), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: handleCopy,
+      className: "px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium flex items-center gap-1 transition-colors cursor-pointer"
+    },
+    copied ? /* @__PURE__ */ React.createElement(IconCheck, { className: "w-3.5 h-3.5" }) : /* @__PURE__ */ React.createElement(IconCopy, { className: "w-3.5 h-3.5" }),
+    /* @__PURE__ */ React.createElement("span", null, copied ? "Copied!" : "Copy Link")
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: handleWhatsApp,
+      className: "px-2.5 py-1 bg-[#25D366] text-slate-950 font-bold rounded-lg flex items-center gap-1 cursor-pointer"
+    },
+    /* @__PURE__ */ React.createElement(IconWhatsApp, { className: "w-3.5 h-3.5" }),
+    /* @__PURE__ */ React.createElement("span", null, "WhatsApp")
+  ))), /* @__PURE__ */ React.createElement("div", { className: "p-6 overflow-y-auto flex-1 space-y-4" }, submitted ? /* @__PURE__ */ React.createElement("div", { className: "py-12 text-center space-y-3" }, /* @__PURE__ */ React.createElement("div", { className: "w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto" }, /* @__PURE__ */ React.createElement(IconCheckCircle, { className: "w-8 h-8" })), /* @__PURE__ */ React.createElement("h3", { className: "text-lg font-bold text-white" }, "Your response has been recorded!"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-slate-300 max-w-sm mx-auto" }, "Your deposit for ", /* @__PURE__ */ React.createElement("strong", { className: "text-emerald-400" }, targetMember.name), " has been logged to live Firestore and queued for ", /* @__PURE__ */ React.createElement("strong", { className: "text-white" }, "Admin Approval"), "."), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: onClose,
+      className: "mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-xl cursor-pointer"
+    },
+    "Done"
+  )) : /* @__PURE__ */ React.createElement("form", { onSubmit: handleFormSubmit, className: "space-y-4 text-left text-xs" }, /* @__PURE__ */ React.createElement("div", { className: "p-3 rounded-xl bg-slate-950 border border-slate-800" }, /* @__PURE__ */ React.createElement("span", { className: "text-[10px] text-slate-400 uppercase font-semibold block" }, "Official Deposit Account"), /* @__PURE__ */ React.createElement("span", { className: "font-bold text-white text-sm mt-0.5 block" }, project.bankDetails.bankName), /* @__PURE__ */ React.createElement("span", { className: "text-emerald-400 font-mono font-bold" }, "A/C: ", project.bankDetails.accountNumber)), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] font-semibold text-slate-300 block mb-1" }, "Selected Syndicate Member *"), /* @__PURE__ */ React.createElement(
+    "select",
+    {
+      value: selectedId,
+      onChange: (e) => setSelectedId(e.target.value),
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+    },
+    members.map((m) => /* @__PURE__ */ React.createElement("option", { key: m.id, value: m.id }, m.name, " (", m.mobile, ")"))
+  )), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-2 gap-3" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] font-semibold text-slate-300 block mb-1" }, "Deposit Amount (BDT) *"), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "number",
+      value: amount,
+      onChange: (e) => setAmount(e.target.value),
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono",
+      required: true
+    }
+  )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] font-semibold text-slate-300 block mb-1" }, "Cycle Month *"), /* @__PURE__ */ React.createElement(
+    "select",
+    {
+      value: month,
+      onChange: (e) => setMonth(e.target.value),
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+    },
+    INITIATIVE_CYCLES.map((c) => /* @__PURE__ */ React.createElement("option", { key: c, value: c }, c))
+  ))), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-2 gap-3" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] font-semibold text-slate-300 block mb-1" }, "Payment Method"), /* @__PURE__ */ React.createElement(
+    "select",
+    {
+      value: method,
+      onChange: (e) => setMethod(e.target.value),
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+    },
+    /* @__PURE__ */ React.createElement("option", { value: "Bank Transfer" }, "Bank Transfer (NPSB/BEFTN)"),
+    /* @__PURE__ */ React.createElement("option", { value: "bKash / MFS" }, "bKash / MFS"),
+    /* @__PURE__ */ React.createElement("option", { value: "Direct Deposit" }, "Direct Branch Cash Deposit"),
+    /* @__PURE__ */ React.createElement("option", { value: "Cash" }, "Cash Handover")
+  )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] font-semibold text-slate-300 block mb-1" }, "Deposit Slip / Ref No."), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "text",
+      value: refNo,
+      onChange: (e) => setRefNo(e.target.value),
+      placeholder: "e.g. CITY-DEP-998822",
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
+    }
+  ))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] font-semibold text-slate-300 block mb-1" }, "Depositor Note"), /* @__PURE__ */ React.createElement(
+    "textarea",
+    {
+      value: notes,
+      onChange: (e) => setNotes(e.target.value),
+      placeholder: "e.g. Transferred via City Touch app...",
+      rows: 2,
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+    }
+  )), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "submit",
+      className: "w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-colors shadow-lg shadow-emerald-950 cursor-pointer"
+    },
+    "Submit Deposit Voucher (Queue for Admin Approval)"
+  )))));
+}
+function ApprovalsModal({ pendingTxs, members, project, onClose, onApprove, onReject }) {
+  return /* @__PURE__ */ React.createElement("div", { className: "fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-fadeIn" }, /* @__PURE__ */ React.createElement("div", { className: "w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" }, /* @__PURE__ */ React.createElement("div", { className: "p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950/60" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement(IconClock, { className: "w-5 h-5 text-amber-400" }), /* @__PURE__ */ React.createElement("h3", { className: "text-base font-bold text-white" }, "Deposit Approvals Queue"), /* @__PURE__ */ React.createElement("span", { className: "text-xs bg-amber-950 text-amber-300 px-2 py-0.5 rounded-full font-mono font-bold" }, pendingTxs.length, " Pending")), /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "p-1 rounded-lg hover:bg-slate-800 cursor-pointer" }, /* @__PURE__ */ React.createElement(IconX, { className: "w-5 h-5 text-slate-400" }))), /* @__PURE__ */ React.createElement("div", { className: "p-4 overflow-y-auto flex-1 space-y-3" }, pendingTxs.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "py-12 text-center text-slate-400" }, "All submissions verified.") : pendingTxs.map((tx) => /* @__PURE__ */ React.createElement("div", { key: tx.id, className: "p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement("strong", { className: "text-white text-sm" }, tx.memberName), /* @__PURE__ */ React.createElement("span", { className: "bg-amber-950 text-amber-300 px-1.5 py-0.5 rounded font-mono text-[10px]" }, "Pending Review")), /* @__PURE__ */ React.createElement("div", { className: "text-slate-400 mt-1" }, "Cycle: ", /* @__PURE__ */ React.createElement("strong", { className: "text-white" }, tx.monthPeriod), " \xB7 Amount: ", /* @__PURE__ */ React.createElement("strong", { className: "text-emerald-400 font-mono" }, formatCurrency(tx.amount))), /* @__PURE__ */ React.createElement("div", { className: "text-slate-500 font-mono text-[11px] mt-0.5" }, "Ref: ", tx.referenceNumber, " \xB7 ", tx.method)), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => onApprove(tx),
+      className: "px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl cursor-pointer"
+    },
+    "Approve"
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => onReject(tx.id),
+      className: "px-3 py-1.5 bg-rose-950 hover:bg-rose-900 text-rose-300 rounded-xl cursor-pointer"
+    },
+    "Reject"
+  )))))));
+}
+function ReceiptModal({ tx, project, onClose }) {
+  return /* @__PURE__ */ React.createElement("div", { className: "fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-fadeIn" }, /* @__PURE__ */ React.createElement("div", { className: "w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden p-6 text-xs space-y-4" }, /* @__PURE__ */ React.createElement("div", { className: "flex justify-between items-center border-b border-slate-800 pb-3" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { className: "font-bold text-white text-sm" }, project.initiativeName), /* @__PURE__ */ React.createElement("span", { className: "text-[11px] text-slate-400" }, "Official Deposit Voucher")), /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "p-1 rounded-lg hover:bg-slate-800 cursor-pointer" }, /* @__PURE__ */ React.createElement(IconX, { className: "w-4 h-4 text-slate-400" }))), /* @__PURE__ */ React.createElement("div", { className: "space-y-2 bg-slate-950 p-4 rounded-xl border border-slate-800" }, /* @__PURE__ */ React.createElement("div", { className: "flex justify-between" }, /* @__PURE__ */ React.createElement("span", { className: "text-slate-400" }, "Member:"), /* @__PURE__ */ React.createElement("strong", { className: "text-white" }, tx.memberName)), /* @__PURE__ */ React.createElement("div", { className: "flex justify-between" }, /* @__PURE__ */ React.createElement("span", { className: "text-slate-400" }, "Cycle:"), /* @__PURE__ */ React.createElement("strong", { className: "text-white" }, tx.monthPeriod)), /* @__PURE__ */ React.createElement("div", { className: "flex justify-between" }, /* @__PURE__ */ React.createElement("span", { className: "text-slate-400" }, "Date:"), /* @__PURE__ */ React.createElement("strong", { className: "text-white" }, tx.date)), /* @__PURE__ */ React.createElement("div", { className: "flex justify-between" }, /* @__PURE__ */ React.createElement("span", { className: "text-slate-400" }, "Amount:"), /* @__PURE__ */ React.createElement("strong", { className: "text-emerald-400 font-mono text-sm" }, formatCurrency(tx.amount))), /* @__PURE__ */ React.createElement("div", { className: "flex justify-between" }, /* @__PURE__ */ React.createElement("span", { className: "text-slate-400" }, "Bank:"), /* @__PURE__ */ React.createElement("strong", { className: "text-white" }, tx.depositBank)), /* @__PURE__ */ React.createElement("div", { className: "flex justify-between" }, /* @__PURE__ */ React.createElement("span", { className: "text-slate-400" }, "Account:"), /* @__PURE__ */ React.createElement("strong", { className: "text-slate-300 font-mono" }, tx.depositAccountNumber)), /* @__PURE__ */ React.createElement("div", { className: "flex justify-between" }, /* @__PURE__ */ React.createElement("span", { className: "text-slate-400" }, "Reference:"), /* @__PURE__ */ React.createElement("strong", { className: "text-slate-300 font-mono" }, tx.referenceNumber)), /* @__PURE__ */ React.createElement("div", { className: "flex justify-between" }, /* @__PURE__ */ React.createElement("span", { className: "text-slate-400" }, "Status:"), /* @__PURE__ */ React.createElement("span", { className: "text-emerald-400 font-bold" }, tx.status))), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => window.print(),
+      className: "w-full py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold cursor-pointer"
+    },
+    "Print Receipt Slip"
+  )));
+}
+function DashboardView({ project, members, transactions, grossTotal, netTotal, pendingTxs, isAdmin, onOpenDepositForm, onOpenApprovals, onUpdateBankCharge }) {
+  const currentMonth = "October 2026";
+  const currentMonthTxs = transactions.filter((t) => t.monthPeriod === currentMonth);
+  const paidMemberIds = new Set(currentMonthTxs.map((t) => t.memberId));
+  const paidCount = members.filter((m) => paidMemberIds.has(m.id)).length;
+  return /* @__PURE__ */ React.createElement("div", { className: "space-y-6" }, /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" }, /* @__PURE__ */ React.createElement("div", { className: "bg-slate-900 border border-slate-800 rounded-2xl p-5" }, /* @__PURE__ */ React.createElement("span", { className: "text-xs font-semibold text-slate-400 uppercase" }, "Total Gross Deposits"), /* @__PURE__ */ React.createElement("div", { className: "text-2xl font-bold font-mono text-white mt-1" }, formatCurrency(grossTotal)), /* @__PURE__ */ React.createElement("span", { className: "text-[11px] text-slate-400 mt-1 block" }, "8 Active Cycles \xB7 11 Members")), /* @__PURE__ */ React.createElement("div", { className: "bg-slate-900 border border-slate-800 rounded-2xl p-5" }, /* @__PURE__ */ React.createElement("span", { className: "text-xs font-semibold text-slate-400 uppercase" }, "Combined Net Treasury"), /* @__PURE__ */ React.createElement("div", { className: "text-2xl font-bold font-mono text-emerald-400 mt-1" }, formatCurrency(netTotal)), /* @__PURE__ */ React.createElement("span", { className: "text-[11px] text-emerald-400/80 mt-1 block" }, "100% Verified Escrow Balance")), /* @__PURE__ */ React.createElement("div", { className: "bg-slate-900 border border-slate-800 rounded-2xl p-5" }, /* @__PURE__ */ React.createElement("div", { className: "flex justify-between items-center" }, /* @__PURE__ */ React.createElement("span", { className: "text-xs font-semibold text-slate-400 uppercase" }, "Combined Bank Charge"), isAdmin && /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => {
+        const val = prompt("Enter manual combined bank charge (BDT):", project.totalCombinedBankCharge || 0);
+        if (val !== null) onUpdateBankCharge(parseFloat(val) || 0);
+      },
+      className: "text-[10px] text-amber-400 hover:underline"
+    },
+    "Edit"
+  )), /* @__PURE__ */ React.createElement("div", { className: "text-2xl font-bold font-mono text-amber-300 mt-1" }, project.totalCombinedBankCharge ? `-${formatCurrency(project.totalCombinedBankCharge)}` : "\u09F3 0"), /* @__PURE__ */ React.createElement("span", { className: "text-[11px] text-slate-400 mt-1 block truncate" }, "Applied on total treasury")), /* @__PURE__ */ React.createElement("div", { className: "bg-slate-900 border border-slate-800 rounded-2xl p-5" }, /* @__PURE__ */ React.createElement("span", { className: "text-xs font-semibold text-slate-400 uppercase" }, "October 2026 Status"), /* @__PURE__ */ React.createElement("div", { className: "text-2xl font-bold font-mono text-white mt-1" }, paidCount, " / ", members.length), /* @__PURE__ */ React.createElement("span", { className: "text-[11px] text-emerald-400 mt-1 block" }, Math.round(paidCount / members.length * 100), "% Cleared"))), /* @__PURE__ */ React.createElement("div", { className: "bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-wrap justify-between items-center gap-4" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h2", { className: "text-base font-bold text-white" }, "Initiative Collaborative Ledger"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-slate-400 mt-0.5" }, "Target: ", formatCurrency(project.monthlyPerMemberExpected), "/member/month \xB7 Bank: ", project.bankDetails.bankName, " (Acc: ", project.bankDetails.accountNumber, ")")), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: onOpenDepositForm,
+      className: "px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow"
+    },
+    /* @__PURE__ */ React.createElement(IconFileSpreadsheet, { className: "w-4 h-4" }),
+    /* @__PURE__ */ React.createElement("span", null, "Submit Deposit Form")
+  ), isAdmin && pendingTxs.length > 0 && /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: onOpenApprovals,
+      className: "px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer shadow"
+    },
+    /* @__PURE__ */ React.createElement(IconClock, { className: "w-4 h-4" }),
+    /* @__PURE__ */ React.createElement("span", null, "Approvals Queue (", pendingTxs.length, ")")
+  ))));
+}
+function TransactionsView({ transactions, members, project, isAdmin, onApprove, onViewReceipt, onOpenDepositForm, onDelete }) {
+  const [search, setSearch] = useState("");
+  const [filterMonth, setFilterMonth] = useState("ALL");
+  const filtered = transactions.filter((t) => {
+    const matchSearch = t.memberName.toLowerCase().includes(search.toLowerCase()) || t.referenceNumber.toLowerCase().includes(search.toLowerCase());
+    const matchMonth = filterMonth === "ALL" || t.monthPeriod === filterMonth;
+    return matchSearch && matchMonth;
+  });
+  return /* @__PURE__ */ React.createElement("div", { className: "space-y-4" }, /* @__PURE__ */ React.createElement("div", { className: "bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-wrap justify-between items-center gap-3" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "text",
+      placeholder: "Search member or reference ID...",
+      value: search,
+      onChange: (e) => setSearch(e.target.value),
+      className: "bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500 w-64"
+    }
+  ), /* @__PURE__ */ React.createElement(
+    "select",
+    {
+      value: filterMonth,
+      onChange: (e) => setFilterMonth(e.target.value),
+      className: "bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none"
+    },
+    /* @__PURE__ */ React.createElement("option", { value: "ALL" }, "All Cycles"),
+    INITIATIVE_CYCLES.map((c) => /* @__PURE__ */ React.createElement("option", { key: c, value: c }, c))
+  )), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: onOpenDepositForm,
+      className: "px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer"
+    },
+    /* @__PURE__ */ React.createElement(IconFileSpreadsheet, { className: "w-3.5 h-3.5" }),
+    /* @__PURE__ */ React.createElement("span", null, "Submit Deposit Voucher")
+  )), /* @__PURE__ */ React.createElement("div", { className: "bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow" }, /* @__PURE__ */ React.createElement("div", { className: "overflow-x-auto" }, /* @__PURE__ */ React.createElement("table", { className: "w-full text-left text-xs" }, /* @__PURE__ */ React.createElement("thead", { className: "bg-slate-950/70 border-b border-slate-800 text-slate-400 font-mono" }, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", { className: "py-3 px-4" }, "DATE / CYCLE"), /* @__PURE__ */ React.createElement("th", { className: "py-3 px-4" }, "MEMBER"), /* @__PURE__ */ React.createElement("th", { className: "py-3 px-4" }, "AMOUNT"), /* @__PURE__ */ React.createElement("th", { className: "py-3 px-4" }, "REFERENCE / BANK"), /* @__PURE__ */ React.createElement("th", { className: "py-3 px-4" }, "STATUS"), /* @__PURE__ */ React.createElement("th", { className: "py-3 px-4 text-right" }, "ACTIONS"))), /* @__PURE__ */ React.createElement("tbody", { className: "divide-y divide-slate-800/60" }, filtered.map((t) => /* @__PURE__ */ React.createElement("tr", { key: t.id, className: "hover:bg-slate-800/40 transition-colors" }, /* @__PURE__ */ React.createElement("td", { className: "py-3 px-4 whitespace-nowrap" }, /* @__PURE__ */ React.createElement("span", { className: "font-bold text-white block" }, t.date), /* @__PURE__ */ React.createElement("span", { className: "text-[10px] text-slate-400 font-mono" }, t.monthPeriod)), /* @__PURE__ */ React.createElement("td", { className: "py-3 px-4 whitespace-nowrap" }, /* @__PURE__ */ React.createElement("span", { className: "font-semibold text-white block" }, t.memberName), /* @__PURE__ */ React.createElement("span", { className: "text-[10px] text-slate-500" }, t.method)), /* @__PURE__ */ React.createElement("td", { className: "py-3 px-4 whitespace-nowrap font-mono font-bold text-emerald-400" }, formatCurrency(t.amount)), /* @__PURE__ */ React.createElement("td", { className: "py-3 px-4 whitespace-nowrap font-mono text-slate-300" }, /* @__PURE__ */ React.createElement("span", { className: "block text-white" }, t.referenceNumber), /* @__PURE__ */ React.createElement("span", { className: "text-[10px] text-slate-500" }, t.depositBank, " (", t.depositAccountNumber, ")")), /* @__PURE__ */ React.createElement("td", { className: "py-3 px-4 whitespace-nowrap" }, /* @__PURE__ */ React.createElement("span", { className: `px-2 py-0.5 rounded-full text-[10px] font-bold font-mono ${t.status === "Verified" ? "bg-emerald-950 text-emerald-400 border border-emerald-800" : t.status === "Pending Review" ? "bg-amber-950 text-amber-300 border border-amber-800" : "bg-rose-950 text-rose-300 border border-rose-800"}` }, t.status)), /* @__PURE__ */ React.createElement("td", { className: "py-3 px-4 whitespace-nowrap text-right" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-end gap-1.5" }, isAdmin && t.status === "Pending Review" && /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => onApprove(t),
+      className: "px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg cursor-pointer text-[10px]"
+    },
+    "Approve"
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => onViewReceipt(t),
+      className: "p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 cursor-pointer",
+      title: "View Receipt"
+    },
+    /* @__PURE__ */ React.createElement(IconEye, { className: "w-3.5 h-3.5" })
+  ), isAdmin && /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => onDelete(t.id),
+      className: "p-1.5 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-800 cursor-pointer",
+      title: "Delete Transaction"
+    },
+    /* @__PURE__ */ React.createElement(IconTrash, { className: "w-3.5 h-3.5" })
+  ))))))))));
+}
+function MembersView({ members, transactions, project, currentMemberId, isAdmin, onUpdateProfile }) {
+  const [editingMember, setEditingMember] = useState(null);
+  return /* @__PURE__ */ React.createElement("div", { className: "space-y-4" }, /* @__PURE__ */ React.createElement("div", { className: "bg-slate-900 border border-slate-800 rounded-2xl p-4 flex justify-between items-center" }, /* @__PURE__ */ React.createElement("h2", { className: "text-base font-bold text-white flex items-center gap-2" }, /* @__PURE__ */ React.createElement(IconUsers, { className: "w-5 h-5 text-emerald-400" }), /* @__PURE__ */ React.createElement("span", null, "11 Initiative Participating Members")), /* @__PURE__ */ React.createElement("span", { className: "text-xs font-mono text-slate-400" }, "Target: 2,000 BDT/month")), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" }, members.map((member) => {
+    const memTxs = transactions.filter((t) => t.memberId === member.id && t.status === "Verified");
+    const gross = memTxs.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+    const isSelf = currentMemberId === member.id;
+    const canEdit = isAdmin || isSelf;
+    return /* @__PURE__ */ React.createElement("div", { key: member.id, className: `bg-slate-900 border rounded-2xl p-5 flex flex-col justify-between ${isSelf ? "border-emerald-600" : "border-slate-800"}` }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-3 mb-3" }, /* @__PURE__ */ React.createElement("img", { src: member.avatar, alt: member.name, className: "w-12 h-12 rounded-full object-cover ring-2 ring-emerald-500/40" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-1.5" }, /* @__PURE__ */ React.createElement("h3", { className: "font-bold text-white text-sm" }, member.name), member.role === "admin" ? /* @__PURE__ */ React.createElement("span", { className: "text-[9px] bg-emerald-950 text-emerald-400 font-bold px-1.5 py-0.5 rounded border border-emerald-800" }, "ADMIN") : isSelf ? /* @__PURE__ */ React.createElement("span", { className: "text-[9px] bg-emerald-950 text-emerald-400 font-bold px-1.5 py-0.5 rounded border border-emerald-800" }, "YOU") : null), /* @__PURE__ */ React.createElement("span", { className: "text-xs text-slate-400 block" }, member.mobile))), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-2 gap-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 text-xs font-mono" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "text-[10px] text-slate-500 block font-sans" }, "TOTAL DEPOSITED"), /* @__PURE__ */ React.createElement("span", { className: "font-bold text-emerald-400" }, formatCurrency(gross))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "text-[10px] text-slate-500 block font-sans" }, "CYCLES CLEARED"), /* @__PURE__ */ React.createElement("span", { className: "font-bold text-white" }, memTxs.length, " / 8")))), /* @__PURE__ */ React.createElement("div", { className: "pt-3 mt-3 border-t border-slate-800 flex justify-between items-center text-xs" }, /* @__PURE__ */ React.createElement("span", { className: "text-slate-400" }, member.nomineeName ? `Nominee: ${member.nomineeName}` : "Regular Member"), canEdit && /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => setEditingMember(member),
+        className: "text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 cursor-pointer"
+      },
+      /* @__PURE__ */ React.createElement(IconEdit, { className: "w-3.5 h-3.5" }),
+      /* @__PURE__ */ React.createElement("span", null, "Edit Profile")
+    )));
+  })), editingMember && /* @__PURE__ */ React.createElement("div", { className: "fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-fadeIn" }, /* @__PURE__ */ React.createElement("div", { className: "w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 text-xs space-y-4" }, /* @__PURE__ */ React.createElement("div", { className: "flex justify-between items-center border-b border-slate-800 pb-3" }, /* @__PURE__ */ React.createElement("h3", { className: "font-bold text-white text-sm" }, "Edit Profile: ", editingMember.name), /* @__PURE__ */ React.createElement("button", { onClick: () => setEditingMember(null), className: "p-1 rounded-lg hover:bg-slate-800 cursor-pointer" }, /* @__PURE__ */ React.createElement(IconX, { className: "w-4 h-4 text-slate-400" }))), /* @__PURE__ */ React.createElement("form", { onSubmit: (e) => {
+    e.preventDefault();
+    onUpdateProfile(editingMember);
+    setEditingMember(null);
+  }, className: "space-y-3 text-left" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] text-slate-400 block mb-1" }, "Full Name"), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "text",
+      value: editingMember.name,
+      onChange: (e) => setEditingMember({ ...editingMember, name: e.target.value }),
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-emerald-500"
+    }
+  )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] text-slate-400 block mb-1" }, "Email Address"), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "email",
+      value: editingMember.email,
+      onChange: (e) => setEditingMember({ ...editingMember, email: e.target.value }),
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-emerald-500"
+    }
+  )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] text-slate-400 block mb-1" }, "Mobile Contact"), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "text",
+      value: editingMember.mobile,
+      onChange: (e) => setEditingMember({ ...editingMember, mobile: e.target.value }),
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-emerald-500"
+    }
+  )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] text-slate-400 block mb-1" }, "Nominee Name"), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "text",
+      value: editingMember.nomineeName || "",
+      onChange: (e) => setEditingMember({ ...editingMember, nomineeName: e.target.value }),
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-emerald-500"
+    }
+  )), /* @__PURE__ */ React.createElement("button", { type: "submit", className: "w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer" }, "Save Profile to Live Cloud")))));
+}
+const rootElement = document.getElementById("root");
+const root = ReactDOM.createRoot(rootElement);
+root.render(/* @__PURE__ */ React.createElement(App, null));
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+{
+  "name": "Aristo Future Plot Initiative",
+  "description": "Collaborative land syndicate management platform tracking 11-member deposits, gross & net funds, automated contribution reminders, transaction ledger, and member management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
