@@ -61,10 +61,27 @@ export const GoogleFormDepositModal: React.FC<GoogleFormDepositModalProps> = ({
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
-    if (preselectedMemberId) {
-      setSelectedMemberId(preselectedMemberId);
+    if (isOpen) {
+      const targetId = preselectedMemberId || selectedMemberId || members[0]?.id || '';
+      if (targetId) {
+        setSelectedMemberId(targetId);
+        const mem = members.find(m => m.id === targetId);
+        if (mem) {
+          setDepositorName(mem.name);
+          setDepositorPhone(mem.mobile);
+        }
+      }
     }
-  }, [preselectedMemberId]);
+  }, [isOpen, preselectedMemberId]);
+
+  const handleSelectMember = (id: string) => {
+    setSelectedMemberId(id);
+    const mem = members.find(m => m.id === id);
+    if (mem) {
+      setDepositorName(mem.name);
+      setDepositorPhone(mem.mobile);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -171,25 +188,25 @@ Your deposit will be automatically credited to your account upon Admin approval.
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-sm overflow-y-auto animate-fadeIn">
-      <div className="relative w-full max-w-2xl bg-[#0f172a] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-100 my-auto max-h-[94vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-sm overflow-y-auto animate-fadeIn">
+      <div className="relative w-full max-w-2xl bg-[#0f172a] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-100 my-auto max-h-[96vh] sm:max-h-[94vh] flex flex-col">
         {/* Google Form Aesthetic Header Banner */}
-        <div className="h-28 bg-gradient-to-r from-emerald-700 via-teal-600 to-indigo-800 relative flex items-center justify-between px-6 overflow-hidden shrink-0">
+        <div className="h-20 sm:h-28 bg-gradient-to-r from-emerald-700 via-teal-600 to-indigo-800 relative flex items-center justify-between px-4 sm:px-6 overflow-hidden shrink-0">
           <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
-          <div className="relative z-10">
-            <span className="text-[11px] font-mono tracking-widest uppercase font-bold text-emerald-200 bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-400/40 inline-flex items-center gap-1">
+          <div className="relative z-10 pr-2">
+            <span className="text-[10px] sm:text-[11px] font-mono tracking-widest uppercase font-bold text-emerald-200 bg-emerald-950/80 px-2 sm:px-2.5 py-0.5 rounded-full border border-emerald-400/40 inline-flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-emerald-300" />
               Public Deposit Portal · Google Form
             </span>
-            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-1">
+            <h2 className="text-base sm:text-2xl font-black text-white tracking-tight mt-0.5 sm:mt-1 truncate">
               Initiative Deposit Submission Form
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="relative z-10 text-white/80 hover:text-white p-2 rounded-full hover:bg-black/20 transition-colors cursor-pointer"
+            className="relative z-10 text-white/80 hover:text-white p-1.5 sm:p-2 rounded-full hover:bg-black/20 transition-colors cursor-pointer shrink-0"
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
 
@@ -336,17 +353,25 @@ Your deposit will be automatically credited to your account upon Admin approval.
               )}
 
               {/* QUESTION 1: Select Member */}
-              <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-2.5">
-                <label className="block text-xs font-bold text-slate-100">
-                  1. Select Syndicate Member <span className="text-rose-400">*</span>
-                </label>
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 sm:p-5 space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <label className="block text-xs font-bold text-slate-100">
+                    1. Select Syndicate Member <span className="text-rose-400">*</span>
+                  </label>
+                  {preselectedMemberId && (
+                    <span className="text-[10px] font-semibold bg-emerald-950 text-emerald-300 border border-emerald-700/80 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0 animate-fadeIn">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      Auto-Selected
+                    </span>
+                  )}
+                </div>
                 <p className="text-[11px] text-slate-400">
                   Select which of the 11 initiative participants this deposit is for.
                 </p>
                 <select
                   value={selectedMemberId}
-                  onChange={(e) => setSelectedMemberId(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer font-medium"
+                  onChange={(e) => handleSelectMember(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-base sm:text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer font-medium"
                   required
                 >
                   {members.map((m) => (
@@ -398,7 +423,7 @@ Your deposit will be automatically credited to your account upon Admin approval.
               </div>
 
               {/* QUESTION 3: Contribution Cycle / Month */}
-              <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-2.5">
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 sm:p-5 space-y-2.5">
                 <label className="block text-xs font-bold text-slate-100">
                   3. Contribution Cycle / Month <span className="text-rose-400">*</span>
                 </label>
@@ -408,7 +433,7 @@ Your deposit will be automatically credited to your account upon Admin approval.
                 <select
                   value={monthPeriod}
                   onChange={(e) => setMonthPeriod(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-base sm:text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
                   required
                 >
                   {INITIATIVE_CYCLES.map((cycle) => (
@@ -420,7 +445,7 @@ Your deposit will be automatically credited to your account upon Admin approval.
               </div>
 
               {/* QUESTION 4: Payment Channel */}
-              <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-2.5">
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 sm:p-5 space-y-2.5">
                 <label className="block text-xs font-bold text-slate-100">
                   4. Payment Channel & Method <span className="text-rose-400">*</span>
                 </label>
@@ -453,7 +478,7 @@ Your deposit will be automatically credited to your account upon Admin approval.
               </div>
 
               {/* QUESTION 5: Transaction ID / Bank Reference */}
-              <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-2.5">
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 sm:p-5 space-y-2.5">
                 <label className="block text-xs font-bold text-slate-100">
                   5. Transaction ID / Bank Deposit Slip Number <span className="text-rose-400">*</span>
                 </label>
@@ -465,13 +490,13 @@ Your deposit will be automatically credited to your account upon Admin approval.
                   value={referenceNumber}
                   onChange={(e) => setReferenceNumber(e.target.value)}
                   placeholder="e.g. CITY-DEP-994821 or 9K204L"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-base sm:text-xs text-white font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   required
                 />
               </div>
 
               {/* QUESTION 6: Deposit Date */}
-              <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-2.5">
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 sm:p-5 space-y-2.5">
                 <label className="block text-xs font-bold text-slate-100">
                   6. Deposit Date <span className="text-rose-400">*</span>
                 </label>
@@ -479,13 +504,13 @@ Your deposit will be automatically credited to your account upon Admin approval.
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-base sm:text-xs text-white font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   required
                 />
               </div>
 
               {/* QUESTION 7: Depositor Contact */}
-              <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-2.5">
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 sm:p-5 space-y-2.5">
                 <label className="block text-xs font-bold text-slate-100">
                   7. Depositor Name & Mobile Number (If deposited by someone else)
                 </label>
@@ -498,14 +523,14 @@ Your deposit will be automatically credited to your account upon Admin approval.
                     value={depositorName}
                     onChange={(e) => setDepositorName(e.target.value)}
                     placeholder="Depositor Name (optional)"
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-base sm:text-xs text-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   />
                   <input
                     type="tel"
                     value={depositorPhone}
                     onChange={(e) => setDepositorPhone(e.target.value)}
                     placeholder="Depositor Phone (optional)"
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-base sm:text-xs text-white font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   />
                 </div>
               </div>

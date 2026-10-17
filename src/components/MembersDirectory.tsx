@@ -14,7 +14,8 @@ import {
   Send,
   AlertTriangle,
   Eye,
-  ShieldCheck
+  ShieldCheck,
+  FileSpreadsheet
 } from 'lucide-react';
 
 interface MembersDirectoryProps {
@@ -28,6 +29,7 @@ interface MembersDirectoryProps {
   onEditMember: (member: Member) => void;
   onViewMemberStatement: (member: Member) => void;
   onSendMemberReminder: (member: Member) => void;
+  onOpenDepositForm?: (memberId?: string) => void;
 }
 
 export const MembersDirectory: React.FC<MembersDirectoryProps> = ({
@@ -40,7 +42,8 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({
   onSelectMember,
   onEditMember,
   onViewMemberStatement,
-  onSendMemberReminder
+  onSendMemberReminder,
+  onOpenDepositForm
 }) => {
   const [search, setSearch] = useState('');
 
@@ -69,8 +72,8 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="relative w-64">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="relative w-full sm:w-64">
             <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
@@ -80,6 +83,17 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({
               className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             />
           </div>
+
+          {onOpenDepositForm && (
+            <button
+              onClick={() => onOpenDepositForm()}
+              className="px-3 py-2 bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/40 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Open Google Form for Submitting Deposits (Auto-selects your account)"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Deposit Form</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -287,6 +301,17 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({
                   <FileText className="w-3.5 h-3.5 text-slate-400" />
                   <span>Statement</span>
                 </button>
+
+                {onOpenDepositForm && (
+                  <button
+                    onClick={() => onOpenDepositForm(member.id)}
+                    className="bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white py-1.5 px-2.5 rounded-xl text-xs font-medium border border-indigo-500/30 transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                    title={`Deposit for ${member.name}`}
+                  >
+                    <FileSpreadsheet className="w-3.5 h-3.5" />
+                    <span>Deposit</span>
+                  </button>
+                )}
 
                 {isAdmin && !isPaid && (
                   <button

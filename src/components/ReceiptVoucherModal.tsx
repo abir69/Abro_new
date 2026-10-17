@@ -23,8 +23,8 @@ export const ReceiptVoucherModal: React.FC<ReceiptVoucherModalProps> = ({
   if (!isOpen || !transaction) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-100 flex flex-col">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-sm animate-fadeIn">
+      <div className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-y-auto max-h-[95vh] text-slate-100 flex flex-col">
         {/* Toolbar */}
         <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50 print:hidden">
           <span className="text-xs font-bold text-slate-300">Syndicate Deposit Voucher</span>

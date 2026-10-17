@@ -59,7 +59,12 @@ import {
   CheckCircle2, 
   RotateCcw, 
   Download, 
-  Building2
+  Building2,
+  Layers,
+  ReceiptText,
+  UsersRound,
+  BellRing,
+  FileSpreadsheet
 } from 'lucide-react';
 
 export default function App() {
@@ -288,6 +293,15 @@ export default function App() {
     updateTransactions(updated);
     deleteTransactionFromCloud(transactionId).catch(err => console.error('[Firestore] Tx delete error:', err));
     showToast(`Transaction ${target?.referenceNumber || transactionId} deleted from cloud.`);
+  };
+
+  // Open Deposit Form with automatic selection of logged-in member
+  const handleOpenDepositForm = (memberIdOverride?: string) => {
+    const targetId = memberIdOverride || (session.isLoggedIn && session.memberId ? session.memberId : preselectedFormMemberId || members[0]?.id);
+    if (targetId) {
+      setPreselectedFormMemberId(targetId);
+    }
+    setIsGoogleFormModalOpen(true);
   };
 
   // Google Form Deposit Submission Handler (Synced to Firestore for real-time Admin review across devices)
@@ -538,7 +552,7 @@ export default function App() {
           project={project}
           onLogin={updateSession}
           onRequestAccess={handleRequestAccess}
-          onOpenDepositForm={() => setIsGoogleFormModalOpen(true)}
+          onOpenDepositForm={() => handleOpenDepositForm()}
           isCloudSynced={isCloudSynced}
         />
 
@@ -586,7 +600,7 @@ export default function App() {
             }
           }
         }}
-        onOpenDepositForm={() => setIsGoogleFormModalOpen(true)}
+        onOpenDepositForm={() => handleOpenDepositForm()}
         onOpenApprovalsQueue={() => setIsApprovalsModalOpen(true)}
         pendingApprovalsCount={pendingTransactions.length}
         grossTotal={grossTotal}
@@ -596,7 +610,7 @@ export default function App() {
       />
 
       {/* Main Workspace Body */}
-      <main className="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 flex-1 w-full space-y-4 sm:space-y-6 pb-24 sm:pb-8">
         {activeTab === 'dashboard' && (
           <DashboardStats
             project={project}
@@ -612,7 +626,7 @@ export default function App() {
             isAdmin={isAdmin}
             onSelectMember={handleSelectMember}
             onOpenAdjustCombinedModal={() => setIsAdjustCombinedModalOpen(true)}
-            onOpenDepositForm={() => setIsGoogleFormModalOpen(true)}
+            onOpenDepositForm={() => handleOpenDepositForm()}
             onOpenApprovalsQueue={() => setIsApprovalsModalOpen(true)}
             pendingApprovalsCount={pendingTransactions.length}
           />
@@ -640,7 +654,7 @@ export default function App() {
             onExportCSV={handleExportCSV}
             onSelectMember={handleSelectMember}
             onSendWhatsAppCongrats={isAdmin ? handleOpenWhatsAppCongrats : undefined}
-            onOpenDepositForm={() => setIsGoogleFormModalOpen(true)}
+            onOpenDepositForm={() => handleOpenDepositForm()}
             onApproveTransaction={handleApproveDeposit}
           />
         )}
@@ -665,6 +679,7 @@ export default function App() {
             onSendMemberReminder={(_member) => {
               setActiveTab('reminders');
             }}
+            onOpenDepositForm={handleOpenDepositForm}
           />
         )}
 
@@ -680,8 +695,68 @@ export default function App() {
         )}
       </main>
 
+      {/* Mobile Bottom Navigation Bar (Thumb friendly on all smartphones) */}
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-md border-t border-slate-800/90 px-2 py-1.5 flex items-center justify-around text-[10px] shadow-2xl">
+        <button
+          onClick={() => setActiveTab('dashboard')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg transition-colors ${
+            activeTab === 'dashboard' ? 'text-emerald-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Layers className="w-4 h-4" />
+          <span>Dashboard</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('transactions')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg transition-colors ${
+            activeTab === 'transactions' ? 'text-emerald-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <ReceiptText className="w-4 h-4" />
+          <span>Ledger</span>
+        </button>
+
+        {/* Floating Quick Action: Auto-selects logged-in member */}
+        <button
+          onClick={() => handleOpenDepositForm()}
+          className="flex flex-col items-center -mt-5 bg-gradient-to-tr from-emerald-600 via-teal-500 to-indigo-600 text-white rounded-full p-2.5 shadow-xl shadow-emerald-950 border-2 border-slate-950 active:scale-95 transition-transform"
+          title="Submit Deposit Voucher (Auto-selects your account)"
+        >
+          <FileSpreadsheet className="w-5 h-5" />
+          <span className="text-[9px] font-black uppercase tracking-wider mt-0.5">Deposit</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('members')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg transition-colors ${
+            activeTab === 'members' ? 'text-emerald-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <UsersRound className="w-4 h-4" />
+          <span>11 Members</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('reminders')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg transition-colors relative ${
+            activeTab === 'reminders' ? 'text-emerald-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <div className="relative">
+            <BellRing className="w-4 h-4" />
+            {pendingRemindersCount > 0 && (
+              <span className="absolute -top-1 -right-2 w-3.5 h-3.5 bg-amber-500 text-slate-950 rounded-full font-bold text-[8px] flex items-center justify-center font-mono">
+                {pendingRemindersCount}
+              </span>
+            )}
+          </div>
+          <span>Reminders</span>
+        </button>
+      </nav>
+
       {/* Footer */}
-      <footer className="mt-auto border-t border-slate-900 bg-slate-950 py-6 px-4 text-xs text-slate-500">
+      <footer className="mt-auto border-t border-slate-900 bg-slate-950 py-6 px-4 text-xs text-slate-500 pb-20 sm:pb-6">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Building2 className="w-4 h-4 text-emerald-500" />
@@ -692,7 +767,7 @@ export default function App() {
 
           <div className="flex items-center gap-4">
             <button
-              onClick={() => setIsGoogleFormModalOpen(true)}
+              onClick={() => handleOpenDepositForm()}
               className="text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-1 cursor-pointer"
             >
               <span>Deposit Submission Form</span>

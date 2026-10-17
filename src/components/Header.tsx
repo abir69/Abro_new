@@ -54,40 +54,40 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="sticky top-0 z-30 bg-slate-950/95 backdrop-blur-md border-b border-emerald-900/40 text-slate-100">
       {/* Top Banner / Financial Ticker */}
-      <div className="border-b border-slate-800/80 bg-slate-900/60 px-4 py-1.5 text-xs text-slate-300">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
+      <div className="border-b border-slate-800/80 bg-slate-900/60 px-3 sm:px-4 py-1.5 text-xs text-slate-300 overflow-x-auto scrollbar-none">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 min-w-max sm:min-w-0">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="flex items-center gap-1.5 text-emerald-400 font-medium text-[11px] sm:text-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-sm shadow-emerald-400" />
-              {isCloudSynced ? 'Live Cloud Synced · Firebase Firestore' : 'Connecting to Live Database...'}
+              {isCloudSynced ? 'Live Cloud Synced · Firebase' : 'Connecting Cloud...'}
             </span>
             <span className="text-slate-600 hidden sm:inline">|</span>
-            <span className="text-slate-400 hidden sm:inline">
+            <span className="text-slate-400 hidden md:inline">
               11 Participating Members
             </span>
-            <span className="text-slate-600 hidden sm:inline">|</span>
-            <span className="text-slate-400 hidden sm:inline">
+            <span className="text-slate-600 hidden md:inline">|</span>
+            <span className="text-slate-400 hidden lg:inline">
               Target: 2,000 BDT / Member / Month
             </span>
           </div>
 
-          <div className="flex items-center gap-4 text-xs font-mono">
-            <div className="flex items-center gap-1.5">
-              <span className="text-slate-400">Gross Deposits:</span>
+          <div className="flex items-center gap-3 sm:gap-4 text-[11px] sm:text-xs font-mono">
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              <span className="text-slate-400">Gross:</span>
               <span className="font-semibold text-slate-100">{formatCurrency(grossTotal, project.symbol)}</span>
             </div>
             {project.totalCombinedBankCharge ? (
               <>
                 <span className="text-slate-700">·</span>
                 <div className="flex items-center gap-1 text-amber-400">
-                  <span>Bank Charge:</span>
+                  <span>Charge:</span>
                   <span className="font-bold">-{formatCurrency(project.totalCombinedBankCharge, project.symbol)}</span>
                 </div>
               </>
             ) : null}
             <span className="text-slate-700">/</span>
-            <div className="flex items-center gap-1.5">
-              <span className="text-emerald-400 font-medium">Total Net Balance:</span>
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              <span className="text-emerald-400 font-medium">Net Treasury:</span>
               <span className="font-semibold text-emerald-300">{formatCurrency(netTotal, project.symbol)}</span>
             </div>
           </div>
@@ -95,29 +95,29 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Main Navigation Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2.5 sm:gap-4">
         {/* Brand Identity */}
-        <div className="flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-800 flex items-center justify-center shadow-lg shadow-emerald-950/50 border border-emerald-400/30">
-            <Building2 className="w-5 h-5 text-white" />
+        <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-800 flex items-center justify-center shadow-lg shadow-emerald-950/50 border border-emerald-400/30 shrink-0">
+            <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold tracking-tight text-white font-sans">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <h1 className="text-sm sm:text-lg font-bold tracking-tight text-white font-sans truncate">
                 {project.initiativeName}
               </h1>
-              <span className="px-2 py-0.5 text-[10px] uppercase tracking-wider font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-800/60 rounded">
-                11-Member Joint Trust
+              <span className="hidden sm:inline-block px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] uppercase tracking-wider font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-800/60 rounded shrink-0">
+                11 Members
               </span>
             </div>
-            <p className="text-xs text-slate-400">
-              Collaborative Deposit Tracking & Member Ledger Portal
+            <p className="text-[10px] sm:text-xs text-slate-400 truncate">
+              Deposit Tracking & Member Ledger Portal
             </p>
           </div>
         </div>
 
-        {/* Tab Links */}
-        <nav className="flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800 text-xs font-medium">
+        {/* Tab Links (Hidden on small mobile screens where bottom bar is used) */}
+        <nav className="hidden md:flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800 text-xs font-medium">
           <button
             onClick={() => setActiveTab('dashboard')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
@@ -173,16 +173,17 @@ export const Header: React.FC<HeaderProps> = ({
         </nav>
 
         {/* Action Buttons & User Session */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           {/* Public Deposit Submission Google Form Button */}
           <button
             onClick={onOpenDepositForm}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/40 text-xs font-semibold transition-all cursor-pointer shadow-sm"
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/40 text-xs font-semibold transition-all cursor-pointer shadow-sm"
             title="Open Google Form for Submitting Deposits & Get Shareable Link"
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
-            <span>Deposit Form</span>
-            <span className="text-[10px] bg-indigo-950 text-indigo-300 px-1.5 py-0.2 rounded border border-indigo-700 font-mono hidden sm:inline">
+            <span className="hidden sm:inline">Deposit Form</span>
+            <span className="sm:hidden font-medium">Deposit</span>
+            <span className="text-[10px] bg-indigo-950 text-indigo-300 px-1.5 py-0.2 rounded border border-indigo-700 font-mono hidden md:inline">
               Share
             </span>
           </button>
@@ -191,11 +192,11 @@ export const Header: React.FC<HeaderProps> = ({
           {session.role === 'admin' && pendingApprovalsCount > 0 && onOpenApprovalsQueue && (
             <button
               onClick={onOpenApprovalsQueue}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 border border-amber-500/40 text-xs font-bold transition-all cursor-pointer animate-pulse shadow-md"
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 border border-amber-500/40 text-xs font-bold transition-all cursor-pointer animate-pulse shadow-md"
               title={`${pendingApprovalsCount} Deposit Submissions Awaiting Verification`}
             >
               <Clock className="w-3.5 h-3.5" />
-              <span>Approvals</span>
+              <span className="hidden sm:inline">Approvals</span>
               <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 text-[10px] font-mono">
                 {pendingApprovalsCount}
               </span>
@@ -203,34 +204,30 @@ export const Header: React.FC<HeaderProps> = ({
           )}
 
           {session.isLoggedIn ? (
-            <div className="flex items-center gap-2.5 bg-slate-900 border border-slate-800 pl-2 pr-3 py-1.5 rounded-xl">
+            <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-900 border border-slate-800 pl-1.5 sm:pl-2 pr-2 sm:pr-3 py-1 sm:py-1.5 rounded-xl">
               {activeMember?.avatar ? (
                 <img
                   src={activeMember.avatar}
                   alt={session.memberName}
-                  className="w-7 h-7 rounded-full object-cover ring-1 ring-emerald-500/50"
+                  className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover ring-1 ring-emerald-500/50"
                 />
               ) : (
-                <div className="w-7 h-7 rounded-full bg-emerald-800 flex items-center justify-center text-xs font-bold text-white">
+                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-emerald-800 flex items-center justify-center text-xs font-bold text-white">
                   {session.memberName?.charAt(0) || 'U'}
                 </div>
               )}
               <div className="text-left text-xs">
-                <div className="flex items-center gap-1.5 leading-none">
-                  <span className="font-medium text-slate-100 max-w-[120px] truncate">
-                    {session.memberName}
+                <div className="flex items-center gap-1 leading-none">
+                  <span className="font-medium text-slate-100 max-w-[75px] sm:max-w-[120px] truncate">
+                    {session.memberName?.split(' ')[0] || session.memberName}
                   </span>
                   {session.role === 'admin' ? (
-                    <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950 px-1 py-0.2 rounded border border-emerald-800">
+                    <span className="text-[9px] font-bold text-emerald-400 bg-emerald-950 px-1 py-0.2 rounded border border-emerald-800">
                       ADMIN
                     </span>
-                  ) : (
-                    <span className="text-[10px] font-medium text-emerald-400 bg-emerald-950/80 px-1 py-0.2 rounded border border-emerald-800/80">
-                      MEMBER
-                    </span>
-                  )}
+                  ) : null}
                 </div>
-                <span className="text-[10px] text-slate-400 truncate block max-w-[120px]">
+                <span className="text-[10px] text-slate-400 truncate hidden sm:block max-w-[120px]">
                   {session.email}
                 </span>
               </div>

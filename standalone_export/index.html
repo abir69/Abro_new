@@ -119,6 +119,8 @@
   <!-- Pre-compiled Vanilla JavaScript Application Script (Instant Load, No Babel) -->
   <script>
 const { useState, useEffect, useMemo, useRef } = React;
+const IconLayers = ({ className = "w-5 h-5" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 2 }, /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" }));
+const IconReceipt = ({ className = "w-5 h-5" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 2 }, /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M9 14h6m-6-4h6m-6-4h6M4 21V5a2 2 0 012-2h12a2 2 0 012 2v16l-3-2-3 2-3-2-3 2-3-2-3 2z" }));
 const IconBuilding = ({ className = "w-5 h-5" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 2 }, /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" }));
 const IconShieldCheck = ({ className = "w-5 h-5" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 2 }, /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" }));
 const IconLandmark = ({ className = "w-5 h-5" }) => /* @__PURE__ */ React.createElement("svg", { className, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 2 }, /* @__PURE__ */ React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" }));
@@ -341,6 +343,11 @@ function App() {
   const grossTotal = useMemo(() => transactions.reduce((sum, t) => sum + (Number(t.amount) || 0), 0), [transactions]);
   const netTotal = useMemo(() => Math.max(0, grossTotal - (project.totalCombinedBankCharge || 0)), [grossTotal, project.totalCombinedBankCharge]);
   const pendingTxs = useMemo(() => transactions.filter((t) => t.status === "Pending Review"), [transactions]);
+  const handleOpenDepositForm = (memberIdOverride) => {
+    const targetId = memberIdOverride || (session.isLoggedIn && session.memberId ? session.memberId : preselectedFormMemberId || members[0]?.id);
+    if (targetId) setPreselectedFormMemberId(targetId);
+    setIsGoogleFormModalOpen(true);
+  };
   const handleApproveDeposit = (tx) => {
     const approved = { ...tx, status: "Verified", verifiedAt: (/* @__PURE__ */ new Date()).toISOString(), verifiedBy: session.memberName || "Md. Minhazul Islam Abir" };
     setTransactions((prev) => prev.map((t) => t.id === tx.id ? approved : t));
@@ -366,7 +373,7 @@ function App() {
     return /* @__PURE__ */ React.createElement("div", { className: "min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between font-sans relative" }, toastMessage && /* @__PURE__ */ React.createElement("div", { className: "fixed bottom-5 right-5 z-50 bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-lg animate-bounce" }, toastMessage), /* @__PURE__ */ React.createElement("div", { className: "border-b border-emerald-900/50 bg-slate-900/80 px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-2" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement(IconLandmark, { className: "w-4 h-4 text-emerald-400" }), /* @__PURE__ */ React.createElement("span", null, "Bank: ", /* @__PURE__ */ React.createElement("strong", { className: "text-white" }, project.bankDetails.bankName), " \xB7 Acc: ", /* @__PURE__ */ React.createElement("strong", { className: "text-emerald-400 font-mono" }, project.bankDetails.accountNumber))), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2 text-[11px] text-emerald-400" }, /* @__PURE__ */ React.createElement("span", { className: "w-2 h-2 rounded-full bg-emerald-400 animate-pulse" }), /* @__PURE__ */ React.createElement("span", null, isCloudSynced ? "Live Cloud Synced (Firestore)" : "Connecting to Cloud..."))), /* @__PURE__ */ React.createElement("div", { className: "flex-1 flex items-center justify-center p-4" }, /* @__PURE__ */ React.createElement("div", { className: "w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-2xl shadow-2xl p-6 text-center space-y-4" }, /* @__PURE__ */ React.createElement("div", { className: "w-12 h-12 bg-emerald-600 rounded-2xl mx-auto flex items-center justify-center text-white shadow-lg shadow-emerald-950" }, /* @__PURE__ */ React.createElement(IconBuilding, { className: "w-6 h-6" })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", { className: "text-xl font-bold text-white" }, project.initiativeName), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-slate-400 mt-1" }, "11-Member Joint Trust Treasury \xB7 Sector 27, Purbachal")), /* @__PURE__ */ React.createElement("div", { className: "flex justify-center gap-2 pt-2" }, /* @__PURE__ */ React.createElement(
       "button",
       {
-        onClick: () => setIsGoogleFormModalOpen(true),
+        onClick: () => handleOpenDepositForm(),
         className: "px-3 py-1.5 bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white rounded-xl text-xs font-semibold border border-indigo-500/40 transition-colors flex items-center gap-1.5 cursor-pointer"
       },
       /* @__PURE__ */ React.createElement(IconFileSpreadsheet, { className: "w-4 h-4 text-indigo-400" }),
@@ -458,7 +465,7 @@ function App() {
       netTotal,
       pendingTxs,
       isAdmin,
-      onOpenDepositForm: () => setIsGoogleFormModalOpen(true),
+      onOpenDepositForm: (mId) => handleOpenDepositForm(mId),
       onOpenApprovals: () => setIsApprovalsModalOpen(true),
       onUpdateBankCharge: (newCharge) => {
         const updated = { ...project, totalCombinedBankCharge: newCharge };
@@ -476,7 +483,7 @@ function App() {
       isAdmin,
       onApprove: handleApproveDeposit,
       onViewReceipt: (tx) => setSelectedReceiptTx(tx),
-      onOpenDepositForm: () => setIsGoogleFormModalOpen(true),
+      onOpenDepositForm: (mId) => handleOpenDepositForm(mId),
       onDelete: (txId) => {
         if (confirm("Delete this transaction?")) {
           setTransactions((prev) => prev.filter((t) => t.id !== txId));
@@ -493,6 +500,7 @@ function App() {
       project,
       currentMemberId: session.memberId,
       isAdmin,
+      onOpenDepositForm: (mId) => handleOpenDepositForm(mId),
       onUpdateProfile: (updatedMem) => {
         setMembers((prev) => prev.map((m) => m.id === updatedMem.id ? updatedMem : m));
         syncMemberToCloud(updatedMem);
@@ -622,14 +630,14 @@ function AuthCard({ members, leadAdminName, onLogin, onRequestAccess }) {
       value: adminPin,
       onChange: (e) => setAdminPin(e.target.value),
       placeholder: "Enter Security PIN (e.g. 2026)",
-      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-base sm:text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
     }
   )), /* @__PURE__ */ React.createElement("button", { type: "submit", className: "w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer" }, "Enter Admin Console")), tab === "member" && /* @__PURE__ */ React.createElement("form", { onSubmit: handleMemberSubmit, className: "space-y-3 text-left" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] text-slate-400 block mb-1" }, "Select Member Account"), /* @__PURE__ */ React.createElement(
     "select",
     {
       value: selectedMemberId,
       onChange: (e) => setSelectedMemberId(e.target.value),
-      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-base sm:text-xs text-white focus:outline-none focus:border-emerald-500"
     },
     members.map((m) => /* @__PURE__ */ React.createElement("option", { key: m.id, value: m.id }, m.name, " (", m.mobile, ")"))
   )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] text-slate-400 block mb-1" }, "4-Digit Member PIN"), /* @__PURE__ */ React.createElement(
@@ -639,7 +647,7 @@ function AuthCard({ members, leadAdminName, onLogin, onRequestAccess }) {
       value: memberPin,
       onChange: (e) => setMemberPin(e.target.value),
       placeholder: "PIN (Default: 1234)",
-      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-base sm:text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
     }
   )), /* @__PURE__ */ React.createElement("button", { type: "submit", className: "w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer" }, "Sign In to Member Portal")), tab === "register" && /* @__PURE__ */ React.createElement("form", { onSubmit: handleRegisterSubmit, className: "space-y-3 text-left" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] text-slate-400 block mb-1" }, "Your Full Name"), /* @__PURE__ */ React.createElement(
     "input",
@@ -648,7 +656,7 @@ function AuthCard({ members, leadAdminName, onLogin, onRequestAccess }) {
       value: regName,
       onChange: (e) => setRegName(e.target.value),
       placeholder: "e.g. Shakil Chowdhury",
-      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-base sm:text-xs text-white focus:outline-none focus:border-emerald-500"
     }
   )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] text-slate-400 block mb-1" }, "Mobile Contact"), /* @__PURE__ */ React.createElement(
     "input",
@@ -657,12 +665,15 @@ function AuthCard({ members, leadAdminName, onLogin, onRequestAccess }) {
       value: regPhone,
       onChange: (e) => setRegPhone(e.target.value),
       placeholder: "+880 1711-XXXXXX",
-      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-base sm:text-xs text-white focus:outline-none focus:border-emerald-500"
     }
   )), /* @__PURE__ */ React.createElement("button", { type: "submit", className: "w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer" }, "Submit Request for Approval")));
 }
 function GoogleFormModal({ members, project, preselectedId, onClose, onSubmit, shareUrl }) {
   const [selectedId, setSelectedId] = useState(preselectedId || members[0]?.id || "");
+  useEffect(() => {
+    if (preselectedId) setSelectedId(preselectedId);
+  }, [preselectedId]);
   const [amount, setAmount] = useState("2000");
   const [month, setMonth] = useState("October 2026");
   const [method, setMethod] = useState("Bank Transfer");
@@ -710,7 +721,7 @@ Name: ${project.bankDetails.accountName}`;
     onSubmit(newTx);
     setSubmitted(true);
   };
-  return /* @__PURE__ */ React.createElement("div", { className: "fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-fadeIn" }, /* @__PURE__ */ React.createElement("div", { className: "w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]" }, /* @__PURE__ */ React.createElement("div", { className: "bg-gradient-to-r from-emerald-700 via-teal-700 to-indigo-800 p-5 text-white flex justify-between items-center" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "text-[10px] uppercase font-bold tracking-wider bg-black/30 px-2 py-0.5 rounded-full border border-white/20" }, "Google Form \xB7 Public Deposit Portal"), /* @__PURE__ */ React.createElement("h2", { className: "text-lg font-bold mt-1" }, "Initiative Deposit Submission Form")), /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "p-1 rounded-lg hover:bg-white/20 cursor-pointer" }, /* @__PURE__ */ React.createElement(IconX, { className: "w-5 h-5 text-white" }))), /* @__PURE__ */ React.createElement("div", { className: "bg-slate-950 px-4 py-2 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-1.5 text-slate-300" }, /* @__PURE__ */ React.createElement(IconShare, { className: "w-4 h-4 text-emerald-400" }), /* @__PURE__ */ React.createElement("span", { className: "font-semibold text-white" }, "Shareable Link:"), /* @__PURE__ */ React.createElement("span", { className: "font-mono text-[11px] text-slate-400 truncate max-w-[150px]" }, shareUrl)), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ React.createElement("div", { className: "fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-sm animate-fadeIn" }, /* @__PURE__ */ React.createElement("div", { className: "w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]" }, /* @__PURE__ */ React.createElement("div", { className: "bg-gradient-to-r from-emerald-700 via-teal-700 to-indigo-800 p-5 text-white flex justify-between items-center" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "text-[10px] uppercase font-bold tracking-wider bg-black/30 px-2 py-0.5 rounded-full border border-white/20" }, "Google Form \xB7 Public Deposit Portal"), /* @__PURE__ */ React.createElement("h2", { className: "text-lg font-bold mt-1" }, "Initiative Deposit Submission Form")), /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "p-1 rounded-lg hover:bg-white/20 cursor-pointer" }, /* @__PURE__ */ React.createElement(IconX, { className: "w-5 h-5 text-white" }))), /* @__PURE__ */ React.createElement("div", { className: "bg-slate-950 px-4 py-2 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-1.5 text-slate-300" }, /* @__PURE__ */ React.createElement(IconShare, { className: "w-4 h-4 text-emerald-400" }), /* @__PURE__ */ React.createElement("span", { className: "font-semibold text-white" }, "Shareable Link:"), /* @__PURE__ */ React.createElement("span", { className: "font-mono text-[11px] text-slate-400 truncate max-w-[150px]" }, shareUrl)), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement(
     "button",
     {
       onClick: handleCopy,
@@ -733,12 +744,12 @@ Name: ${project.bankDetails.accountName}`;
       className: "mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-xl cursor-pointer"
     },
     "Done"
-  )) : /* @__PURE__ */ React.createElement("form", { onSubmit: handleFormSubmit, className: "space-y-4 text-left text-xs" }, /* @__PURE__ */ React.createElement("div", { className: "p-3 rounded-xl bg-slate-950 border border-slate-800" }, /* @__PURE__ */ React.createElement("span", { className: "text-[10px] text-slate-400 uppercase font-semibold block" }, "Official Deposit Account"), /* @__PURE__ */ React.createElement("span", { className: "font-bold text-white text-sm mt-0.5 block" }, project.bankDetails.bankName), /* @__PURE__ */ React.createElement("span", { className: "text-emerald-400 font-mono font-bold" }, "A/C: ", project.bankDetails.accountNumber)), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] font-semibold text-slate-300 block mb-1" }, "Selected Syndicate Member *"), /* @__PURE__ */ React.createElement(
+  )) : /* @__PURE__ */ React.createElement("form", { onSubmit: handleFormSubmit, className: "space-y-4 text-left text-xs" }, /* @__PURE__ */ React.createElement("div", { className: "p-3 rounded-xl bg-slate-950 border border-slate-800" }, /* @__PURE__ */ React.createElement("span", { className: "text-[10px] text-slate-400 uppercase font-semibold block" }, "Official Deposit Account"), /* @__PURE__ */ React.createElement("span", { className: "font-bold text-white text-sm mt-0.5 block" }, project.bankDetails.bankName), /* @__PURE__ */ React.createElement("span", { className: "text-emerald-400 font-mono font-bold" }, "A/C: ", project.bankDetails.accountNumber)), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between mb-1" }, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] font-semibold text-slate-300 block" }, "Selected Syndicate Member *"), preselectedId && /* @__PURE__ */ React.createElement("span", { className: "text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-700/80 px-2 py-0.2 rounded-full font-bold" }, "Auto-Selected")), /* @__PURE__ */ React.createElement(
     "select",
     {
       value: selectedId,
       onChange: (e) => setSelectedId(e.target.value),
-      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-base sm:text-xs text-white focus:outline-none focus:border-emerald-500"
     },
     members.map((m) => /* @__PURE__ */ React.createElement("option", { key: m.id, value: m.id }, m.name, " (", m.mobile, ")"))
   )), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-2 gap-3" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] font-semibold text-slate-300 block mb-1" }, "Deposit Amount (BDT) *"), /* @__PURE__ */ React.createElement(
@@ -747,7 +758,7 @@ Name: ${project.bankDetails.accountName}`;
       type: "number",
       value: amount,
       onChange: (e) => setAmount(e.target.value),
-      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono",
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-base sm:text-xs text-white focus:outline-none focus:border-emerald-500 font-mono",
       required: true
     }
   )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] font-semibold text-slate-300 block mb-1" }, "Cycle Month *"), /* @__PURE__ */ React.createElement(
@@ -755,7 +766,7 @@ Name: ${project.bankDetails.accountName}`;
     {
       value: month,
       onChange: (e) => setMonth(e.target.value),
-      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-base sm:text-xs text-white focus:outline-none focus:border-emerald-500"
     },
     INITIATIVE_CYCLES.map((c) => /* @__PURE__ */ React.createElement("option", { key: c, value: c }, c))
   ))), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-2 gap-3" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] font-semibold text-slate-300 block mb-1" }, "Payment Method"), /* @__PURE__ */ React.createElement(
@@ -763,7 +774,7 @@ Name: ${project.bankDetails.accountName}`;
     {
       value: method,
       onChange: (e) => setMethod(e.target.value),
-      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-base sm:text-xs text-white focus:outline-none focus:border-emerald-500"
     },
     /* @__PURE__ */ React.createElement("option", { value: "Bank Transfer" }, "Bank Transfer (NPSB/BEFTN)"),
     /* @__PURE__ */ React.createElement("option", { value: "bKash / MFS" }, "bKash / MFS"),
@@ -776,7 +787,7 @@ Name: ${project.bankDetails.accountName}`;
       value: refNo,
       onChange: (e) => setRefNo(e.target.value),
       placeholder: "e.g. CITY-DEP-998822",
-      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-base sm:text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
     }
   ))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "text-[11px] font-semibold text-slate-300 block mb-1" }, "Depositor Note"), /* @__PURE__ */ React.createElement(
     "textarea",
@@ -785,7 +796,7 @@ Name: ${project.bankDetails.accountName}`;
       onChange: (e) => setNotes(e.target.value),
       placeholder: "e.g. Transferred via City Touch app...",
       rows: 2,
-      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+      className: "w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-base sm:text-xs text-white focus:outline-none focus:border-emerald-500"
     }
   )), /* @__PURE__ */ React.createElement(
     "button",
