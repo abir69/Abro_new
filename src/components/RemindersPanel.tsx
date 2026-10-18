@@ -16,7 +16,8 @@ import {
   Calendar,
   Landmark,
   Smartphone,
-  ExternalLink
+  ExternalLink,
+  Edit3
 } from 'lucide-react';
 
 interface RemindersPanelProps {
@@ -26,6 +27,8 @@ interface RemindersPanelProps {
   remindersLog: ReminderLog[];
   onAddReminderLog: (log: ReminderLog) => void;
   currentMonth: string;
+  onOpenDirectivesEdit?: () => void;
+  isAdmin?: boolean;
 }
 
 export const RemindersPanel: React.FC<RemindersPanelProps> = ({
@@ -34,7 +37,9 @@ export const RemindersPanel: React.FC<RemindersPanelProps> = ({
   transactions,
   remindersLog,
   onAddReminderLog,
-  currentMonth
+  currentMonth,
+  onOpenDirectivesEdit,
+  isAdmin = false
 }) => {
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
   const [copiedMemberId, setCopiedMemberId] = useState<string | null>(null);
@@ -447,14 +452,27 @@ export const RemindersPanel: React.FC<RemindersPanelProps> = ({
 
         {/* Automated Scheduling Policy & Escrow Details */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-          <div>
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Landmark className="w-4 h-4 text-emerald-400" />
-              <span>Syndicate Escrow Deposit Directives</span>
-            </h3>
-            <p className="text-xs text-slate-400">
-              Official banking details included in all automated member reminder dispatches
-            </p>
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Landmark className="w-4 h-4 text-emerald-400" />
+                <span>Syndicate Escrow Deposit Directives</span>
+              </h3>
+              <p className="text-xs text-slate-400">
+                Official banking details included in all automated member reminder dispatches
+              </p>
+            </div>
+            {isAdmin && onOpenDirectivesEdit && (
+              <button
+                type="button"
+                onClick={onOpenDirectivesEdit}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/40 text-xs font-semibold transition-all cursor-pointer shadow-sm shrink-0"
+                title="Edit banking coordinates and escrow directives"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Edit Directives</span>
+              </button>
+            )}
           </div>
 
           <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 text-xs">

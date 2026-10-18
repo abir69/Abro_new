@@ -32,7 +32,7 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
       isMaintenanceMode: isEnabled,
       maintenanceMessage: message.trim(),
       maintenanceEstimatedTime: estimatedTime.trim(),
-      maintenanceStartedAt: isEnabled ? (project.maintenanceStartedAt || new Date().toISOString()) : undefined
+      maintenanceStartedAt: isEnabled ? (project.maintenanceStartedAt || new Date().toISOString()) : ''
     };
     onSaveMaintenance(updated);
     onClose();

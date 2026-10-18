@@ -1,23 +1,23 @@
 import React from 'react';
 import { Member, UserSession, PlotProject, ThemeMode } from '../types';
-import { formatCurrency } from '../services/storageService';
 import { 
   Building2, 
-  User, 
+  Landmark,
+  Shield,
+  Layers,
+  Gem,
   LogOut, 
   LogIn, 
-  Layers, 
   ReceiptText, 
   BellRing, 
   UsersRound, 
-  ShieldCheck,
   FileSpreadsheet,
   Clock,
-  Share2,
   Sun,
   Moon,
   Wrench,
-  AlertTriangle
+  AlertTriangle,
+  Settings
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -32,6 +32,8 @@ interface HeaderProps {
   onOpenDepositForm: () => void;
   onOpenApprovalsQueue?: () => void;
   onOpenMaintenanceModal?: () => void;
+  onOpenAdminPanel?: () => void;
+  onViewMyStatement?: () => void;
   themeMode: ThemeMode;
   onToggleThemeMode: () => void;
   pendingApprovalsCount?: number;
@@ -49,79 +51,61 @@ export const Header: React.FC<HeaderProps> = ({
   setActiveTab,
   onOpenAuthModal,
   onLogout,
-  onEditMyProfile,
   onOpenDepositForm,
   onOpenApprovalsQueue,
   onOpenMaintenanceModal,
+  onOpenAdminPanel,
+  onViewMyStatement,
   themeMode,
   onToggleThemeMode,
   pendingApprovalsCount = 0,
-  grossTotal,
-  netTotal,
   pendingRemindersCount,
-  isCloudSynced = true
 }) => {
+  // Brand Logo Icon
+  const renderBrandLogo = () => {
+    if (project.customLogoUrl) {
+      return (
+        <img
+          src={project.customLogoUrl}
+          alt={project.initiativeName}
+          className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl object-cover shadow-lg border border-emerald-400/30 shrink-0"
+        />
+      );
+    }
+    const iconType = project.customLogoIcon || 'building';
+    const IconComp = 
+      iconType === 'landmark' ? Landmark :
+      iconType === 'shield' ? Shield :
+      iconType === 'layers' ? Layers :
+      iconType === 'gem' ? Gem : Building2;
+
+    return (
+      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-800 flex items-center justify-center shadow-lg shadow-emerald-950/50 border border-emerald-400/30 shrink-0">
+        <IconComp className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+      </div>
+    );
+  };
+
   return (
     <header className="sticky top-0 z-30 bg-slate-950/95 backdrop-blur-md border-b border-emerald-900/40 text-slate-100">
-      {/* Top Banner / Financial Ticker */}
-      <div className="border-b border-slate-800/80 bg-slate-900/60 px-3 sm:px-4 py-1.5 text-xs text-slate-300 overflow-x-auto scrollbar-none">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 min-w-max sm:min-w-0">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <span className="flex items-center gap-1.5 text-emerald-400 font-medium text-[11px] sm:text-xs">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-sm shadow-emerald-400" />
-              {isCloudSynced ? 'Live Cloud Synced · Firebase' : 'Connecting Cloud...'}
-            </span>
-            <span className="text-slate-600 hidden sm:inline">|</span>
-            <span className="text-slate-400 hidden md:inline">
-              11 Participating Members
-            </span>
-            <span className="text-slate-600 hidden md:inline">|</span>
-            <span className="text-slate-400 hidden lg:inline">
-              Target: 2,000 BDT / Member / Month
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3 sm:gap-4 text-[11px] sm:text-xs font-mono">
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              <span className="text-slate-400">Gross:</span>
-              <span className="font-semibold text-slate-100">{formatCurrency(grossTotal, project.symbol)}</span>
-            </div>
-            {project.totalCombinedBankCharge ? (
-              <>
-                <span className="text-slate-700">·</span>
-                <div className="flex items-center gap-1 text-amber-400">
-                  <span>Charge:</span>
-                  <span className="font-bold">-{formatCurrency(project.totalCombinedBankCharge, project.symbol)}</span>
-                </div>
-              </>
-            ) : null}
-            <span className="text-slate-700">/</span>
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              <span className="text-emerald-400 font-medium">Net Treasury:</span>
-              <span className="font-semibold text-emerald-300">{formatCurrency(netTotal, project.symbol)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Top nav ticker with cloud sync & gross/net amounts has been removed as requested */}
 
       {/* Main Navigation Bar */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2.5 sm:gap-4">
         {/* Brand Identity */}
         <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-800 flex items-center justify-center shadow-lg shadow-emerald-950/50 border border-emerald-400/30 shrink-0">
-            <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-          </div>
+          {renderBrandLogo()}
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 sm:gap-2">
               <h1 className="text-sm sm:text-lg font-bold tracking-tight text-white font-sans truncate">
                 {project.initiativeName}
               </h1>
               <span className="hidden sm:inline-block px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] uppercase tracking-wider font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-800/60 rounded shrink-0">
-                11 Members
+                {project.badgeText || '11 Members'}
               </span>
             </div>
             <p className="text-[10px] sm:text-xs text-slate-400 truncate">
-              Deposit Tracking & Member Ledger Portal
+              {project.sector || 'Deposit Tracking & Member Ledger Portal'}
             </p>
           </div>
         </div>
@@ -188,15 +172,24 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={onOpenDepositForm}
             className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/40 text-xs font-semibold transition-all cursor-pointer shadow-sm"
-            title="Open Google Form for Submitting Deposits & Get Shareable Link"
+            title="Open Deposit Form for Submitting Deposits"
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Deposit Form</span>
             <span className="sm:hidden font-medium">Deposit</span>
-            <span className="text-[10px] bg-indigo-950 text-indigo-300 px-1.5 py-0.2 rounded border border-indigo-700 font-mono hidden md:inline">
-              Share
-            </span>
           </button>
+
+          {/* Member Statement Button (When member is logged in - Request 5) */}
+          {session.role === 'member' && onViewMyStatement && (
+            <button
+              onClick={onViewMyStatement}
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/40 text-xs font-semibold transition-all cursor-pointer shadow-sm"
+              title="View and download my personal deposit statement"
+            >
+              <ReceiptText className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden sm:inline">My Statement</span>
+            </button>
+          )}
 
           {/* Admin Pending Approvals Queue Button */}
           {session.role === 'admin' && pendingApprovalsCount > 0 && onOpenApprovalsQueue && (
@@ -213,7 +206,19 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
-          {/* Admin Maintenance Mode Control */}
+          {/* Admin Panel Button (Request 1) */}
+          {session.role === 'admin' && onOpenAdminPanel && (
+            <button
+              onClick={onOpenAdminPanel}
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700/80 text-xs font-semibold transition-all cursor-pointer shadow-sm"
+              title="Admin Panel: Theme, Font, Style, Logo, Escrow Directives, and Maintenance Mode"
+            >
+              <Settings className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden md:inline">Admin Panel</span>
+            </button>
+          )}
+
+          {/* Admin Maintenance Mode Indicator/Button */}
           {session.role === 'admin' && onOpenMaintenanceModal && (
             <button
               onClick={onOpenMaintenanceModal}
@@ -233,7 +238,7 @@ export const Header: React.FC<HeaderProps> = ({
               ) : (
                 <>
                   <Wrench className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="hidden md:inline">Maintenance</span>
+                  <span className="hidden lg:inline">Maintenance</span>
                 </>
               )}
             </button>
@@ -253,8 +258,9 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </button>
 
+          {/* User Session Pill with Online status and Logout Icon (Request 4) */}
           {session.isLoggedIn ? (
-            <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-900 border border-slate-800 pl-1.5 sm:pl-2 pr-2 sm:pr-3 py-1 sm:py-1.5 rounded-xl">
+            <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-900 border border-slate-800 pl-1.5 sm:pl-2 pr-1.5 sm:pr-2 py-1 sm:py-1.5 rounded-xl">
               {activeMember?.avatar ? (
                 <img
                   src={activeMember.avatar}
@@ -266,6 +272,7 @@ export const Header: React.FC<HeaderProps> = ({
                   {session.memberName?.charAt(0) || 'U'}
                 </div>
               )}
+              
               <div className="text-left text-xs">
                 <div className="flex items-center gap-1 leading-none">
                   <span className="font-medium text-slate-100 max-w-[75px] sm:max-w-[120px] truncate">
@@ -277,43 +284,30 @@ export const Header: React.FC<HeaderProps> = ({
                     </span>
                   ) : null}
                 </div>
-                <span className="text-[10px] text-slate-400 truncate hidden sm:block max-w-[120px]">
-                  {session.email}
-                </span>
+                
+                {/* Active Online Indicator (Request 4) */}
+                <div className="flex items-center gap-1 text-[10px] text-emerald-400 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="font-medium">Online</span>
+                </div>
               </div>
 
-              <div className="flex items-center gap-1 ml-1 border-l border-slate-800 pl-1.5">
-                {onEditMyProfile && session.role === 'member' && (
-                  <button
-                    onClick={onEditMyProfile}
-                    title="Update My Profile Details"
-                    className="p-1 text-emerald-400 hover:text-white hover:bg-emerald-800/50 rounded transition-colors text-xs flex items-center gap-0.5"
-                  >
-                    <User className="w-3.5 h-3.5" />
-                    <span className="text-[11px] font-semibold hidden md:inline">My Profile</span>
-                  </button>
-                )}
-                <button
-                  onClick={onOpenAuthModal}
-                  title="Switch User / Login Settings"
-                  className="p-1 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded transition-colors text-xs flex items-center gap-0.5"
-                >
-                  <User className="w-3.5 h-3.5" />
-                  <span className="text-[11px] hidden md:inline">Switch</span>
-                </button>
+              {/* Logout Button (Extra profile switch icon removed as requested in Request 4) */}
+              <div className="ml-1 border-l border-slate-800 pl-1.5 flex items-center">
                 <button
                   onClick={onLogout}
-                  title="Log Out (Return to Login Approval)"
-                  className="p-1 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors"
+                  title="Log Out (Return to Login Screen)"
+                  className="p-1 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer flex items-center gap-1"
                 >
                   <LogOut className="w-3.5 h-3.5" />
+                  <span className="text-[11px] font-medium hidden lg:inline">Logout</span>
                 </button>
               </div>
             </div>
           ) : (
             <button
               onClick={onOpenAuthModal}
-              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-1.5 rounded-xl text-xs font-semibold shadow-md transition-all"
+              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-1.5 rounded-xl text-xs font-semibold shadow-md transition-all cursor-pointer"
             >
               <LogIn className="w-3.5 h-3.5" />
               <span>Secure Login</span>

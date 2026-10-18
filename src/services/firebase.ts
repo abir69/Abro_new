@@ -168,11 +168,33 @@ export function subscribeToReminders(onUpdate: (reminders: ReminderLog[]) => voi
 }
 
 /**
+ * Recursively removes all `undefined` properties from objects/arrays so Firestore setDoc never throws.
+ */
+function sanitizeForFirestore<T>(data: T): T {
+  if (data === null || data === undefined) {
+    return null as any;
+  }
+  if (Array.isArray(data)) {
+    return data.map(item => sanitizeForFirestore(item)) as any;
+  }
+  if (typeof data === 'object') {
+    const cleaned: Record<string, any> = {};
+    for (const [key, val] of Object.entries(data as Record<string, any>)) {
+      if (val !== undefined) {
+        cleaned[key] = sanitizeForFirestore(val);
+      }
+    }
+    return cleaned as T;
+  }
+  return data;
+}
+
+/**
  * Write / update a Member document in Firestore.
  */
 export async function saveMemberToCloud(member: Member): Promise<void> {
   const ref = doc(db, MEMBERS_COL, member.id);
-  await setDoc(ref, member, { merge: true });
+  await setDoc(ref, sanitizeForFirestore(member), { merge: true });
 }
 
 /**
@@ -180,7 +202,7 @@ export async function saveMemberToCloud(member: Member): Promise<void> {
  */
 export async function saveTransactionToCloud(tx: Transaction): Promise<void> {
   const ref = doc(db, TRANSACTIONS_COL, tx.id);
-  await setDoc(ref, tx, { merge: true });
+  await setDoc(ref, sanitizeForFirestore(tx), { merge: true });
 }
 
 /**
@@ -196,7 +218,7 @@ export async function deleteTransactionFromCloud(txId: string): Promise<void> {
  */
 export async function saveProjectToCloud(project: PlotProject): Promise<void> {
   const ref = doc(db, PROJECT_COL, PROJECT_DOC_ID);
-  await setDoc(ref, project, { merge: true });
+  await setDoc(ref, sanitizeForFirestore(project), { merge: true });
 }
 
 /**
@@ -204,5 +226,5 @@ export async function saveProjectToCloud(project: PlotProject): Promise<void> {
  */
 export async function saveReminderToCloud(reminder: ReminderLog): Promise<void> {
   const ref = doc(db, REMINDERS_COL, reminder.id);
-  await setDoc(ref, reminder, { merge: true });
+  await setDoc(ref, sanitizeForFirestore(reminder), { merge: true });
 }

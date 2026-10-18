@@ -186,7 +186,7 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({
                       Mobile / WA:
                     </span>
                     <span className="text-slate-200 font-mono">
-                      {member.mobile}
+                      {(isAdmin || isSelf) ? member.mobile : 'Protected (Confidential)'}
                     </span>
                   </div>
 

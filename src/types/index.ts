@@ -103,6 +103,19 @@ export interface PlotProject {
     branch: string;
     mfsNumber: string;
   };
+  // Admin Custom Styling & Directives
+  appTheme?: 'emerald' | 'indigo' | 'blue' | 'violet' | 'amber' | 'slate';
+  fontFamily?: 'inter' | 'roboto' | 'outfit' | 'jakarta' | 'mono';
+  borderRadiusStyle?: 'smooth' | 'rounded' | 'sharp';
+  customLogoUrl?: string;
+  customLogoIcon?: 'building' | 'landmark' | 'shield' | 'layers' | 'gem';
+  badgeText?: string;
+  headerNotice?: string;
+  showHeaderNotice?: boolean;
+  footerCopyright?: string;
+  supportContactEmail?: string;
+  supportContactPhone?: string;
+  escrowDirectivesNotes?: string;
 }
 
 export type ThemeMode = 'dark' | 'light';

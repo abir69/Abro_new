@@ -39,12 +39,12 @@ export const getStoredMembers = (): Member[] => {
     return parsed.map(m => {
       const defaultMatch = INITIAL_MEMBERS.find(init => init.id === m.id);
       return {
+        ...defaultMatch,
         ...m,
-        name: m.name === 'Abir Mia' ? 'Md. Minhazul Islam Abir' : m.name,
         approvalStatus: m.approvalStatus || 'approved',
-        emergencyContactName: m.emergencyContactName || defaultMatch?.emergencyContactName || '',
-        emergencyContactRelation: m.emergencyContactRelation || defaultMatch?.emergencyContactRelation || '',
-        emergencyContactPhone: m.emergencyContactPhone || defaultMatch?.emergencyContactPhone || ''
+        emergencyContactName: m.emergencyContactName !== undefined ? m.emergencyContactName : (defaultMatch?.emergencyContactName || ''),
+        emergencyContactRelation: m.emergencyContactRelation !== undefined ? m.emergencyContactRelation : (defaultMatch?.emergencyContactRelation || ''),
+        emergencyContactPhone: m.emergencyContactPhone !== undefined ? m.emergencyContactPhone : (defaultMatch?.emergencyContactPhone || '')
       };
     });
   } catch (e) {

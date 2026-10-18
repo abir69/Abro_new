@@ -69,21 +69,21 @@ export const LoginApprovalScreen: React.FC<LoginApprovalScreenProps> = ({
     setErrorMessage('');
     setPendingApprovalNotice(null);
 
-    // Verify Admin PIN (Default Master PIN: 2026 or admin member's custom PIN)
+    // Verify Admin PIN (Master PIN: 2026 or admin member's custom PIN)
     if (adminPin === '2026' || (adminMember && adminPin === adminMember.pin)) {
-      setSuccessMessage('Admin credentials verified. Logging in as Lead Admin...');
+      setSuccessMessage('Admin credentials verified. Logging in as Administrator...');
       setTimeout(() => {
         onLogin({
           isLoggedIn: true,
           role: 'admin',
           memberId: adminMember?.id || 'm1',
-          memberName: leadAdminName,
+          memberName: adminMember?.name || leadAdminName,
           email: adminMember?.email || 'miabir9927@gmail.com',
           isApproved: true
         });
       }, 500);
     } else {
-      setErrorMessage('Invalid Admin Security PIN. Please enter the authorized PIN for Md. Minhazul Islam Abir.');
+      setErrorMessage('Invalid Admin Security PIN. Access denied.');
     }
   };
 
@@ -176,33 +176,6 @@ export const LoginApprovalScreen: React.FC<LoginApprovalScreenProps> = ({
       {/* Background Decorative Gradients */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-gradient-to-b from-emerald-600/15 via-teal-900/10 to-transparent blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-[500px] h-[300px] bg-emerald-950/20 blur-3xl pointer-events-none" />
-
-      {/* Top Banner: Bank Details */}
-      <div className="relative z-10 border-b border-emerald-900/50 bg-slate-900/80 backdrop-blur-md px-4 py-2 text-xs">
-        <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Landmark className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span className="text-slate-300">
-              Default Deposit Bank: <strong className="text-white font-bold">{depositBank}</strong>
-            </span>
-            <span className="text-slate-600">·</span>
-            <span className="text-slate-300">
-              Account Number for Deposit: <strong className="text-emerald-400 font-mono font-bold tracking-wider">{depositAccount}</strong>
-            </span>
-          </div>
-          <div className="flex items-center gap-3 text-[11px] text-slate-400 font-medium">
-            <span className="flex items-center gap-1.5 text-emerald-400">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-sm shadow-emerald-400" />
-              <span>Live Cloud Synced (Firestore)</span>
-            </span>
-            <span className="text-slate-600 hidden sm:inline">·</span>
-            <div className="hidden sm:flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>One-Click Bypass Disabled</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Main Authentication Container */}
       <div className="relative z-10 flex-1 flex items-center justify-center p-4 sm:p-6 my-auto">
@@ -325,21 +298,6 @@ export const LoginApprovalScreen: React.FC<LoginApprovalScreenProps> = ({
             {/* TAB 1: ADMIN LOGIN */}
             {activeTab === 'admin' && (
               <form onSubmit={handleAdminLogin} className="space-y-4">
-                <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 text-xs space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-400">Lead Admin & Chief Trustee:</span>
-                    <span className="font-bold text-white font-mono">{leadAdminName}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-400">Initiative Email:</span>
-                    <span className="text-slate-300 font-mono">miabir9927@gmail.com</span>
-                  </div>
-                  <div className="flex items-center justify-between pt-1 border-t border-slate-800 text-[11px]">
-                    <span className="text-slate-400">Authority:</span>
-                    <span className="text-emerald-400 font-medium">Full Treasury & Member Management</span>
-                  </div>
-                </div>
-
                 <div>
                   <label className="block text-xs font-medium text-slate-300 mb-1.5">
                     Admin Security PIN
@@ -350,15 +308,11 @@ export const LoginApprovalScreen: React.FC<LoginApprovalScreenProps> = ({
                       type="password"
                       value={adminPin}
                       onChange={(e) => setAdminPin(e.target.value)}
-                      placeholder="Enter Admin PIN (Default: 2026)"
+                      placeholder="Enter Admin PIN"
                       className="w-full bg-slate-950 border border-slate-700/80 rounded-xl pl-9 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
                       autoFocus
                       required
                     />
-                  </div>
-                  <div className="mt-2 flex items-center justify-between text-[11px] text-slate-400">
-                    <span>Authorized PIN: <strong className="text-emerald-400 font-mono">2026</strong></span>
-                    <span className="text-slate-500">Secure Vault Access</span>
                   </div>
                 </div>
 
@@ -397,7 +351,7 @@ export const LoginApprovalScreen: React.FC<LoginApprovalScreenProps> = ({
                   >
                     {members.map((m) => (
                       <option key={m.id} value={m.id}>
-                        {m.name} ({m.mobile}) - {m.approvalStatus === 'pending' ? 'PENDING APPROVAL' : m.role.toUpperCase()}
+                        {m.name} · {m.approvalStatus === 'pending' ? 'PENDING APPROVAL' : m.role.toUpperCase()}
                       </option>
                     ))}
                   </select>
@@ -414,14 +368,10 @@ export const LoginApprovalScreen: React.FC<LoginApprovalScreenProps> = ({
                       maxLength={6}
                       value={memberPin}
                       onChange={(e) => setMemberPin(e.target.value)}
-                      placeholder="Enter 4-digit PIN (Default: 1234)"
+                      placeholder="Enter 4-digit PIN"
                       className="w-full bg-slate-950 border border-slate-700/80 rounded-xl pl-9 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
                       required
                     />
-                  </div>
-                  <div className="mt-2 text-[11px] text-slate-400 flex items-center justify-between">
-                    <span>Default PIN for members: <strong className="text-emerald-400 font-mono">1234</strong></span>
-                    <span className="text-slate-500">Approval Required</span>
                   </div>
                 </div>
 
@@ -571,8 +521,10 @@ export const LoginApprovalScreen: React.FC<LoginApprovalScreenProps> = ({
       <footer className="relative z-10 p-4 border-t border-slate-800/60 bg-slate-950/90 text-center text-[11px] text-slate-500">
         <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-2">
           <span>&copy; 2026 {project.initiativeName} · All Rights Reserved</span>
-          <span>Lead Admin: <strong className="text-slate-300 font-mono">{leadAdminName}</strong></span>
-          <span>Bank: <strong className="text-emerald-400 font-mono">{depositBank} ({depositAccount})</strong></span>
+          <span className="flex items-center gap-1.5 text-slate-400">
+            <Lock className="w-3.5 h-3.5 text-emerald-500" />
+            <span>Encrypted Syndicate Authentication Gate</span>
+          </span>
         </div>
       </footer>
     </div>

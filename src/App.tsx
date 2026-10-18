@@ -9,7 +9,8 @@ import {
   Transaction, 
   PlotProject, 
   ReminderLog, 
-  UserSession 
+  UserSession,
+  ThemeMode
 } from './types';
 import { 
   getStoredMembers, 
@@ -23,7 +24,8 @@ import {
   getStoredSession, 
   saveStoredSession, 
   formatCurrency,
-  resetAllDataToDefault
+  getStoredTheme,
+  saveStoredTheme
 } from './services/storageService';
 
 import { Header } from './components/Header';
@@ -42,6 +44,9 @@ import { DepositSuccessWhatsAppModal } from './components/DepositSuccessWhatsApp
 import { GoogleFormDepositModal } from './components/GoogleFormDepositModal';
 import { DepositApprovalsModal } from './components/DepositApprovalsModal';
 import { LoginApprovalScreen } from './components/LoginApprovalScreen';
+import { AdminPanelModal } from './components/AdminPanelModal';
+import { MaintenanceScreen } from './components/MaintenanceScreen';
+import { MaintenanceModal } from './components/MaintenanceModal';
 import { 
   initializeFirestoreDataIfEmpty,
   subscribeToMembers,
@@ -64,7 +69,11 @@ import {
   ReceiptText,
   UsersRound,
   BellRing,
-  FileSpreadsheet
+  FileSpreadsheet,
+  AlertTriangle,
+  ArrowUp,
+  Settings,
+  Smartphone
 } from 'lucide-react';
 
 export default function App() {
@@ -106,10 +115,43 @@ export default function App() {
   const [whatsAppCongratsTx, setWhatsAppCongratsTx] = useState<Transaction | null>(null);
   const [whatsAppCongratsMember, setWhatsAppCongratsMember] = useState<Member | null>(null);
 
+  // Theme & Admin Panel Customization States
+  const [themeMode, setThemeMode] = useState<ThemeMode>(getStoredTheme());
+  const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
+  const [adminPanelTab, setAdminPanelTab] = useState<'appearance' | 'branding' | 'directives' | 'maintenance' | 'footer'>('appearance');
+
+  const handleOpenAdminPanel = (tab: 'appearance' | 'branding' | 'directives' | 'maintenance' | 'footer' = 'appearance') => {
+    setAdminPanelTab(tab);
+    setIsAdminPanelOpen(true);
+  };
+
+  const handleToggleThemeMode = () => {
+    const nextMode: ThemeMode = themeMode === 'dark' ? 'light' : 'dark';
+    setThemeMode(nextMode);
+    saveStoredTheme(nextMode);
+    if (nextMode === 'light') {
+      document.documentElement.classList.add('theme-light');
+      document.body.classList.add('theme-light');
+    } else {
+      document.documentElement.classList.remove('theme-light');
+      document.body.classList.remove('theme-light');
+    }
+  };
+
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Initialize from LocalStorage and connect real-time Firestore listeners
   useEffect(() => {
+    // 0. Synchronize Theme mode class
+    const storedTheme = getStoredTheme();
+    if (storedTheme === 'light') {
+      document.documentElement.classList.add('theme-light');
+      document.body.classList.add('theme-light');
+    } else {
+      document.documentElement.classList.remove('theme-light');
+      document.body.classList.remove('theme-light');
+    }
+
     // 1. Instant local render
     setMembers(getStoredMembers());
     setTransactions(getStoredTransactions());
@@ -387,6 +429,18 @@ export default function App() {
     const updated = members.map(m => m.id === updatedMember.id ? updatedMember : m);
     updateMembers(updated);
     saveMemberToCloud(updatedMember).catch(err => console.error('[Firestore] Save member error:', err));
+    
+    // Request 10: If admin profile is updated, keep project.leadAdminName in sync so it NEVER reverts on logout
+    if (updatedMember.id === 'm1' || updatedMember.role === 'admin') {
+      const updatedProject: PlotProject = {
+        ...project,
+        leadAdminName: updatedMember.name
+      };
+      setProject(updatedProject);
+      saveStoredProject(updatedProject);
+      saveProjectToCloud(updatedProject).catch(err => console.error('[Firestore] Project admin update err:', err));
+    }
+
     // If the active user updated themselves, update session name/email too
     if (session.memberId === updatedMember.id) {
       updateSession({
@@ -523,17 +577,30 @@ export default function App() {
     }
   };
 
-  // Reset demo data handler
-  const handleResetData = () => {
-    if (window.confirm('Reset all initiative records, transactions, and reminders to initial seed state?')) {
-      resetAllDataToDefault();
-      setMembers(getStoredMembers());
-      setTransactions(getStoredTransactions());
-      setProject(getStoredProject());
-      setRemindersLog(getStoredReminders());
-      showToast('Initiative database reset to default demo dataset.');
-    }
-  };
+  // Maintenance Mode Gatekeeper (Request 8): If maintenance mode is active and user is not admin, show maintenance screen
+  if (project.isMaintenanceMode && session.role !== 'admin') {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
+        <MaintenanceScreen
+          project={project}
+          themeMode={themeMode}
+          onToggleThemeMode={handleToggleThemeMode}
+          onOpenAdminAuth={() => {
+            setIsAuthModalOpen(true);
+          }}
+        />
+
+        {/* Admin Login Modal during maintenance mode */}
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          members={members}
+          currentSession={session}
+          onLogin={updateSession}
+        />
+      </div>
+    );
+  }
 
   // Gatekeeper: Require login approval before loading the app
   if (!session.isLoggedIn) {
@@ -583,33 +650,60 @@ export default function App() {
       <div id="app-main-content" className="flex-1 flex flex-col print:hidden">
         {/* Main App Navigation Header */}
         <Header
-        project={project}
-        session={session}
-        activeMember={activeMember}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onOpenAuthModal={() => setIsAuthModalOpen(true)}
-        onLogout={() => {
-          updateSession({ isLoggedIn: false, role: 'member' });
-          showToast('Signed out of session. Login approval required to re-enter.');
-        }}
-        onEditMyProfile={() => {
-          if (session.memberId) {
+          project={project}
+          session={session}
+          activeMember={activeMember}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onOpenAuthModal={() => setIsAuthModalOpen(true)}
+          onLogout={() => {
+            updateSession({ isLoggedIn: false, role: 'member' });
+            showToast('Signed out of session. Login approval required to re-enter.');
+          }}
+          onEditMyProfile={() => {
+            if (session.memberId) {
+              const myProfile = members.find(m => m.id === session.memberId);
+              if (myProfile) {
+                setEditingMember(myProfile);
+                setIsEditMemberModalOpen(true);
+              }
+            }
+          }}
+          onOpenDepositForm={() => handleOpenDepositForm()}
+          onOpenApprovalsQueue={() => setIsApprovalsModalOpen(true)}
+          onOpenMaintenanceModal={() => handleOpenAdminPanel('maintenance')}
+          onOpenAdminPanel={() => handleOpenAdminPanel('appearance')}
+          onViewMyStatement={() => {
             const myProfile = members.find(m => m.id === session.memberId);
             if (myProfile) {
-              setEditingMember(myProfile);
-              setIsEditMemberModalOpen(true);
+              setSelectedStatementMember(myProfile);
+              setIsStatementModalOpen(true);
             }
-          }
-        }}
-        onOpenDepositForm={() => handleOpenDepositForm()}
-        onOpenApprovalsQueue={() => setIsApprovalsModalOpen(true)}
-        pendingApprovalsCount={pendingTransactions.length}
-        grossTotal={grossTotal}
-        netTotal={netTotal}
-        pendingRemindersCount={pendingRemindersCount}
-        isCloudSynced={isCloudSynced}
-      />
+          }}
+          themeMode={themeMode}
+          onToggleThemeMode={handleToggleThemeMode}
+          pendingApprovalsCount={pendingTransactions.length}
+          grossTotal={grossTotal}
+          netTotal={netTotal}
+          pendingRemindersCount={pendingRemindersCount}
+          isCloudSynced={isCloudSynced}
+        />
+
+        {/* Admin Maintenance Mode Active Notification Bar */}
+        {project.isMaintenanceMode && session.role === 'admin' && (
+          <div className="bg-amber-500/20 border-b border-amber-500/40 text-amber-300 px-4 py-2.5 text-xs font-semibold flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-400 animate-pulse shrink-0" />
+              <span>System Maintenance Mode is currently ACTIVE. Public and non-admin member access is halted.</span>
+            </div>
+            <button
+              onClick={() => handleOpenAdminPanel('maintenance')}
+              className="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors cursor-pointer"
+            >
+              Configure Maintenance
+            </button>
+          </div>
+        )}
 
       {/* Main Workspace Body */}
       <main className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 flex-1 w-full space-y-4 sm:space-y-6 pb-24 sm:pb-8">
@@ -697,6 +791,8 @@ export default function App() {
             remindersLog={remindersLog}
             onAddReminderLog={handleAddReminderLog}
             currentMonth={currentMonth}
+            onOpenDirectivesEdit={() => handleOpenAdminPanel('directives')}
+            isAdmin={isAdmin}
           />
         )}
       </main>
@@ -766,17 +862,17 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Building2 className="w-4 h-4 text-emerald-500" />
-            <span className="font-semibold text-slate-400">Aristo Future Initiative</span>
+            <span className="font-semibold text-slate-400">{project.initiativeName}</span>
             <span>·</span>
-            <span>11-Member Collaborative Deposit Ledger</span>
+            <span>{project.footerCopyright || `© 2026 ${project.initiativeName} · All Rights Reserved`}</span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
             <button
               onClick={() => handleOpenDepositForm()}
               className="text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-1 cursor-pointer"
             >
-              <span>Deposit Submission Form</span>
+              <span>Deposit Form</span>
             </button>
             <span>·</span>
             <button
@@ -785,7 +881,7 @@ export default function App() {
               title="Export complete application as a single standalone index.html with CDN scripts and live Firestore"
             >
               <Download className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Export Single-File index.html</span>
+              <span>Export Single-File</span>
             </button>
             <span>·</span>
             <button
@@ -793,16 +889,40 @@ export default function App() {
               className="text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-1 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Download Backup (CSV)</span>
+              <span>Backup CSV</span>
             </button>
             <span>·</span>
+            {/* Install Option (Request 9) */}
             <button
-              onClick={handleResetData}
-              className="text-slate-400 hover:text-amber-400 transition-colors flex items-center gap-1 cursor-pointer"
+              onClick={() => handleOpenAdminPanel('footer')}
+              className="text-slate-400 hover:text-sky-400 transition-colors flex items-center gap-1 cursor-pointer"
+              title="Install App to device home screen"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset Demo Data</span>
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>Install App</span>
             </button>
+            <span>·</span>
+            {/* Back to Top Navigation (Request 9) */}
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-1 cursor-pointer font-medium"
+              title="Smooth scroll back to top of page"
+            >
+              <ArrowUp className="w-3.5 h-3.5" />
+              <span>Back to Top</span>
+            </button>
+            {isAdmin && (
+              <>
+                <span>·</span>
+                <button
+                  onClick={() => handleOpenAdminPanel('appearance')}
+                  className="text-slate-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer font-medium"
+                >
+                  <Settings className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Admin Panel</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
       </footer>
@@ -965,6 +1085,19 @@ export default function App() {
           setIsReceiptModalOpen(true);
         }}
         onAddReminderLog={handleAddReminderLog}
+      />
+
+      {/* Admin Control & Styling Panel Modal */}
+      <AdminPanelModal
+        isOpen={isAdminPanelOpen}
+        onClose={() => setIsAdminPanelOpen(false)}
+        project={project}
+        onSaveProject={handleUpdateProject}
+        themeMode={themeMode}
+        onToggleThemeMode={handleToggleThemeMode}
+        initialTab={adminPanelTab}
+        onExportStandaloneHtml={handleDownloadStandaloneHtml}
+        onExportCSV={handleExportCSV}
       />
     </div>
   );
