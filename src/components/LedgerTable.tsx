@@ -26,6 +26,7 @@ interface LedgerTableProps {
   members: Member[];
   transactions: Transaction[];
   isAdmin: boolean;
+  currentMemberId?: string;
   onOpenAddModal: () => void;
   onOpenEditModal: (transaction: Transaction) => void;
   onDeleteTransaction: (transactionId: string) => void;
@@ -43,6 +44,7 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
   members,
   transactions,
   isAdmin,
+  currentMemberId,
   onOpenAddModal,
   onOpenEditModal,
   onDeleteTransaction,
@@ -151,34 +153,55 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
 
             {/* Export Single Member Statement Button */}
             {onViewMemberStatement && (
-              selectedMemberObj ? (
-                <button
-                  onClick={() => onViewMemberStatement(selectedMemberObj)}
-                  className="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white text-xs font-semibold px-3 py-2 rounded-xl border border-emerald-500/40 flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
-                  title={`Export clean single member PDF statement for ${selectedMemberObj.name}`}
-                >
-                  <FileText className="w-4 h-4 text-emerald-400" />
-                  <span>PDF Statement ({selectedMemberObj.name.split(' ')[0]})</span>
-                </button>
+              isAdmin ? (
+                selectedMemberObj ? (
+                  <button
+                    onClick={() => onViewMemberStatement(selectedMemberObj)}
+                    className="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white text-xs font-semibold px-3 py-2 rounded-xl border border-emerald-500/40 flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                    title={`Export clean single member PDF statement for ${selectedMemberObj.name}`}
+                  >
+                    <FileText className="w-4 h-4 text-emerald-400" />
+                    <span>PDF Statement ({selectedMemberObj.name.split(' ')[0]})</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setIsStatementPickerOpen(true)}
+                    className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-xl border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
+                    title="Export single member PDF statement"
+                  >
+                    <FileText className="w-4 h-4 text-emerald-400" />
+                    <span>Member PDF Statement</span>
+                  </button>
+                )
               ) : (
-                <button
-                  onClick={() => setIsStatementPickerOpen(true)}
-                  className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-xl border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
-                  title="Export single member PDF statement"
-                >
-                  <FileText className="w-4 h-4 text-emerald-400" />
-                  <span>Member PDF Statement</span>
-                </button>
+                (() => {
+                  const myMember = members.find(m => m.id === currentMemberId);
+                  if (!myMember) return null;
+                  return (
+                    <button
+                      onClick={() => onViewMemberStatement(myMember)}
+                      className="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white text-xs font-semibold px-3 py-2 rounded-xl border border-emerald-500/40 flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                      title="Download my official personal statement"
+                    >
+                      <FileText className="w-4 h-4 text-emerald-400" />
+                      <span>Download My Statement</span>
+                    </button>
+                  );
+                })()
               )
             )}
 
-            <button
-              onClick={onExportCSV}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-xl border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <Download className="w-4 h-4 text-emerald-400" />
-              <span>Export CSV</span>
-            </button>
+            {/* Export CSV - Admin Only (Request 4: Remove backup csv for members) */}
+            {isAdmin && (
+              <button
+                onClick={onExportCSV}
+                className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-xl border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Export complete syndicate ledger CSV"
+              >
+                <Download className="w-4 h-4 text-emerald-400" />
+                <span>Export CSV</span>
+              </button>
+            )}
 
             {isAdmin && (
               <button
@@ -420,14 +443,14 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
                       <span>Receipt</span>
                     </button>
 
-                    {onViewMemberStatement && member && (
+                    {onViewMemberStatement && member && (isAdmin || member.id === currentMemberId) && (
                       <button
                         onClick={() => onViewMemberStatement(member)}
                         className="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg flex items-center gap-1 border border-slate-700 cursor-pointer"
-                        title={`Export PDF Statement for ${member.name}`}
+                        title={member.id === currentMemberId ? "Download My Personal Statement" : `Export PDF Statement for ${member.name}`}
                       >
                         <FileText className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>Statement</span>
+                        <span>{member.id === currentMemberId ? 'My Statement' : 'Statement'}</span>
                       </button>
                     )}
 
@@ -670,10 +693,10 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
                             <Eye className="w-3.5 h-3.5" />
                           </button>
 
-                          {onViewMemberStatement && member && (
+                          {onViewMemberStatement && member && (isAdmin || member.id === currentMemberId) && (
                             <button
                               onClick={() => onViewMemberStatement(member)}
-                              title={`Export single member PDF statement for ${member.name}`}
+                              title={member.id === currentMemberId ? "Download My Personal Statement" : `Export single member PDF statement for ${member.name}`}
                               className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
                             >
                               <FileText className="w-3.5 h-3.5 text-emerald-400" />
@@ -781,7 +804,7 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
                           {mem.name}
                         </span>
                         <span className="text-[10px] text-slate-400 font-mono block">
-                          {mem.mobile}
+                          {mem.role.toUpperCase()} · {mem.approvalStatus?.toUpperCase() || 'VERIFIED'}
                         </span>
                       </div>
                     </div>

@@ -391,7 +391,7 @@ export const LoginApprovalScreen: React.FC<LoginApprovalScreenProps> = ({
                 <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800 text-[11px] text-slate-300 flex items-start gap-2">
                   <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                   <span>
-                    New participant access requires formal approval from Lead Admin ({leadAdminName}). Submit your details to queue your approval request.
+                    New participant access requires formal approval from Syndicate Administration. Submit your details to queue your approval request.
                   </span>
                 </div>
 

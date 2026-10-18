@@ -17,7 +17,8 @@ import {
   Moon,
   Wrench,
   AlertTriangle,
-  Settings
+  Settings,
+  Smartphone
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -34,6 +35,7 @@ interface HeaderProps {
   onOpenMaintenanceModal?: () => void;
   onOpenAdminPanel?: () => void;
   onViewMyStatement?: () => void;
+  onOpenInstallModal?: () => void;
   themeMode: ThemeMode;
   onToggleThemeMode: () => void;
   pendingApprovalsCount?: number;
@@ -56,6 +58,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenMaintenanceModal,
   onOpenAdminPanel,
   onViewMyStatement,
+  onOpenInstallModal,
   themeMode,
   onToggleThemeMode,
   pendingApprovalsCount = 0,
@@ -148,22 +151,24 @@ export const Header: React.FC<HeaderProps> = ({
             <span>11 Members</span>
           </button>
 
-          <button
-            onClick={() => setActiveTab('reminders')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all relative ${
-              activeTab === 'reminders'
-                ? 'bg-emerald-600 text-white shadow-sm font-semibold'
-                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-            }`}
-          >
-            <BellRing className="w-3.5 h-3.5" />
-            <span>Automated Reminders</span>
-            {pendingRemindersCount > 0 && (
-              <span className="w-5 h-5 flex items-center justify-center text-[10px] font-bold rounded-full bg-amber-500 text-slate-950 font-mono">
-                {pendingRemindersCount}
-              </span>
-            )}
-          </button>
+          {session.role === 'admin' && (
+            <button
+              onClick={() => setActiveTab('reminders')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all relative ${
+                activeTab === 'reminders'
+                  ? 'bg-emerald-600 text-white shadow-sm font-semibold'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <BellRing className="w-3.5 h-3.5" />
+              <span>Automated Reminders</span>
+              {pendingRemindersCount > 0 && (
+                <span className="w-5 h-5 flex items-center justify-center text-[10px] font-bold rounded-full bg-amber-500 text-slate-950 font-mono">
+                  {pendingRemindersCount}
+                </span>
+              )}
+            </button>
+          )}
         </nav>
 
         {/* Action Buttons & User Session */}
@@ -257,6 +262,18 @@ export const Header: React.FC<HeaderProps> = ({
               <Moon className="w-4 h-4 text-sky-400" />
             )}
           </button>
+
+          {/* Install Web App (PWA) Button */}
+          {onOpenInstallModal && (
+            <button
+              onClick={onOpenInstallModal}
+              className="p-1.5 sm:p-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-emerald-400 transition-colors cursor-pointer"
+              title="Install App to Device / Home Screen"
+              aria-label="Install App"
+            >
+              <Smartphone className="w-4 h-4" />
+            </button>
+          )}
 
           {/* User Session Pill with Online status and Logout Icon (Request 4) */}
           {session.isLoggedIn ? (

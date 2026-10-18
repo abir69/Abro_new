@@ -168,25 +168,24 @@ export function subscribeToReminders(onUpdate: (reminders: ReminderLog[]) => voi
 }
 
 /**
- * Recursively removes all `undefined` properties from objects/arrays so Firestore setDoc never throws.
+ * Recursively removes all `undefined` properties so Firestore setDoc never throws.
  */
-function sanitizeForFirestore<T>(data: T): T {
+function sanitizeForFirestore<T>(data: T): any {
   if (data === null || data === undefined) {
-    return null as any;
+    return {};
   }
-  if (Array.isArray(data)) {
-    return data.map(item => sanitizeForFirestore(item)) as any;
-  }
-  if (typeof data === 'object') {
+  try {
+    return JSON.parse(JSON.stringify(data));
+  } catch (e) {
+    console.warn('[Firestore] Failed to sanitize object with JSON stringify, fallback object cleanup:', e);
     const cleaned: Record<string, any> = {};
     for (const [key, val] of Object.entries(data as Record<string, any>)) {
       if (val !== undefined) {
-        cleaned[key] = sanitizeForFirestore(val);
+        cleaned[key] = val;
       }
     }
-    return cleaned as T;
+    return cleaned;
   }
-  return data;
 }
 
 /**

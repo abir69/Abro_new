@@ -11,6 +11,7 @@ interface MemberStatementModalProps {
   transactions: Transaction[];
   project: PlotProject;
   isAdmin?: boolean;
+  currentMemberId?: string;
   onEditTransaction?: (tx: Transaction) => void;
   onDeleteTransaction?: (txId: string) => void;
   onUpdateProject?: (updatedProject: PlotProject) => void;
@@ -23,6 +24,7 @@ export const MemberStatementModal: React.FC<MemberStatementModalProps> = ({
   transactions,
   project,
   isAdmin = false,
+  currentMemberId,
   onEditTransaction,
   onDeleteTransaction,
   onUpdateProject
@@ -145,39 +147,57 @@ export const MemberStatementModal: React.FC<MemberStatementModalProps> = ({
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {/* Edit Lead & Syndicate Admin Button */}
-            <button
-              type="button"
-              onClick={() => setIsEditingSignatories(!isEditingSignatories)}
-              className={`text-xs font-semibold px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer border ${
-                isEditingSignatories 
-                  ? 'bg-emerald-600/20 text-emerald-300 border-emerald-500/50' 
-                  : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
-              }`}
-            >
-              <Edit3 className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{isEditingSignatories ? 'Close Admin Editor' : 'Edit Admin & Designation'}</span>
-            </button>
+            {/* Edit Lead & Syndicate Admin Button (Admin Authority Only) */}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setIsEditingSignatories(!isEditingSignatories)}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer border ${
+                  isEditingSignatories 
+                    ? 'bg-emerald-600/20 text-emerald-300 border-emerald-500/50' 
+                    : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
+                }`}
+              >
+                <Edit3 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>{isEditingSignatories ? 'Close Admin Editor' : 'Edit Admin & Designation'}</span>
+              </button>
+            )}
 
-            {/* Download Statement HTML / Offline */}
-            <button
-              onClick={handleDownloadHtml}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
-              title="Download standalone statement file for offline use"
-            >
-              <Download className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Download File</span>
-            </button>
+            {/* Role-based Statement Download Authorization (Request 4) */}
+            {(() => {
+              const isAuthorizedToDownload = isAdmin || (!!currentMemberId && member.id === currentMemberId);
+              if (isAuthorizedToDownload) {
+                return (
+                  <>
+                    {/* Download Statement HTML / Offline */}
+                    <button
+                      onClick={handleDownloadHtml}
+                      className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
+                      title="Download standalone statement file for offline use"
+                    >
+                      <Download className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Download File</span>
+                    </button>
 
-            {/* Export PDF Statement - Guaranteed Single Member Isolated Print */}
-            <button
-              onClick={handleExportPdf}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
-              title="Generate and print/save clean single member PDF statement"
-            >
-              <Printer className="w-4 h-4" />
-              <span>Export PDF Statement</span>
-            </button>
+                    {/* Export PDF Statement - Guaranteed Single Member Isolated Print */}
+                    <button
+                      onClick={handleExportPdf}
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+                      title="Generate and print/save clean single member PDF statement"
+                    >
+                      <Printer className="w-4 h-4" />
+                      <span>Export PDF Statement</span>
+                    </button>
+                  </>
+                );
+              }
+              return (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-400 text-xs">
+                  <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                  <span>Confidential: Download restricted to {member.name.split(' ')[0]}</span>
+                </div>
+              );
+            })()}
 
             <button
               onClick={onClose}

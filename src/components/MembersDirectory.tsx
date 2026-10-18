@@ -180,16 +180,7 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500 flex items-center gap-1.5">
-                      <Phone className="w-3.5 h-3.5 text-slate-400" />
-                      Mobile / WA:
-                    </span>
-                    <span className="text-slate-200 font-mono">
-                      {(isAdmin || isSelf) ? member.mobile : 'Protected (Confidential)'}
-                    </span>
-                  </div>
-
+                  {/* Phone number hidden from list as requested */}
                   {/* Role-based privacy protection: Nominee and Emergency Contact visible ONLY to Admin and Self */}
                   {(() => {
                     const canViewPrivateDetails = isAdmin || currentMemberId === member.id;

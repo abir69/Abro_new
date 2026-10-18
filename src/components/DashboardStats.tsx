@@ -276,13 +276,15 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
                 <span>Record Deposit</span>
               </button>
             )}
-            <button
-              onClick={onExportLedger}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium px-3 py-2 rounded-xl border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-              <span>Export CSV</span>
-            </button>
+            {isAdmin && (
+              <button
+                onClick={onExportLedger}
+                className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium px-3 py-2 rounded-xl border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                <span>Export CSV</span>
+              </button>
+            )}
           </div>
         </div>
 

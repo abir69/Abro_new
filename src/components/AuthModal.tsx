@@ -49,7 +49,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         setAdminPin('');
       }, 500);
     } else {
-      setErrorMessage('Invalid Admin PIN. (Default demo PIN is 2026)');
+      setErrorMessage('Invalid Admin Security PIN. Please verify your credentials.');
     }
   };
 
@@ -63,11 +63,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
 
     if (targetMember.approvalStatus === 'pending') {
-      setErrorMessage(`Login Pending: ${targetMember.name} is awaiting Lead Admin approval.`);
+      setErrorMessage(`Login Pending: ${targetMember.name} is awaiting Syndicate Admin approval.`);
       return;
     }
     if (targetMember.approvalStatus === 'rejected') {
-      setErrorMessage(`Access Denied: Account for ${targetMember.name} has been rejected/suspended.`);
+      setErrorMessage(`Access Denied: Account for ${targetMember.name} has been rejected or suspended.`);
       return;
     }
 
@@ -88,7 +88,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         setMemberPin('');
       }, 500);
     } else {
-      setErrorMessage(`Invalid PIN for ${targetMember.name}. (Default demo PIN is 1234)`);
+      setErrorMessage(`Invalid Security PIN for ${targetMember.name}.`);
     }
   };
 
@@ -162,7 +162,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <form onSubmit={handleAdminLogin} className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                  Admin Credentials (Md. Minhazul Islam Abir - miabir9927@gmail.com)
+                  Admin Security PIN
                 </label>
                 <div className="relative">
                   <KeyRound className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -170,14 +170,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     type="password"
                     value={adminPin}
                     onChange={(e) => setAdminPin(e.target.value)}
-                    placeholder="Enter Admin PIN (Default: 2026)"
-                    className="w-full bg-slate-950 border border-slate-700/80 rounded-xl pl-9 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="Enter Admin PIN"
+                    className="w-full bg-slate-950 border border-slate-700/80 rounded-xl pl-9 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
                     autoFocus
+                    required
                   />
-                </div>
-                <div className="mt-2 flex items-center justify-between text-[11px] text-slate-400">
-                  <span>Demo PIN: <strong className="text-emerald-400 font-mono">2026</strong></span>
-                  <span className="text-slate-500">Unlocks Full Ledger Control</span>
                 </div>
               </div>
 
@@ -202,7 +199,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 >
                   {members.map((m) => (
                     <option key={m.id} value={m.id}>
-                      {m.name} ({m.mobile}) - {m.role.toUpperCase()}
+                      {m.name} · {m.role.toUpperCase()}
                     </option>
                   ))}
                 </select>
@@ -218,12 +215,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     type="password"
                     value={memberPin}
                     onChange={(e) => setMemberPin(e.target.value)}
-                    placeholder="Enter 4-digit PIN (Default: 1234)"
-                    className="w-full bg-slate-950 border border-slate-700/80 rounded-xl pl-9 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="Enter 4-digit PIN"
+                    className="w-full bg-slate-950 border border-slate-700/80 rounded-xl pl-9 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
+                    required
                   />
-                </div>
-                <div className="mt-2 text-[11px] text-slate-400">
-                  Demo PIN for all participants is <strong className="text-emerald-400 font-mono">1234</strong>
                 </div>
               </div>
 

@@ -47,6 +47,7 @@ import { LoginApprovalScreen } from './components/LoginApprovalScreen';
 import { AdminPanelModal } from './components/AdminPanelModal';
 import { MaintenanceScreen } from './components/MaintenanceScreen';
 import { MaintenanceModal } from './components/MaintenanceModal';
+import { InstallAppModal } from './components/InstallAppModal';
 import { 
   initializeFirestoreDataIfEmpty,
   subscribeToMembers,
@@ -73,7 +74,8 @@ import {
   AlertTriangle,
   ArrowUp,
   Settings,
-  Smartphone
+  Smartphone,
+  ShieldAlert
 } from 'lucide-react';
 
 export default function App() {
@@ -118,6 +120,7 @@ export default function App() {
   // Theme & Admin Panel Customization States
   const [themeMode, setThemeMode] = useState<ThemeMode>(getStoredTheme());
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [adminPanelTab, setAdminPanelTab] = useState<'appearance' | 'branding' | 'directives' | 'maintenance' | 'footer'>('appearance');
 
   const handleOpenAdminPanel = (tab: 'appearance' | 'branding' | 'directives' | 'maintenance' | 'footer' = 'appearance') => {
@@ -526,6 +529,21 @@ export default function App() {
     saveReminderToCloud(newLog).catch(err => console.error('[Firestore] Save reminder error:', err));
   };
 
+  // Statement Viewing & Downloading Handler (Requests 4 & 5: Member can only view/download their own statement)
+  const handleViewMemberStatement = (targetMember: Member) => {
+    if (!isAdmin && session.memberId && targetMember.id !== session.memberId) {
+      showToast('Confidentiality: You are authorized to view and download only your personal statement.');
+      const ownProfile = members.find(m => m.id === session.memberId);
+      if (ownProfile) {
+        setSelectedStatementMember(ownProfile);
+        setIsStatementModalOpen(true);
+      }
+      return;
+    }
+    setSelectedStatementMember(targetMember);
+    setIsStatementModalOpen(true);
+  };
+
   // CSV Ledger Exporter
   const handleExportCSV = () => {
     const headers = ['Date', 'Cycle', 'Reference', 'Member Name', 'Member Phone', 'Gross Amount', 'Payment Method', 'Channel/Bank', 'Status', 'Notes'];
@@ -680,6 +698,7 @@ export default function App() {
               setIsStatementModalOpen(true);
             }
           }}
+          onOpenInstallModal={() => setIsInstallModalOpen(true)}
           themeMode={themeMode}
           onToggleThemeMode={handleToggleThemeMode}
           pendingApprovalsCount={pendingTransactions.length}
@@ -748,10 +767,8 @@ export default function App() {
               setIsReceiptModalOpen(true);
             }}
             onExportCSV={handleExportCSV}
-            onViewMemberStatement={(member) => {
-              setSelectedStatementMember(member);
-              setIsStatementModalOpen(true);
-            }}
+            onViewMemberStatement={handleViewMemberStatement}
+            currentMemberId={session.memberId}
             onSelectMember={handleSelectMember}
             onSendWhatsAppCongrats={isAdmin ? handleOpenWhatsAppCongrats : undefined}
             onOpenDepositForm={() => handleOpenDepositForm()}
@@ -772,10 +789,7 @@ export default function App() {
               setEditingMember(member);
               setIsEditMemberModalOpen(true);
             }}
-            onViewMemberStatement={(member) => {
-              setSelectedStatementMember(member);
-              setIsStatementModalOpen(true);
-            }}
+            onViewMemberStatement={handleViewMemberStatement}
             onSendMemberReminder={(_member) => {
               setActiveTab('reminders');
             }}
@@ -784,16 +798,32 @@ export default function App() {
         )}
 
         {activeTab === 'reminders' && (
-          <RemindersPanel
-            project={project}
-            members={members}
-            transactions={transactions}
-            remindersLog={remindersLog}
-            onAddReminderLog={handleAddReminderLog}
-            currentMonth={currentMonth}
-            onOpenDirectivesEdit={() => handleOpenAdminPanel('directives')}
-            isAdmin={isAdmin}
-          />
+          isAdmin ? (
+            <RemindersPanel
+              project={project}
+              members={members}
+              transactions={transactions}
+              remindersLog={remindersLog}
+              onAddReminderLog={handleAddReminderLog}
+              currentMonth={currentMonth}
+              onOpenDirectivesEdit={() => handleOpenAdminPanel('directives')}
+              isAdmin={isAdmin}
+            />
+          ) : (
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center max-w-md mx-auto my-12">
+              <ShieldAlert className="w-12 h-12 text-amber-400 mx-auto mb-3" />
+              <h2 className="text-base font-bold text-white mb-2">Admin Authority Required</h2>
+              <p className="text-xs text-slate-400 mb-4">
+                Automated payment reminders and dispatch logs are restricted to Syndicate Administration.
+              </p>
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold cursor-pointer"
+              >
+                Return to Dashboard
+              </button>
+            </div>
+          )
         )}
       </main>
 
@@ -839,22 +869,39 @@ export default function App() {
           <span>11 Members</span>
         </button>
 
-        <button
-          onClick={() => setActiveTab('reminders')}
-          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg transition-colors relative ${
-            activeTab === 'reminders' ? 'text-emerald-400 font-bold' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <div className="relative">
-            <BellRing className="w-4 h-4" />
-            {pendingRemindersCount > 0 && (
-              <span className="absolute -top-1 -right-2 w-3.5 h-3.5 bg-amber-500 text-slate-950 rounded-full font-bold text-[8px] flex items-center justify-center font-mono">
-                {pendingRemindersCount}
-              </span>
-            )}
-          </div>
-          <span>Reminders</span>
-        </button>
+        {isAdmin ? (
+          <button
+            onClick={() => setActiveTab('reminders')}
+            className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg transition-colors relative ${
+              activeTab === 'reminders' ? 'text-emerald-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <div className="relative">
+              <BellRing className="w-4 h-4" />
+              {pendingRemindersCount > 0 && (
+                <span className="absolute -top-1 -right-2 w-3.5 h-3.5 bg-amber-500 text-slate-950 rounded-full font-bold text-[8px] flex items-center justify-center font-mono">
+                  {pendingRemindersCount}
+                </span>
+              )}
+            </div>
+            <span>Reminders</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => {
+              const myProfile = members.find(m => m.id === session.memberId);
+              if (myProfile) {
+                setSelectedStatementMember(myProfile);
+                setIsStatementModalOpen(true);
+              }
+            }}
+            className="flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg text-slate-400 hover:text-emerald-400 transition-colors cursor-pointer"
+            title="View and download my statement"
+          >
+            <ReceiptText className="w-4 h-4 text-emerald-400" />
+            <span>My Statement</span>
+          </button>
+        )}
       </nav>
 
       {/* Footer */}
@@ -874,27 +921,32 @@ export default function App() {
             >
               <span>Deposit Form</span>
             </button>
+            {isAdmin && (
+              <>
+                <span>·</span>
+                <button
+                  onClick={handleDownloadStandaloneHtml}
+                  className="text-emerald-300 hover:text-white bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700/80 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer font-medium"
+                  title="Export complete application as a single standalone index.html with CDN scripts and live Firestore"
+                >
+                  <Download className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Export Single-File</span>
+                </button>
+                <span>·</span>
+                <button
+                  onClick={handleExportCSV}
+                  className="text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-1 cursor-pointer"
+                  title="Download CSV backup of syndicate ledger"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Backup CSV</span>
+                </button>
+              </>
+            )}
             <span>·</span>
+            {/* Back Install Option (Request 9) */}
             <button
-              onClick={handleDownloadStandaloneHtml}
-              className="text-emerald-300 hover:text-white bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700/80 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer font-medium"
-              title="Export complete application as a single standalone index.html with CDN scripts and live Firestore"
-            >
-              <Download className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Export Single-File</span>
-            </button>
-            <span>·</span>
-            <button
-              onClick={handleExportCSV}
-              className="text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-1 cursor-pointer"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Backup CSV</span>
-            </button>
-            <span>·</span>
-            {/* Install Option (Request 9) */}
-            <button
-              onClick={() => handleOpenAdminPanel('footer')}
+              onClick={() => setIsInstallModalOpen(true)}
               className="text-slate-400 hover:text-sky-400 transition-colors flex items-center gap-1 cursor-pointer"
               title="Install App to device home screen"
             >
@@ -1009,6 +1061,7 @@ export default function App() {
         transactions={transactions}
         project={project}
         isAdmin={isAdmin}
+        currentMemberId={session.memberId}
         onEditTransaction={(tx) => {
           setEditingTransaction(tx);
           setIsTxModalOpen(true);
@@ -1098,6 +1151,13 @@ export default function App() {
         initialTab={adminPanelTab}
         onExportStandaloneHtml={handleDownloadStandaloneHtml}
         onExportCSV={handleExportCSV}
+      />
+
+      {/* Back Install Option Modal (Request 9) */}
+      <InstallAppModal
+        isOpen={isInstallModalOpen}
+        onClose={() => setIsInstallModalOpen(false)}
+        project={project}
       />
     </div>
   );
