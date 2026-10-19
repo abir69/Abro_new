@@ -63,21 +63,21 @@ export async function initializeFirestoreDataIfEmpty(): Promise<void> {
 
       // Seed Project
       const projectRef = doc(db, PROJECT_COL, PROJECT_DOC_ID);
-      batch.set(projectRef, INITIAL_PLOT_PROJECT);
+      batch.set(projectRef, sanitizeForFirestore(INITIAL_PLOT_PROJECT));
 
       // Seed Members
       INITIAL_MEMBERS.forEach((member) => {
         const memRef = doc(db, MEMBERS_COL, member.id);
-        batch.set(memRef, {
+        batch.set(memRef, sanitizeForFirestore({
           ...member,
           approvalStatus: member.approvalStatus || 'approved'
-        });
+        }));
       });
 
       // Seed Initial Transactions
       INITIAL_TRANSACTIONS.forEach((tx) => {
         const txRef = doc(db, TRANSACTIONS_COL, tx.id);
-        batch.set(txRef, tx);
+        batch.set(txRef, sanitizeForFirestore(tx));
       });
 
       await batch.commit();
@@ -86,7 +86,7 @@ export async function initializeFirestoreDataIfEmpty(): Promise<void> {
       // Ensure project doc exists
       const projSnap = await getDoc(doc(db, PROJECT_COL, PROJECT_DOC_ID));
       if (!projSnap.exists()) {
-        await setDoc(doc(db, PROJECT_COL, PROJECT_DOC_ID), INITIAL_PLOT_PROJECT);
+        await setDoc(doc(db, PROJECT_COL, PROJECT_DOC_ID), sanitizeForFirestore(INITIAL_PLOT_PROJECT));
       }
     }
   } catch (error) {
@@ -172,20 +172,23 @@ export function subscribeToReminders(onUpdate: (reminders: ReminderLog[]) => voi
  */
 function sanitizeForFirestore<T>(data: T): any {
   if (data === null || data === undefined) {
-    return {};
+    return null;
   }
-  try {
-    return JSON.parse(JSON.stringify(data));
-  } catch (e) {
-    console.warn('[Firestore] Failed to sanitize object with JSON stringify, fallback object cleanup:', e);
+  if (Array.isArray(data)) {
+    return data
+      .filter((item) => item !== undefined)
+      .map((item) => sanitizeForFirestore(item));
+  }
+  if (typeof data === 'object') {
     const cleaned: Record<string, any> = {};
     for (const [key, val] of Object.entries(data as Record<string, any>)) {
       if (val !== undefined) {
-        cleaned[key] = val;
+        cleaned[key] = sanitizeForFirestore(val);
       }
     }
     return cleaned;
   }
+  return data;
 }
 
 /**

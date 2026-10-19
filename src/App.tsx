@@ -25,7 +25,9 @@ import {
   saveStoredSession, 
   formatCurrency,
   getStoredTheme,
-  saveStoredTheme
+  saveStoredTheme,
+  saveStoredAdminProfile,
+  getStoredAdminProfile
 } from './services/storageService';
 
 import { Header } from './components/Header';
@@ -47,7 +49,6 @@ import { LoginApprovalScreen } from './components/LoginApprovalScreen';
 import { AdminPanelModal } from './components/AdminPanelModal';
 import { MaintenanceScreen } from './components/MaintenanceScreen';
 import { MaintenanceModal } from './components/MaintenanceModal';
-import { InstallAppModal } from './components/InstallAppModal';
 import { 
   initializeFirestoreDataIfEmpty,
   subscribeToMembers,
@@ -120,7 +121,6 @@ export default function App() {
   // Theme & Admin Panel Customization States
   const [themeMode, setThemeMode] = useState<ThemeMode>(getStoredTheme());
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
-  const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [adminPanelTab, setAdminPanelTab] = useState<'appearance' | 'branding' | 'directives' | 'maintenance' | 'footer'>('appearance');
 
   const handleOpenAdminPanel = (tab: 'appearance' | 'branding' | 'directives' | 'maintenance' | 'footer' = 'appearance') => {
@@ -433,11 +433,15 @@ export default function App() {
     updateMembers(updated);
     saveMemberToCloud(updatedMember).catch(err => console.error('[Firestore] Save member error:', err));
     
-    // Request 10: If admin profile is updated, keep project.leadAdminName in sync so it NEVER reverts on logout
+    // If admin profile is updated, keep project lead admin & contact in sync so it NEVER reverts on logout or reload
     if (updatedMember.id === 'm1' || updatedMember.role === 'admin') {
+      saveStoredAdminProfile(updatedMember);
       const updatedProject: PlotProject = {
         ...project,
-        leadAdminName: updatedMember.name
+        leadAdminName: updatedMember.name,
+        supportContactEmail: updatedMember.email || project.supportContactEmail,
+        supportContactPhone: updatedMember.mobile || project.supportContactPhone,
+        maintenanceStartedAt: project.isMaintenanceMode ? (project.maintenanceStartedAt || new Date().toISOString()) : ''
       };
       setProject(updatedProject);
       saveStoredProject(updatedProject);
@@ -445,7 +449,7 @@ export default function App() {
     }
 
     // If the active user updated themselves, update session name/email too
-    if (session.memberId === updatedMember.id) {
+    if (session.memberId === updatedMember.id || session.role === 'admin') {
       updateSession({
         ...session,
         memberName: updatedMember.name,
@@ -461,7 +465,8 @@ export default function App() {
     const updatedProject = {
       ...project,
       totalCombinedBankCharge: charge,
-      combinedChargeNotes: notes || project.combinedChargeNotes
+      combinedChargeNotes: notes || project.combinedChargeNotes,
+      maintenanceStartedAt: project.isMaintenanceMode ? (project.maintenanceStartedAt || new Date().toISOString()) : ''
     };
     setProject(updatedProject);
     saveStoredProject(updatedProject);
@@ -471,10 +476,56 @@ export default function App() {
 
   // Update Project Initiative & Statement Signatories
   const handleUpdateProject = (updatedProject: PlotProject) => {
-    setProject(updatedProject);
-    saveStoredProject(updatedProject);
-    saveProjectToCloud(updatedProject).catch(err => console.error('[Firestore] Update project error:', err));
-    showToast('Statement signatories and official designations updated live.');
+    const sanitizedProject: PlotProject = {
+      ...updatedProject,
+      maintenanceStartedAt: updatedProject.isMaintenanceMode 
+        ? (updatedProject.maintenanceStartedAt || new Date().toISOString()) 
+        : ''
+    };
+    setProject(sanitizedProject);
+    saveStoredProject(sanitizedProject);
+    saveProjectToCloud(sanitizedProject).catch(err => console.error('[Firestore] Update project error:', err));
+
+    // CRITICAL: Synchronize admin member profile if leadAdminName or contact was changed in project settings!
+    const adminMember = members.find(m => m.id === 'm1' || m.role === 'admin');
+    if (adminMember) {
+      const updatedAdmin: Member = {
+        ...adminMember,
+        name: sanitizedProject.leadAdminName || adminMember.name,
+        email: sanitizedProject.supportContactEmail || adminMember.email,
+        mobile: sanitizedProject.supportContactPhone || adminMember.mobile
+      };
+      saveStoredAdminProfile(updatedAdmin);
+      const updatedMembers = members.map(m => m.id === adminMember.id ? updatedAdmin : m);
+      setMembers(updatedMembers);
+      saveStoredMembers(updatedMembers);
+      saveMemberToCloud(updatedAdmin).catch(err => console.error('[Firestore] Sync admin member error:', err));
+      if (session.role === 'admin') {
+        updateSession({
+          ...session,
+          memberName: updatedAdmin.name,
+          email: updatedAdmin.email
+        });
+      }
+    }
+    showToast('Admin profile and syndicate settings saved successfully.');
+  };
+
+  // Dedicated Admin PIN setup handler: replaces old PIN permanently across database and storage
+  const handleSaveAdminPin = (newPin: string) => {
+    const adminMember = members.find(m => m.id === 'm1' || m.role === 'admin');
+    if (adminMember && newPin.trim()) {
+      const updatedAdmin: Member = {
+        ...adminMember,
+        pin: newPin.trim()
+      };
+      saveStoredAdminProfile(updatedAdmin);
+      const updatedMembers = members.map(m => m.id === adminMember.id ? updatedAdmin : m);
+      setMembers(updatedMembers);
+      saveStoredMembers(updatedMembers);
+      saveMemberToCloud(updatedAdmin).catch(err => console.error('[Firestore] Update admin PIN err:', err));
+      showToast('Admin Security PIN updated successfully. Previous PIN has been removed.');
+    }
   };
 
   // Select Member & Open Total Transaction History
@@ -698,7 +749,6 @@ export default function App() {
               setIsStatementModalOpen(true);
             }
           }}
-          onOpenInstallModal={() => setIsInstallModalOpen(true)}
           themeMode={themeMode}
           onToggleThemeMode={handleToggleThemeMode}
           pendingApprovalsCount={pendingTransactions.length}
@@ -944,16 +994,6 @@ export default function App() {
               </>
             )}
             <span>·</span>
-            {/* Back Install Option (Request 9) */}
-            <button
-              onClick={() => setIsInstallModalOpen(true)}
-              className="text-slate-400 hover:text-sky-400 transition-colors flex items-center gap-1 cursor-pointer"
-              title="Install App to device home screen"
-            >
-              <Smartphone className="w-3.5 h-3.5" />
-              <span>Install App</span>
-            </button>
-            <span>·</span>
             {/* Back to Top Navigation (Request 9) */}
             <button
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
@@ -1151,13 +1191,8 @@ export default function App() {
         initialTab={adminPanelTab}
         onExportStandaloneHtml={handleDownloadStandaloneHtml}
         onExportCSV={handleExportCSV}
-      />
-
-      {/* Back Install Option Modal (Request 9) */}
-      <InstallAppModal
-        isOpen={isInstallModalOpen}
-        onClose={() => setIsInstallModalOpen(false)}
-        project={project}
+        adminMember={members.find(m => m.id === 'm1' || m.role === 'admin')}
+        onSaveAdminPin={handleSaveAdminPin}
       />
     </div>
   );

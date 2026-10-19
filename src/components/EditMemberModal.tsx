@@ -488,11 +488,15 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
                 </label>
                 <input
                   type="text"
-                  maxLength={6}
+                  maxLength={10}
                   value={pin}
                   onChange={(e) => setPin(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  placeholder="Enter 4-digit PIN"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-emerald-400 tracking-wider focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
+                <span className="text-[10px] text-slate-400 block mt-1">
+                  Setting a new PIN replaces the old PIN completely.
+                </span>
               </div>
             </div>
 

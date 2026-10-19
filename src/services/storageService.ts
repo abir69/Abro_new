@@ -3,6 +3,7 @@ import { INITIAL_MEMBERS, INITIAL_TRANSACTIONS, INITIAL_EXPENSES, INITIAL_PLOT_P
 
 const STORAGE_KEYS = {
   MEMBERS: 'aristo_initiative_v3_members',
+  ADMIN_PROFILE: 'aristo_initiative_v3_admin_profile',
   TRANSACTIONS: 'aristo_initiative_v3_transactions',
   EXPENSES: 'aristo_initiative_v3_expenses',
   PROJECT: 'aristo_initiative_v3_project',
@@ -28,24 +29,57 @@ export const saveStoredTheme = (theme: ThemeMode): void => {
   }
 };
 
+/**
+ * Direct permanent persistence for Lead Admin profile
+ */
+export const getStoredAdminProfile = (): Partial<Member> | null => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.ADMIN_PROFILE);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+export const saveStoredAdminProfile = (admin: Member): void => {
+  try {
+    localStorage.setItem(STORAGE_KEYS.ADMIN_PROFILE, JSON.stringify(admin));
+  } catch (e) {
+    console.error('Error saving admin profile to localStorage:', e);
+  }
+};
+
 export const getStoredMembers = (): Member[] => {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.MEMBERS);
+    const savedAdmin = getStoredAdminProfile();
+    
     if (!raw) {
-      localStorage.setItem(STORAGE_KEYS.MEMBERS, JSON.stringify(INITIAL_MEMBERS));
-      return INITIAL_MEMBERS;
+      const initial = INITIAL_MEMBERS.map(m => {
+        if ((m.id === 'm1' || m.role === 'admin') && savedAdmin) {
+          return { ...m, ...savedAdmin, id: m.id, role: 'admin' as const };
+        }
+        return m;
+      });
+      localStorage.setItem(STORAGE_KEYS.MEMBERS, JSON.stringify(initial));
+      return initial;
     }
     const parsed: Member[] = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      return INITIAL_MEMBERS;
+    }
+
     return parsed.map(m => {
-      const defaultMatch = INITIAL_MEMBERS.find(init => init.id === m.id);
-      return {
-        ...defaultMatch,
-        ...m,
-        approvalStatus: m.approvalStatus || 'approved',
-        emergencyContactName: m.emergencyContactName !== undefined ? m.emergencyContactName : (defaultMatch?.emergencyContactName || ''),
-        emergencyContactRelation: m.emergencyContactRelation !== undefined ? m.emergencyContactRelation : (defaultMatch?.emergencyContactRelation || ''),
-        emergencyContactPhone: m.emergencyContactPhone !== undefined ? m.emergencyContactPhone : (defaultMatch?.emergencyContactPhone || '')
-      };
+      // If this is the admin member, guarantee that savedAdmin profile fields override defaults
+      if ((m.id === 'm1' || m.role === 'admin') && savedAdmin) {
+        return {
+          ...savedAdmin,
+          ...m,
+          id: m.id,
+          role: 'admin' as const
+        };
+      }
+      return m;
     });
   } catch (e) {
     console.error('Error loading members:', e);
@@ -54,7 +88,15 @@ export const getStoredMembers = (): Member[] => {
 };
 
 export const saveStoredMembers = (members: Member[]) => {
-  localStorage.setItem(STORAGE_KEYS.MEMBERS, JSON.stringify(members));
+  try {
+    localStorage.setItem(STORAGE_KEYS.MEMBERS, JSON.stringify(members));
+    const admin = members.find(m => m.id === 'm1' || m.role === 'admin');
+    if (admin) {
+      localStorage.setItem(STORAGE_KEYS.ADMIN_PROFILE, JSON.stringify(admin));
+    }
+  } catch (e) {
+    console.error('Error saving members:', e);
+  }
 };
 
 export const DEFAULT_DEPOSIT_BANK = 'The City Bank PLC';
@@ -99,9 +141,15 @@ export const saveStoredExpenses = (_expenses: SyndicateExpense[]) => {
 export const getStoredProject = (): PlotProject => {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.PROJECT);
+    const savedAdmin = getStoredAdminProfile();
+    
     if (!raw) {
-      localStorage.setItem(STORAGE_KEYS.PROJECT, JSON.stringify(INITIAL_PLOT_PROJECT));
-      return INITIAL_PLOT_PROJECT;
+      const initial: PlotProject = {
+        ...INITIAL_PLOT_PROJECT,
+        leadAdminName: savedAdmin?.name || INITIAL_PLOT_PROJECT.leadAdminName
+      };
+      localStorage.setItem(STORAGE_KEYS.PROJECT, JSON.stringify(initial));
+      return initial;
     }
     const parsed = JSON.parse(raw);
     const existingBank = parsed.bankDetails || {};
@@ -112,12 +160,12 @@ export const getStoredProject = (): PlotProject => {
       ? existingBank.accountNumber
       : DEFAULT_DEPOSIT_ACCOUNT;
 
+    const leadAdminName = parsed.leadAdminName || savedAdmin?.name || INITIAL_PLOT_PROJECT.leadAdminName;
+
     return {
       ...INITIAL_PLOT_PROJECT,
       ...parsed,
-      leadAdminName: (!parsed.leadAdminName || parsed.leadAdminName === 'Abir Mia')
-        ? 'Md. Minhazul Islam Abir'
-        : parsed.leadAdminName,
+      leadAdminName,
       bankDetails: {
         ...INITIAL_PLOT_PROJECT.bankDetails,
         ...existingBank,
@@ -133,6 +181,17 @@ export const getStoredProject = (): PlotProject => {
 
 export const saveStoredProject = (project: PlotProject) => {
   localStorage.setItem(STORAGE_KEYS.PROJECT, JSON.stringify(project));
+  if (project.leadAdminName) {
+    const savedAdmin = getStoredAdminProfile();
+    if (savedAdmin) {
+      localStorage.setItem(STORAGE_KEYS.ADMIN_PROFILE, JSON.stringify({
+        ...savedAdmin,
+        name: project.leadAdminName,
+        email: project.supportContactEmail || savedAdmin.email,
+        mobile: project.supportContactPhone || savedAdmin.mobile
+      }));
+    }
+  }
 };
 
 export const getStoredReminders = (): ReminderLog[] => {
@@ -154,8 +213,10 @@ export const getStoredSession = (): UserSession => {
     if (raw) {
       const parsed: UserSession = JSON.parse(raw);
       if (parsed && typeof parsed.isLoggedIn === 'boolean') {
-        if (parsed.memberName === 'Abir Mia') {
-          parsed.memberName = 'Md. Minhazul Islam Abir';
+        const savedAdmin = getStoredAdminProfile();
+        if (parsed.role === 'admin' && savedAdmin && savedAdmin.name) {
+          parsed.memberName = savedAdmin.name;
+          if (savedAdmin.email) parsed.email = savedAdmin.email;
         }
         return parsed;
       }

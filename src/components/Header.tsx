@@ -35,7 +35,6 @@ interface HeaderProps {
   onOpenMaintenanceModal?: () => void;
   onOpenAdminPanel?: () => void;
   onViewMyStatement?: () => void;
-  onOpenInstallModal?: () => void;
   themeMode: ThemeMode;
   onToggleThemeMode: () => void;
   pendingApprovalsCount?: number;
@@ -58,7 +57,6 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenMaintenanceModal,
   onOpenAdminPanel,
   onViewMyStatement,
-  onOpenInstallModal,
   themeMode,
   onToggleThemeMode,
   pendingApprovalsCount = 0,
@@ -262,18 +260,6 @@ export const Header: React.FC<HeaderProps> = ({
               <Moon className="w-4 h-4 text-sky-400" />
             )}
           </button>
-
-          {/* Install Web App (PWA) Button */}
-          {onOpenInstallModal && (
-            <button
-              onClick={onOpenInstallModal}
-              className="p-1.5 sm:p-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-emerald-400 transition-colors cursor-pointer"
-              title="Install App to Device / Home Screen"
-              aria-label="Install App"
-            >
-              <Smartphone className="w-4 h-4" />
-            </button>
-          )}
 
           {/* User Session Pill with Online status and Logout Icon (Request 4) */}
           {session.isLoggedIn ? (

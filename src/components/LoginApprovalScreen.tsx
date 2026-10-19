@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Member, UserSession, PlotProject } from '../types';
+import { getStoredAdminProfile } from '../services/storageService';
 import { 
   ShieldCheck, 
   Lock, 
@@ -59,8 +60,10 @@ export const LoginApprovalScreen: React.FC<LoginApprovalScreenProps> = ({
   const [successMessage, setSuccessMessage] = useState('');
   const [pendingApprovalNotice, setPendingApprovalNotice] = useState<string | null>(null);
 
-  const adminMember = members.find(m => m.role === 'admin') || members[0];
-  const leadAdminName = project.leadAdminName || adminMember?.name || 'Md. Minhazul Islam Abir';
+  const savedAdmin = getStoredAdminProfile();
+  const adminMember = members.find(m => m.role === 'admin') || members.find(m => m.id === 'm1') || (savedAdmin as Member) || members[0];
+  const leadAdminName = savedAdmin?.name || project.leadAdminName || adminMember?.name || 'Administrator';
+  const adminEmail = savedAdmin?.email || adminMember?.email || 'admin@syndicate.internal';
   const depositBank = project.bankDetails?.bankName || 'The City Bank PLC';
   const depositAccount = project.bankDetails?.accountNumber || '1781580054174';
 
@@ -69,16 +72,17 @@ export const LoginApprovalScreen: React.FC<LoginApprovalScreenProps> = ({
     setErrorMessage('');
     setPendingApprovalNotice(null);
 
-    // Verify Admin PIN (Master PIN: 2026 or admin member's custom PIN)
-    if (adminPin === '2026' || (adminMember && adminPin === adminMember.pin)) {
+    // Verify Admin PIN: Only the configured PIN is accepted (old PIN is removed once new PIN is set)
+    const validPin = (savedAdmin?.pin && savedAdmin.pin.trim()) || (adminMember?.pin && adminMember.pin.trim()) || '2026';
+    if (adminPin.trim() === validPin) {
       setSuccessMessage('Admin credentials verified. Logging in as Administrator...');
       setTimeout(() => {
         onLogin({
           isLoggedIn: true,
           role: 'admin',
-          memberId: adminMember?.id || 'm1',
+          memberId: adminMember?.id || savedAdmin?.id || 'm1',
           memberName: adminMember?.name || leadAdminName,
-          email: adminMember?.email || 'miabir9927@gmail.com',
+          email: adminMember?.email || adminEmail,
           isApproved: true
         });
       }, 500);
@@ -111,8 +115,9 @@ export const LoginApprovalScreen: React.FC<LoginApprovalScreenProps> = ({
       return;
     }
 
-    // Verify member PIN (targetMember.pin or fallback default 1234)
-    if (memberPin === targetMember.pin || memberPin === '1234') {
+    // Verify member PIN: Only the configured PIN is accepted (old PIN is removed once new PIN is set)
+    const expectedMemberPin = (targetMember.pin && targetMember.pin.trim()) || '1234';
+    if (memberPin.trim() === expectedMemberPin) {
       setSuccessMessage(`Login Approved: Verified identity for ${targetMember.name}. Loading portal...`);
       setTimeout(() => {
         onLogin({

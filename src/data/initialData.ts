@@ -24,7 +24,11 @@ export const INITIAL_PLOT_PROJECT: PlotProject = {
     routingNumber: '225272654',
     branch: 'Principal Branch, Dhaka',
     mfsNumber: '+880 1712-992700 (Citytouch / bKash)'
-  }
+  },
+  isMaintenanceMode: false,
+  maintenanceMessage: 'Scheduled Syndicate Treasury Audit & Maintenance. Member access will resume shortly.',
+  maintenanceEstimatedTime: 'October 17, 2026, 6:00 PM BST',
+  maintenanceStartedAt: ''
 };
 
 export const INITIAL_MEMBERS: Member[] = [

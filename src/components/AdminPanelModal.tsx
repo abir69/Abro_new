@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PlotProject, ThemeMode } from '../types';
+import { PlotProject, ThemeMode, Member } from '../types';
 import { 
   X, 
   Check, 
@@ -20,7 +20,8 @@ import {
   Clock,
   Layers,
   Shield,
-  Gem
+  Gem,
+  KeyRound
 } from 'lucide-react';
 
 interface AdminPanelModalProps {
@@ -33,6 +34,8 @@ interface AdminPanelModalProps {
   initialTab?: 'appearance' | 'branding' | 'directives' | 'maintenance' | 'footer';
   onExportStandaloneHtml?: () => void;
   onExportCSV?: () => void;
+  adminMember?: Member | null;
+  onSaveAdminPin?: (newPin: string) => void;
 }
 
 export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
@@ -44,7 +47,9 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   onToggleThemeMode,
   initialTab = 'appearance',
   onExportStandaloneHtml,
-  onExportCSV
+  onExportCSV,
+  adminMember,
+  onSaveAdminPin
 }) => {
   const [activeTab, setActiveTab] = useState<'appearance' | 'branding' | 'directives' | 'maintenance' | 'footer'>(initialTab);
 
@@ -95,9 +100,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const [footerCopyright, setFooterCopyright] = useState(project.footerCopyright || `© 2026 ${project.initiativeName} · All Rights Reserved`);
   const [supportEmail, setSupportEmail] = useState(project.supportContactEmail || 'miabir9927@gmail.com');
   const [supportPhone, setSupportPhone] = useState(project.supportContactPhone || '+880 1712-992700');
-
-  // Install Prompt State
-  const [installSuccessMessage, setInstallSuccessMessage] = useState<string | null>(null);
+  const [adminPin, setAdminPin] = useState(adminMember?.pin || '2026');
 
   useEffect(() => {
     if (isOpen) {
@@ -128,8 +131,9 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       setFooterCopyright(project.footerCopyright || `© 2026 ${project.initiativeName} · All Rights Reserved`);
       setSupportEmail(project.supportContactEmail || 'miabir9927@gmail.com');
       setSupportPhone(project.supportContactPhone || '+880 1712-992700');
+      setAdminPin(adminMember?.pin || '2026');
     }
-  }, [isOpen, project, initialTab]);
+  }, [isOpen, project, initialTab, adminMember]);
 
   if (!isOpen) return null;
 
@@ -169,25 +173,12 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       supportContactPhone: supportPhone.trim()
     };
 
+    if (onSaveAdminPin && adminPin.trim()) {
+      onSaveAdminPin(adminPin.trim());
+    }
+
     onSaveProject(updated);
     onClose();
-  };
-
-  const handleInstallApp = () => {
-    // If browser supports beforeinstallprompt
-    const promptEvent = (window as any).deferredInstallPrompt;
-    if (promptEvent) {
-      promptEvent.prompt();
-      promptEvent.userChoice.then((choiceResult: any) => {
-        if (choiceResult.outcome === 'accepted') {
-          setInstallSuccessMessage('App installed successfully to your device home screen!');
-        }
-      });
-    } else {
-      setInstallSuccessMessage(
-        'To install on Android: Tap the 3 dots (⋮) in Chrome and tap "Add to Home screen". On iOS / Safari: Tap Share (⎋) and tap "Add to Home Screen".'
-      );
-    }
   };
 
   return (
@@ -281,8 +272,8 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
               }`}
             >
-              <Smartphone className="w-3.5 h-3.5" />
-              <span>Footer & Install</span>
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Admin Profile & Backup</span>
             </button>
           </div>
         </div>
@@ -696,34 +687,20 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
             </div>
           )}
 
-          {/* TAB 5: FOOTER, INSTALL & BACKUP (Request 9) */}
+          {/* TAB 5: ADMIN PROFILE, BACKUP & SIGNATORIES */}
           {activeTab === 'footer' && (
             <div className="space-y-4">
-              {/* Install PWA Option */}
-              <div className="p-4 bg-slate-950/80 rounded-xl border border-slate-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-600/20 text-emerald-400 flex items-center justify-center">
-                      <Smartphone className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-white">Install Web App (PWA)</h4>
-                      <p className="text-[11px] text-slate-400">Install to phone or desktop home screen for one-tap access</p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleInstallApp}
-                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow-sm transition-all cursor-pointer"
-                  >
-                    Install App
-                  </button>
+              {/* Admin Profile Overview Notice */}
+              <div className="p-4 bg-slate-950/80 rounded-xl border border-slate-800 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-5 h-5" />
                 </div>
-                {installSuccessMessage && (
-                  <div className="p-2.5 rounded-lg bg-emerald-950/60 border border-emerald-800/80 text-emerald-300 text-xs">
-                    {installSuccessMessage}
-                  </div>
-                )}
+                <div>
+                  <h4 className="text-xs font-bold text-white">Lead Admin Profile & Syndicate Signatories</h4>
+                  <p className="text-[11px] text-slate-400">
+                    Changes made here synchronize immediately to cloud Firestore, local storage, and the member profile so your credentials and information never reset.
+                  </p>
+                </div>
               </div>
 
               {/* Data Export Options */}
@@ -806,6 +783,32 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                     className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 font-mono"
                   />
                 </div>
+              </div>
+
+              {/* Admin Security PIN (Login Credentials) */}
+              <div className="p-4 bg-slate-950/80 rounded-xl border border-slate-800 space-y-2">
+                <div className="flex items-center gap-2">
+                  <KeyRound className="w-4 h-4 text-emerald-400" />
+                  <label className="text-xs font-bold text-white block">
+                    Admin Security PIN (Login Access)
+                  </label>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <input
+                    type="text"
+                    maxLength={10}
+                    value={adminPin}
+                    onChange={(e) => setAdminPin(e.target.value)}
+                    placeholder="Enter Admin PIN"
+                    className="w-full sm:w-64 bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-emerald-400 font-mono tracking-widest focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
+                  <span className="text-[11px] text-slate-400">
+                    Configures authentication for Syndicate Administrator access.
+                  </span>
+                </div>
+                <p className="text-[11px] text-amber-300/90 bg-amber-500/10 border border-amber-500/20 rounded-lg p-2 mt-1">
+                  Security Rule: When a new PIN is saved, the previous PIN is permanently removed and cannot be used for login anymore.
+                </p>
               </div>
 
               <div>

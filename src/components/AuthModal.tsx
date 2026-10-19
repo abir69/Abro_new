@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Member, UserSession } from '../types';
+import { getStoredAdminProfile } from '../services/storageService';
 import { ShieldCheck, Lock, User, KeyRound, AlertCircle, CheckCircle2, X } from 'lucide-react';
 
 interface AuthModalProps {
@@ -31,15 +32,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const handleAdminLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
-    // Master admin pin: 2026 or admin member PIN
-    const adminMember = members.find(m => m.role === 'admin') || members[0];
-    if (adminPin === '2026' || adminPin === adminMember?.pin || adminPin.toLowerCase() === 'admin123') {
+    const savedAdmin = getStoredAdminProfile();
+    const adminMember = members.find(m => m.role === 'admin') || members.find(m => m.id === 'm1') || (savedAdmin as Member) || members[0];
+    const validPin = (savedAdmin?.pin && savedAdmin.pin.trim()) || (adminMember?.pin && adminMember.pin.trim()) || '2026';
+    if (adminPin.trim() === validPin) {
       const session: UserSession = {
         isLoggedIn: true,
         role: 'admin',
-        memberId: adminMember.id,
-        memberName: adminMember.name,
-        email: adminMember.email
+        memberId: adminMember?.id || savedAdmin?.id || 'm1',
+        memberName: adminMember?.name || savedAdmin?.name || 'Administrator',
+        email: adminMember?.email || savedAdmin?.email || 'admin@syndicate.internal'
       };
       setSuccessMessage('Admin authentication verified successfully.');
       setTimeout(() => {
@@ -71,7 +73,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return;
     }
 
-    if (memberPin === targetMember.pin || memberPin === '1234') {
+    // Verify member PIN: Only the configured PIN is accepted (old PIN is removed once new PIN is set)
+    const expectedMemberPin = (targetMember.pin && targetMember.pin.trim()) || '1234';
+    if (memberPin.trim() === expectedMemberPin) {
       const session: UserSession = {
         isLoggedIn: true,
         role: targetMember.role,
