@@ -10,6 +10,8 @@ interface ReceiptVoucherModalProps {
   member?: Member;
   project: PlotProject;
   onSendWhatsAppCongrats?: (tx: Transaction) => void;
+  isAdmin?: boolean;
+  currentMemberId?: string;
 }
 
 export const ReceiptVoucherModal: React.FC<ReceiptVoucherModalProps> = ({
@@ -18,9 +20,36 @@ export const ReceiptVoucherModal: React.FC<ReceiptVoucherModalProps> = ({
   transaction,
   member,
   project,
-  onSendWhatsAppCongrats
+  onSendWhatsAppCongrats,
+  isAdmin,
+  currentMemberId
 }) => {
   if (!isOpen || !transaction) return null;
+
+  // Role-based security: Admins can view/print all vouchers; regular members can ONLY view/download their own vouchers
+  const isAuthorized = isAdmin || (!!currentMemberId && transaction.memberId === currentMemberId);
+
+  if (!isAuthorized) {
+    return (
+      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-fadeIn">
+        <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center shadow-2xl">
+          <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center mx-auto mb-3">
+            <ShieldCheck className="w-6 h-6" />
+          </div>
+          <h3 className="text-base font-bold text-white mb-1.5">Voucher Access Restricted</h3>
+          <p className="text-xs text-slate-300 mb-4 leading-relaxed">
+            Data Security Policy: Syndicate members are strictly authorized to view and print/download <strong>only their own personal deposit vouchers</strong>. Financial vouchers belonging to other members are confidential.
+          </p>
+          <button
+            onClick={onClose}
+            className="w-full py-2 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-sm animate-fadeIn">

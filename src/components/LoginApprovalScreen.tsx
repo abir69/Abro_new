@@ -72,8 +72,11 @@ export const LoginApprovalScreen: React.FC<LoginApprovalScreenProps> = ({
     setErrorMessage('');
     setPendingApprovalNotice(null);
 
-    // Verify Admin PIN: Only the configured PIN is accepted (old PIN is removed once new PIN is set)
-    const validPin = (savedAdmin?.pin && savedAdmin.pin.trim()) || (adminMember?.pin && adminMember.pin.trim()) || '2026';
+    // Verify Admin PIN: Only the latest configured PIN is accepted (old PIN is permanently removed once new PIN is set)
+    const validPin = (project.adminPin && project.adminPin.trim())
+      || (adminMember?.pin && adminMember.pin.trim())
+      || (savedAdmin?.pin && savedAdmin.pin.trim())
+      || '2026';
     if (adminPin.trim() === validPin) {
       setSuccessMessage('Admin credentials verified. Logging in as Administrator...');
       setTimeout(() => {

@@ -187,11 +187,52 @@ export const saveStoredProject = (project: PlotProject) => {
       localStorage.setItem(STORAGE_KEYS.ADMIN_PROFILE, JSON.stringify({
         ...savedAdmin,
         name: project.leadAdminName,
+        pin: project.adminPin || savedAdmin.pin,
         email: project.supportContactEmail || savedAdmin.email,
         mobile: project.supportContactPhone || savedAdmin.mobile
       }));
     }
   }
+};
+
+export const applyThemeAndStyles = (
+  theme?: string,
+  font?: string,
+  radius?: string
+) => {
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement;
+  const body = document.body;
+
+  // 1. Theme Color Palette
+  const allThemes = ['theme-emerald', 'theme-indigo', 'theme-blue', 'theme-violet', 'theme-amber', 'theme-slate'];
+  const activeThemeClass = `theme-${theme || 'emerald'}`;
+  allThemes.forEach(cls => {
+    root.classList.remove(cls);
+    body.classList.remove(cls);
+  });
+  root.classList.add(activeThemeClass);
+  body.classList.add(activeThemeClass);
+
+  // 2. Font Family Typography
+  const allFonts = ['font-family-inter', 'font-family-roboto', 'font-family-jakarta', 'font-family-outfit', 'font-family-mono'];
+  const activeFontClass = `font-family-${font || 'inter'}`;
+  allFonts.forEach(cls => {
+    root.classList.remove(cls);
+    body.classList.remove(cls);
+  });
+  root.classList.add(activeFontClass);
+  body.classList.add(activeFontClass);
+
+  // 3. Border Radius Style
+  const allRadii = ['radius-sharp', 'radius-rounded', 'radius-smooth'];
+  const activeRadiusClass = `radius-${radius || 'smooth'}`;
+  allRadii.forEach(cls => {
+    root.classList.remove(cls);
+    body.classList.remove(cls);
+  });
+  root.classList.add(activeRadiusClass);
+  body.classList.add(activeRadiusClass);
 };
 
 export const getStoredReminders = (): ReminderLog[] => {

@@ -26,7 +26,8 @@ import {
   ExternalLink,
   Calculator,
   FileText,
-  Lock
+  Lock,
+  ShieldCheck
 } from 'lucide-react';
 
 interface MemberDetailHistoryModalProps {
@@ -221,17 +222,27 @@ export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> =
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                onClose();
-                onOpenPrintStatement(member);
-              }}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-1.5 rounded-xl border border-emerald-500/40 flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
-              title="Export single member PDF statement"
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span>Export PDF Statement</span>
-            </button>
+            {(isAdmin || currentMemberId === member.id) ? (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenPrintStatement(member);
+                }}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-1.5 rounded-xl border border-emerald-500/40 flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+                title="Export single member PDF statement"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Export PDF Statement</span>
+              </button>
+            ) : (
+              <div
+                className="bg-slate-950/70 border border-slate-800 text-slate-400 text-xs px-2.5 py-1.5 rounded-xl flex items-center gap-1.5"
+                title="Data Security: Only this member or admin can export this statement"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Confidential</span>
+              </div>
+            )}
 
             {(isAdmin || currentMemberId === member.id) && (
               <button

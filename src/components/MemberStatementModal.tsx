@@ -52,6 +52,30 @@ export const MemberStatementModal: React.FC<MemberStatementModalProps> = ({
 
   if (!isOpen || !member) return null;
 
+  const isAuthorized = isAdmin || (!!currentMemberId && member.id === currentMemberId);
+
+  if (!isAuthorized) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-fadeIn">
+        <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center shadow-2xl">
+          <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center mx-auto mb-3">
+            <ShieldCheck className="w-6 h-6" />
+          </div>
+          <h3 className="text-base font-bold text-white mb-1.5">Statement Download Restricted</h3>
+          <p className="text-xs text-slate-300 mb-4 leading-relaxed">
+            Data Security Policy: Syndicate members are strictly authorized to view and download <strong>only their own personal statement</strong>. You cannot access or download financial records belonging to <strong>{member.name}</strong>.
+          </p>
+          <button
+            onClick={onClose}
+            className="w-full py-2 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Filter this member's deposits sorted chronologically for statement
   const memberTxs = transactions
     .filter(t => t.memberId === member.id)
@@ -61,6 +85,9 @@ export const MemberStatementModal: React.FC<MemberStatementModalProps> = ({
   const dueSummary = calculateMemberDueSummary(member, transactions, project, 'October 2026');
 
   const handleExportPdf = () => {
+    if (!isAuthorized) {
+      return;
+    }
     exportMemberStatementPDF({
       member,
       transactions,
@@ -73,6 +100,9 @@ export const MemberStatementModal: React.FC<MemberStatementModalProps> = ({
   };
 
   const handleDownloadHtml = () => {
+    if (!isAuthorized) {
+      return;
+    }
     downloadMemberStatementHtml({
       member,
       transactions,

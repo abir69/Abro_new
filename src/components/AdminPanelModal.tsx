@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PlotProject, ThemeMode, Member } from '../types';
+import { applyThemeAndStyles } from '../services/storageService';
 import { 
   X, 
   Check, 
@@ -28,7 +29,7 @@ interface AdminPanelModalProps {
   isOpen: boolean;
   onClose: () => void;
   project: PlotProject;
-  onSaveProject: (updated: PlotProject) => void;
+  onSaveProject: (updated: PlotProject, newAdminPin?: string) => void;
   themeMode: ThemeMode;
   onToggleThemeMode: () => void;
   initialTab?: 'appearance' | 'branding' | 'directives' | 'maintenance' | 'footer';
@@ -131,14 +132,21 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       setFooterCopyright(project.footerCopyright || `© 2026 ${project.initiativeName} · All Rights Reserved`);
       setSupportEmail(project.supportContactEmail || 'miabir9927@gmail.com');
       setSupportPhone(project.supportContactPhone || '+880 1712-992700');
-      setAdminPin(adminMember?.pin || '2026');
+      setAdminPin(project.adminPin || adminMember?.pin || '2026');
     }
   }, [isOpen, project, initialTab, adminMember]);
 
   if (!isOpen) return null;
 
+  const handleClose = () => {
+    // Revert preview to saved project styles if dismissed without saving
+    applyThemeAndStyles(project.appTheme, project.fontFamily, project.borderRadiusStyle);
+    onClose();
+  };
+
   const handleSaveAll = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    const pinToSet = adminPin.trim() || project.adminPin || adminMember?.pin || '2026';
     const updated: PlotProject = {
       ...project,
       initiativeName: initiativeName.trim() || project.initiativeName,
@@ -150,6 +158,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       borderRadiusStyle: selectedRadius,
       customLogoIcon: logoIcon,
       customLogoUrl: customLogoUrl.trim(),
+      adminPin: pinToSet,
       bankDetails: {
         ...project.bankDetails,
         accountName: accountName.trim() || project.bankDetails.accountName,
@@ -173,11 +182,13 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       supportContactPhone: supportPhone.trim()
     };
 
-    if (onSaveAdminPin && adminPin.trim()) {
-      onSaveAdminPin(adminPin.trim());
+    applyThemeAndStyles(selectedTheme, selectedFont, selectedRadius);
+
+    if (onSaveAdminPin && pinToSet) {
+      onSaveAdminPin(pinToSet);
     }
 
-    onSaveProject(updated);
+    onSaveProject(updated, pinToSet);
     onClose();
   };
 
@@ -203,7 +214,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -330,7 +341,10 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                     <button
                       key={theme.id}
                       type="button"
-                      onClick={() => setSelectedTheme(theme.id as any)}
+                      onClick={() => {
+                        setSelectedTheme(theme.id as any);
+                        applyThemeAndStyles(theme.id, selectedFont, selectedRadius);
+                      }}
                       className={`p-3 rounded-xl border text-left flex items-center gap-2.5 transition-all cursor-pointer ${
                         selectedTheme === theme.id
                           ? 'border-emerald-500 bg-slate-950/90 ring-1 ring-emerald-500/50'
@@ -364,7 +378,10 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                     <button
                       key={font.id}
                       type="button"
-                      onClick={() => setSelectedFont(font.id as any)}
+                      onClick={() => {
+                        setSelectedFont(font.id as any);
+                        applyThemeAndStyles(selectedTheme, font.id, selectedRadius);
+                      }}
                       className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                         selectedFont === font.id
                           ? 'border-emerald-500 bg-slate-950/90 ring-1 ring-emerald-500/50'
@@ -395,7 +412,10 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                     <button
                       key={rad.id}
                       type="button"
-                      onClick={() => setSelectedRadius(rad.id as any)}
+                      onClick={() => {
+                        setSelectedRadius(rad.id as any);
+                        applyThemeAndStyles(selectedTheme, selectedFont, rad.id);
+                      }}
                       className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
                         selectedRadius === rad.id
                           ? 'border-emerald-500 bg-slate-950/90 ring-1 ring-emerald-500/50'
@@ -830,7 +850,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         <div className="p-4 border-t border-slate-800 bg-slate-950/80 flex items-center justify-between shrink-0">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
           >
             Cancel

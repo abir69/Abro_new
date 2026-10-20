@@ -25,6 +25,10 @@ export const INITIAL_PLOT_PROJECT: PlotProject = {
     branch: 'Principal Branch, Dhaka',
     mfsNumber: '+880 1712-992700 (Citytouch / bKash)'
   },
+  adminPin: '2026',
+  appTheme: 'emerald',
+  fontFamily: 'inter',
+  borderRadiusStyle: 'smooth',
   isMaintenanceMode: false,
   maintenanceMessage: 'Scheduled Syndicate Treasury Audit & Maintenance. Member access will resume shortly.',
   maintenanceEstimatedTime: 'October 17, 2026, 6:00 PM BST',

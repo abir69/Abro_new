@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Member, UserSession } from '../types';
-import { getStoredAdminProfile } from '../services/storageService';
+import { Member, UserSession, PlotProject } from '../types';
+import { getStoredAdminProfile, getStoredProject } from '../services/storageService';
 import { ShieldCheck, Lock, User, KeyRound, AlertCircle, CheckCircle2, X } from 'lucide-react';
 
 interface AuthModalProps {
@@ -9,6 +9,7 @@ interface AuthModalProps {
   members: Member[];
   currentSession: UserSession;
   onLogin: (session: UserSession) => void;
+  project?: PlotProject;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
@@ -16,7 +17,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onClose,
   members,
   currentSession,
-  onLogin
+  onLogin,
+  project
 }) => {
   const [activeTab, setActiveTab] = useState<'admin' | 'member'>('admin');
   const [adminPin, setAdminPin] = useState('');
@@ -33,8 +35,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     e.preventDefault();
     setErrorMessage('');
     const savedAdmin = getStoredAdminProfile();
+    const storedProj = getStoredProject();
+    const activeProject = project || storedProj;
     const adminMember = members.find(m => m.role === 'admin') || members.find(m => m.id === 'm1') || (savedAdmin as Member) || members[0];
-    const validPin = (savedAdmin?.pin && savedAdmin.pin.trim()) || (adminMember?.pin && adminMember.pin.trim()) || '2026';
+    const validPin = (activeProject?.adminPin && activeProject.adminPin.trim())
+      || (adminMember?.pin && adminMember.pin.trim())
+      || (savedAdmin?.pin && savedAdmin.pin.trim())
+      || '2026';
     if (adminPin.trim() === validPin) {
       const session: UserSession = {
         isLoggedIn: true,

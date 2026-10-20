@@ -18,7 +18,8 @@ import {
   Check,
   FileText,
   Users,
-  X
+  X,
+  Lock
 } from 'lucide-react';
 
 interface LedgerTableProps {
@@ -435,13 +436,24 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
                       </button>
                     )}
 
-                    <button
-                      onClick={() => onViewReceipt(tx)}
-                      className="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg flex items-center gap-1 border border-slate-700 cursor-pointer"
-                    >
-                      <Eye className="w-3.5 h-3.5 text-slate-400" />
-                      <span>Receipt</span>
-                    </button>
+                    {(isAdmin || !currentMemberId || tx.memberId === currentMemberId) ? (
+                      <button
+                        onClick={() => onViewReceipt(tx)}
+                        className="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg flex items-center gap-1 border border-slate-700 cursor-pointer"
+                        title="View and print/download personal deposit receipt"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Receipt</span>
+                      </button>
+                    ) : (
+                      <span
+                        className="px-2 py-1 text-[11px] bg-slate-900/60 text-slate-500 rounded-lg flex items-center gap-1 border border-slate-800/80 cursor-not-allowed opacity-50"
+                        title="Confidential: Only depositor and admin can access receipt"
+                      >
+                        <Lock className="w-3 h-3 text-slate-500" />
+                        <span>Private</span>
+                      </span>
+                    )}
 
                     {onViewMemberStatement && member && (isAdmin || member.id === currentMemberId) && (
                       <button
@@ -685,13 +697,22 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
                             </button>
                           )}
 
-                          <button
-                            onClick={() => onViewReceipt(tx)}
-                            title="View Receipt Slip"
-                            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                          </button>
+                          {(isAdmin || !currentMemberId || tx.memberId === currentMemberId) ? (
+                            <button
+                              onClick={() => onViewReceipt(tx)}
+                              title="View Receipt Slip"
+                              className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+                          ) : (
+                            <span
+                              title="Receipt download restricted to depositor"
+                              className="p-1.5 text-slate-600 cursor-not-allowed opacity-50"
+                            >
+                              <Lock className="w-3.5 h-3.5 text-slate-600" />
+                            </span>
+                          )}
 
                           {onViewMemberStatement && member && (isAdmin || member.id === currentMemberId) && (
                             <button

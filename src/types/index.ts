@@ -91,6 +91,7 @@ export interface PlotProject {
   currency: string;
   symbol: string;
   dueDayOfMonth: number; // e.g. 10th of every month
+  adminPin?: string; // 4-digit or custom security PIN for Admin login
   isMaintenanceMode?: boolean;
   maintenanceMessage?: string;
   maintenanceEstimatedTime?: string;

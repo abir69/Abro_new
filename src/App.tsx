@@ -27,7 +27,8 @@ import {
   getStoredTheme,
   saveStoredTheme,
   saveStoredAdminProfile,
-  getStoredAdminProfile
+  getStoredAdminProfile,
+  applyThemeAndStyles
 } from './services/storageService';
 
 import { Header } from './components/Header';
@@ -76,7 +77,8 @@ import {
   ArrowUp,
   Settings,
   Smartphone,
-  ShieldAlert
+  ShieldAlert,
+  Plus
 } from 'lucide-react';
 
 export default function App() {
@@ -156,11 +158,20 @@ export default function App() {
     }
 
     // 1. Instant local render
-    setMembers(getStoredMembers());
-    setTransactions(getStoredTransactions());
-    setProject(getStoredProject());
-    setRemindersLog(getStoredReminders());
-    setSession(getStoredSession());
+    const initialMembers = getStoredMembers();
+    const initialTxs = getStoredTransactions();
+    const initialProject = getStoredProject();
+    const initialReminders = getStoredReminders();
+    const initialSession = getStoredSession();
+
+    setMembers(initialMembers);
+    setTransactions(initialTxs);
+    setProject(initialProject);
+    setRemindersLog(initialReminders);
+    setSession(initialSession);
+
+    // Synchronize initial theme, font, and border radius to DOM
+    applyThemeAndStyles(initialProject.appTheme, initialProject.fontFamily, initialProject.borderRadiusStyle);
 
     // 2. Check for shareable link query parameters: ?form=deposit&member=m1
     try {
@@ -199,6 +210,7 @@ export default function App() {
       if (liveProj) {
         setProject(liveProj);
         saveStoredProject(liveProj);
+        applyThemeAndStyles(liveProj.appTheme, liveProj.fontFamily, liveProj.borderRadiusStyle);
         setIsCloudSynced(true);
       }
     });
@@ -215,6 +227,11 @@ export default function App() {
       unsubReminders();
     };
   }, []);
+
+  // Reactive synchronizer: whenever project appearance changes, update classes globally
+  useEffect(() => {
+    applyThemeAndStyles(project.appTheme, project.fontFamily, project.borderRadiusStyle);
+  }, [project.appTheme, project.fontFamily, project.borderRadiusStyle]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -433,12 +450,13 @@ export default function App() {
     updateMembers(updated);
     saveMemberToCloud(updatedMember).catch(err => console.error('[Firestore] Save member error:', err));
     
-    // If admin profile is updated, keep project lead admin & contact in sync so it NEVER reverts on logout or reload
+    // If admin profile is updated, keep project lead admin, pin & contact in sync so it NEVER reverts on logout or reload
     if (updatedMember.id === 'm1' || updatedMember.role === 'admin') {
       saveStoredAdminProfile(updatedMember);
       const updatedProject: PlotProject = {
         ...project,
         leadAdminName: updatedMember.name,
+        adminPin: updatedMember.pin || project.adminPin,
         supportContactEmail: updatedMember.email || project.supportContactEmail,
         supportContactPhone: updatedMember.mobile || project.supportContactPhone,
         maintenanceStartedAt: project.isMaintenanceMode ? (project.maintenanceStartedAt || new Date().toISOString()) : ''
@@ -475,9 +493,11 @@ export default function App() {
   };
 
   // Update Project Initiative & Statement Signatories
-  const handleUpdateProject = (updatedProject: PlotProject) => {
+  const handleUpdateProject = (updatedProject: PlotProject, newAdminPin?: string) => {
+    const pinToUse = (newAdminPin && newAdminPin.trim()) || (updatedProject.adminPin && updatedProject.adminPin.trim()) || project.adminPin;
     const sanitizedProject: PlotProject = {
       ...updatedProject,
+      adminPin: pinToUse,
       maintenanceStartedAt: updatedProject.isMaintenanceMode 
         ? (updatedProject.maintenanceStartedAt || new Date().toISOString()) 
         : ''
@@ -485,12 +505,14 @@ export default function App() {
     setProject(sanitizedProject);
     saveStoredProject(sanitizedProject);
     saveProjectToCloud(sanitizedProject).catch(err => console.error('[Firestore] Update project error:', err));
+    applyThemeAndStyles(sanitizedProject.appTheme, sanitizedProject.fontFamily, sanitizedProject.borderRadiusStyle);
 
-    // CRITICAL: Synchronize admin member profile if leadAdminName or contact was changed in project settings!
+    // CRITICAL: Synchronize admin member profile AND PIN so old PIN is permanently removed
     const adminMember = members.find(m => m.id === 'm1' || m.role === 'admin');
     if (adminMember) {
       const updatedAdmin: Member = {
         ...adminMember,
+        pin: pinToUse || adminMember.pin || '2026',
         name: sanitizedProject.leadAdminName || adminMember.name,
         email: sanitizedProject.supportContactEmail || adminMember.email,
         mobile: sanitizedProject.supportContactPhone || adminMember.mobile
@@ -508,23 +530,34 @@ export default function App() {
         });
       }
     }
-    showToast('Admin profile and syndicate settings saved successfully.');
+    showToast('Syndicate settings, styling, and admin security PIN saved successfully.');
   };
 
   // Dedicated Admin PIN setup handler: replaces old PIN permanently across database and storage
   const handleSaveAdminPin = (newPin: string) => {
+    if (!newPin.trim()) return;
+    const cleanPin = newPin.trim();
     const adminMember = members.find(m => m.id === 'm1' || m.role === 'admin');
-    if (adminMember && newPin.trim()) {
+    if (adminMember) {
       const updatedAdmin: Member = {
         ...adminMember,
-        pin: newPin.trim()
+        pin: cleanPin
       };
       saveStoredAdminProfile(updatedAdmin);
       const updatedMembers = members.map(m => m.id === adminMember.id ? updatedAdmin : m);
       setMembers(updatedMembers);
       saveStoredMembers(updatedMembers);
       saveMemberToCloud(updatedAdmin).catch(err => console.error('[Firestore] Update admin PIN err:', err));
-      showToast('Admin Security PIN updated successfully. Previous PIN has been removed.');
+
+      const updatedProject: PlotProject = {
+        ...project,
+        adminPin: cleanPin
+      };
+      setProject(updatedProject);
+      saveStoredProject(updatedProject);
+      saveProjectToCloud(updatedProject).catch(err => console.error('[Firestore] Update project PIN err:', err));
+
+      showToast('Admin Security PIN updated successfully. Previous PIN has been permanently removed.');
     }
   };
 
@@ -595,8 +628,46 @@ export default function App() {
     setIsStatementModalOpen(true);
   };
 
-  // CSV Ledger Exporter
+  // CSV Ledger Exporter with Data Confidentiality Protection
   const handleExportCSV = () => {
+    if (!isAdmin) {
+      if (!session.memberId) {
+        showToast('Security Alert: You are not authorized to download ledger records.');
+        return;
+      }
+      const myMember = members.find(m => m.id === session.memberId);
+      const myTxs = transactions.filter(t => t.memberId === session.memberId);
+
+      if (myTxs.length === 0) {
+        showToast('No verified transaction records available for your account.');
+        return;
+      }
+
+      const headers = ['Date', 'Cycle', 'Reference', 'Member Name', 'Gross Amount', 'Payment Method', 'Channel/Bank', 'Status', 'Notes'];
+      const rows = myTxs.map(t => [
+        t.date,
+        t.monthPeriod,
+        t.referenceNumber,
+        `"${myMember?.name || t.memberName}"`,
+        t.amount,
+        t.method,
+        `"${t.bankOrChannel || ''}"`,
+        t.status,
+        `"${t.notes || ''}"`
+      ]);
+
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `Aristo_Personal_Statement_${(myMember?.name || 'Member').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('Your personal deposit records downloaded as CSV.');
+      return;
+    }
+
     const headers = ['Date', 'Cycle', 'Reference', 'Member Name', 'Member Phone', 'Gross Amount', 'Payment Method', 'Channel/Bank', 'Status', 'Notes'];
     const rows = transactions.map(t => {
       const member = members.find(m => m.id === t.memberId);
@@ -627,6 +698,10 @@ export default function App() {
 
   // Download Standalone Single-File index.html
   const handleDownloadStandaloneHtml = async () => {
+    if (!isAdmin) {
+      showToast('Security Alert: Only syndicate administration can export standalone bundle.');
+      return;
+    }
     try {
       const response = await fetch('/standalone.html');
       const htmlText = await response.text();
@@ -649,7 +724,7 @@ export default function App() {
   // Maintenance Mode Gatekeeper (Request 8): If maintenance mode is active and user is not admin, show maintenance screen
   if (project.isMaintenanceMode && session.role !== 'admin') {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
+      <div className={`min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white theme-${project.appTheme || 'emerald'} font-family-${project.fontFamily || 'inter'} radius-${project.borderRadiusStyle || 'smooth'}`}>
         <MaintenanceScreen
           project={project}
           themeMode={themeMode}
@@ -666,6 +741,7 @@ export default function App() {
           members={members}
           currentSession={session}
           onLogin={updateSession}
+          project={project}
         />
       </div>
     );
@@ -674,7 +750,7 @@ export default function App() {
   // Gatekeeper: Require login approval before loading the app
   if (!session.isLoggedIn) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
+      <div className={`min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white theme-${project.appTheme || 'emerald'} font-family-${project.fontFamily || 'inter'} radius-${project.borderRadiusStyle || 'smooth'}`}>
         {/* Toast Notification */}
         {toastMessage && (
           <div className="fixed bottom-5 right-5 z-[80] bg-emerald-600 text-white px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 text-xs font-semibold animate-bounce">
@@ -706,7 +782,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
+    <div className={`min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white theme-${project.appTheme || 'emerald'} font-family-${project.fontFamily || 'inter'} radius-${project.borderRadiusStyle || 'smooth'}`}>
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-5 right-5 z-[80] bg-emerald-600 text-white px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 text-xs font-semibold animate-bounce">
@@ -738,7 +814,6 @@ export default function App() {
               }
             }
           }}
-          onOpenDepositForm={() => handleOpenDepositForm()}
           onOpenApprovalsQueue={() => setIsApprovalsModalOpen(true)}
           onOpenMaintenanceModal={() => handleOpenAdminPanel('maintenance')}
           onOpenAdminPanel={() => handleOpenAdminPanel('appearance')}
@@ -813,6 +888,10 @@ export default function App() {
             }}
             onDeleteTransaction={handleDeleteTransaction}
             onViewReceipt={(tx) => {
+              if (!isAdmin && session.memberId && tx.memberId !== session.memberId) {
+                showToast('Data Security: You are authorized to view and download only your personal deposit receipts.');
+                return;
+              }
               setSelectedReceiptTx(tx);
               setIsReceiptModalOpen(true);
             }}
@@ -899,14 +978,22 @@ export default function App() {
           <span>Ledger</span>
         </button>
 
-        {/* Floating Quick Action: Auto-selects logged-in member */}
+        {/* Restored Mobile Deposit Button (Elevated Center Quick Action) */}
         <button
-          onClick={() => handleOpenDepositForm()}
-          className="flex flex-col items-center -mt-5 bg-gradient-to-tr from-emerald-600 via-teal-500 to-indigo-600 text-white rounded-full p-2.5 shadow-xl shadow-emerald-950 border-2 border-slate-950 active:scale-95 transition-transform"
-          title="Submit Deposit Voucher (Auto-selects your account)"
+          onClick={() => {
+            if (isAdmin) {
+              setIsAddModalOpen(true);
+            } else {
+              handleOpenDepositForm();
+            }
+          }}
+          className="flex flex-col items-center gap-0.5 py-0.5 px-2 rounded-lg text-emerald-400 hover:text-emerald-300 transition-transform active:scale-95 cursor-pointer"
+          title={isAdmin ? "Record New Deposit" : "Submit Monthly Deposit"}
         >
-          <FileSpreadsheet className="w-5 h-5" />
-          <span className="text-[9px] font-black uppercase tracking-wider mt-0.5">Deposit</span>
+          <div className="w-8 h-8 -mt-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-950 border-2 border-slate-950">
+            <Plus className="w-5 h-5 font-bold" />
+          </div>
+          <span className="font-bold text-emerald-400 text-[10px]">Deposit</span>
         </button>
 
         <button
@@ -965,15 +1052,8 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
-            <button
-              onClick={() => handleOpenDepositForm()}
-              className="text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-1 cursor-pointer"
-            >
-              <span>Deposit Form</span>
-            </button>
             {isAdmin && (
               <>
-                <span>·</span>
                 <button
                   onClick={handleDownloadStandaloneHtml}
                   className="text-emerald-300 hover:text-white bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700/80 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer font-medium"
@@ -1027,6 +1107,7 @@ export default function App() {
         members={members}
         currentSession={session}
         onLogin={updateSession}
+        project={project}
       />
 
       {/* Google Form Public Deposit Submission Modal with Shareable Link */}
@@ -1128,6 +1209,8 @@ export default function App() {
         transaction={selectedReceiptTx}
         member={members.find(m => m.id === selectedReceiptTx?.memberId)}
         project={project}
+        isAdmin={isAdmin}
+        currentMemberId={session.memberId}
         onSendWhatsAppCongrats={isAdmin ? handleOpenWhatsAppCongrats : undefined}
       />
 

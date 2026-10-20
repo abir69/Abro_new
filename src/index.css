@@ -237,3 +237,396 @@ body.theme-light {
   border-color: #c7d2fe !important;
 }
 
+/* =========================================================
+   TYPOGRAPHY & FONT FAMILIES (Admin Panel Typography)
+   ========================================================= */
+html.font-family-inter, body.font-family-inter, .font-family-inter,
+html.font-family-inter * :not([class*="font-mono"]):not([class*="code"]):not(code):not(pre),
+body.font-family-inter * :not([class*="font-mono"]):not([class*="code"]):not(code):not(pre),
+.font-family-inter * :not([class*="font-mono"]):not([class*="code"]):not(code):not(pre) {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+html.font-family-roboto, body.font-family-roboto, .font-family-roboto,
+html.font-family-roboto * :not([class*="font-mono"]):not([class*="code"]):not(code):not(pre),
+body.font-family-roboto * :not([class*="font-mono"]):not([class*="code"]):not(code):not(pre),
+.font-family-roboto * :not([class*="font-mono"]):not([class*="code"]):not(code):not(pre) {
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+html.font-family-jakarta, body.font-family-jakarta, .font-family-jakarta,
+html.font-family-jakarta * :not([class*="font-mono"]):not([class*="code"]):not(code):not(pre),
+body.font-family-jakarta * :not([class*="font-mono"]):not([class*="code"]):not(code):not(pre),
+.font-family-jakarta * :not([class*="font-mono"]):not([class*="code"]):not(code):not(pre) {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+html.font-family-outfit, body.font-family-outfit, .font-family-outfit,
+html.font-family-outfit * :not([class*="font-mono"]):not([class*="code"]):not(code):not(pre),
+body.font-family-outfit * :not([class*="font-mono"]):not([class*="code"]):not(code):not(pre),
+.font-family-outfit * :not([class*="font-mono"]):not([class*="code"]):not(code):not(pre) {
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+html.font-family-mono, body.font-family-mono, .font-family-mono,
+html.font-family-mono *, body.font-family-mono *, .font-family-mono * {
+  font-family: 'JetBrains Mono', 'Space Mono', ui-monospace, SFMono-Regular, monospace !important;
+}
+
+/* =========================================================
+   CARD BORDER RADIUS STYLES (Admin Panel Style)
+   ========================================================= */
+/* Sharp Style (Crisp & Technical) */
+html.radius-sharp .rounded-3xl, body.radius-sharp .rounded-3xl, .radius-sharp .rounded-3xl,
+html.radius-sharp .rounded-2xl, body.radius-sharp .rounded-2xl, .radius-sharp .rounded-2xl,
+html.radius-sharp .rounded-xl, body.radius-sharp .rounded-xl, .radius-sharp .rounded-xl,
+html.radius-sharp .rounded-lg, body.radius-sharp .rounded-lg, .radius-sharp .rounded-lg {
+  border-radius: 4px !important;
+}
+html.radius-sharp .rounded-md, body.radius-sharp .rounded-md, .radius-sharp .rounded-md {
+  border-radius: 2px !important;
+}
+html.radius-sharp .rounded-full, body.radius-sharp .rounded-full, .radius-sharp .rounded-full {
+  border-radius: 6px !important;
+}
+
+/* Modern Rounded Style (Pill & Ultra Soft) */
+html.radius-rounded .rounded-xl, body.radius-rounded .rounded-xl, .radius-rounded .rounded-xl {
+  border-radius: 1.25rem !important;
+}
+html.radius-rounded .rounded-2xl, body.radius-rounded .rounded-2xl, .radius-rounded .rounded-2xl {
+  border-radius: 1.75rem !important;
+}
+html.radius-rounded .rounded-3xl, body.radius-rounded .rounded-3xl, .radius-rounded .rounded-3xl {
+  border-radius: 2.25rem !important;
+}
+html.radius-rounded .rounded-lg, body.radius-rounded .rounded-lg, .radius-rounded .rounded-lg {
+  border-radius: 1rem !important;
+}
+html.radius-rounded .rounded-md, body.radius-rounded .rounded-md, .radius-rounded .rounded-md {
+  border-radius: 0.75rem !important;
+}
+
+/* Smooth Style (Standard default rounded-xl) */
+html.radius-smooth .rounded-xl, body.radius-smooth .rounded-xl, .radius-smooth .rounded-xl {
+  border-radius: 0.75rem !important;
+}
+html.radius-smooth .rounded-2xl, body.radius-smooth .rounded-2xl, .radius-smooth .rounded-2xl {
+  border-radius: 1rem !important;
+}
+
+/* =========================================================
+   ACCENT COLOR THEMES (Admin Panel Color Palette)
+   ========================================================= */
+
+/* --- 1. ROYAL INDIGO THEME --- */
+.theme-indigo .bg-emerald-600 {
+  background-color: #4f46e5 !important;
+}
+.theme-indigo .hover\:bg-emerald-500:hover,
+.theme-indigo .hover\:bg-emerald-600:hover {
+  background-color: #6366f1 !important;
+}
+.theme-indigo .text-emerald-400 {
+  color: #818cf8 !important;
+}
+.theme-indigo .text-emerald-300 {
+  color: #a5b4fc !important;
+}
+.theme-indigo .text-emerald-500 {
+  color: #6366f1 !important;
+}
+.theme-indigo .border-emerald-500,
+.theme-indigo .border-emerald-500\/50,
+.theme-indigo .border-emerald-500\/40,
+.theme-indigo .border-emerald-500\/30,
+.theme-indigo .border-emerald-700\/80,
+.theme-indigo .border-emerald-800\/80 {
+  border-color: rgba(99, 102, 241, 0.45) !important;
+}
+.theme-indigo .hover\:border-emerald-500:hover {
+  border-color: #6366f1 !important;
+}
+.theme-indigo .bg-emerald-600\/20,
+.theme-indigo .bg-emerald-600\/15,
+.theme-indigo .bg-emerald-500\/20,
+.theme-indigo .bg-emerald-500\/10 {
+  background-color: rgba(99, 102, 241, 0.18) !important;
+  color: #a5b4fc !important;
+}
+.theme-indigo .bg-emerald-950,
+.theme-indigo .bg-emerald-950\/80,
+.theme-indigo .bg-emerald-950\/90,
+.theme-indigo .bg-emerald-950\/60 {
+  background-color: #1e1b4b !important;
+  border-color: rgba(99, 102, 241, 0.35) !important;
+}
+.theme-indigo .ring-emerald-500,
+.theme-indigo .ring-emerald-500\/50 {
+  --tw-ring-color: #6366f1 !important;
+}
+.theme-indigo .focus\:ring-emerald-500:focus {
+  --tw-ring-color: #6366f1 !important;
+}
+.theme-indigo .shadow-emerald-950,
+.theme-indigo .shadow-emerald-950\/60 {
+  --tw-shadow-color: rgba(30, 27, 75, 0.7) !important;
+}
+
+/* --- 2. OCEAN BLUE THEME --- */
+.theme-blue .bg-emerald-600 {
+  background-color: #0284c7 !important;
+}
+.theme-blue .hover\:bg-emerald-500:hover,
+.theme-blue .hover\:bg-emerald-600:hover {
+  background-color: #0ea5e9 !important;
+}
+.theme-blue .text-emerald-400 {
+  color: #38bdf8 !important;
+}
+.theme-blue .text-emerald-300 {
+  color: #7dd3fc !important;
+}
+.theme-blue .text-emerald-500 {
+  color: #0ea5e9 !important;
+}
+.theme-blue .border-emerald-500,
+.theme-blue .border-emerald-500\/50,
+.theme-blue .border-emerald-500\/40,
+.theme-blue .border-emerald-500\/30,
+.theme-blue .border-emerald-700\/80,
+.theme-blue .border-emerald-800\/80 {
+  border-color: rgba(14, 165, 233, 0.45) !important;
+}
+.theme-blue .hover\:border-emerald-500:hover {
+  border-color: #0ea5e9 !important;
+}
+.theme-blue .bg-emerald-600\/20,
+.theme-blue .bg-emerald-600\/15,
+.theme-blue .bg-emerald-500\/20,
+.theme-blue .bg-emerald-500\/10 {
+  background-color: rgba(14, 165, 233, 0.18) !important;
+  color: #7dd3fc !important;
+}
+.theme-blue .bg-emerald-950,
+.theme-blue .bg-emerald-950\/80,
+.theme-blue .bg-emerald-950\/90,
+.theme-blue .bg-emerald-950\/60 {
+  background-color: #082f49 !important;
+  border-color: rgba(14, 165, 233, 0.35) !important;
+}
+.theme-blue .ring-emerald-500,
+.theme-blue .ring-emerald-500\/50 {
+  --tw-ring-color: #0ea5e9 !important;
+}
+.theme-blue .focus\:ring-emerald-500:focus {
+  --tw-ring-color: #0ea5e9 !important;
+}
+.theme-blue .shadow-emerald-950,
+.theme-blue .shadow-emerald-950\/60 {
+  --tw-shadow-color: rgba(8, 47, 73, 0.7) !important;
+}
+
+/* --- 3. DEEP VIOLET THEME --- */
+.theme-violet .bg-emerald-600 {
+  background-color: #7c3aed !important;
+}
+.theme-violet .hover\:bg-emerald-500:hover,
+.theme-violet .hover\:bg-emerald-600:hover {
+  background-color: #8b5cf6 !important;
+}
+.theme-violet .text-emerald-400 {
+  color: #a78bfa !important;
+}
+.theme-violet .text-emerald-300 {
+  color: #c4b5fd !important;
+}
+.theme-violet .text-emerald-500 {
+  color: #8b5cf6 !important;
+}
+.theme-violet .border-emerald-500,
+.theme-violet .border-emerald-500\/50,
+.theme-violet .border-emerald-500\/40,
+.theme-violet .border-emerald-500\/30,
+.theme-violet .border-emerald-700\/80,
+.theme-violet .border-emerald-800\/80 {
+  border-color: rgba(139, 92, 246, 0.45) !important;
+}
+.theme-violet .hover\:border-emerald-500:hover {
+  border-color: #8b5cf6 !important;
+}
+.theme-violet .bg-emerald-600\/20,
+.theme-violet .bg-emerald-600\/15,
+.theme-violet .bg-emerald-500\/20,
+.theme-violet .bg-emerald-500\/10 {
+  background-color: rgba(139, 92, 246, 0.18) !important;
+  color: #c4b5fd !important;
+}
+.theme-violet .bg-emerald-950,
+.theme-violet .bg-emerald-950\/80,
+.theme-violet .bg-emerald-950\/90,
+.theme-violet .bg-emerald-950\/60 {
+  background-color: #2e1065 !important;
+  border-color: rgba(139, 92, 246, 0.35) !important;
+}
+.theme-violet .ring-emerald-500,
+.theme-violet .ring-emerald-500\/50 {
+  --tw-ring-color: #8b5cf6 !important;
+}
+.theme-violet .focus\:ring-emerald-500:focus {
+  --tw-ring-color: #8b5cf6 !important;
+}
+.theme-violet .shadow-emerald-950,
+.theme-violet .shadow-emerald-950\/60 {
+  --tw-shadow-color: rgba(46, 16, 101, 0.7) !important;
+}
+
+/* --- 4. WARM AMBER THEME --- */
+.theme-amber .bg-emerald-600 {
+  background-color: #d97706 !important;
+}
+.theme-amber .hover\:bg-emerald-500:hover,
+.theme-amber .hover\:bg-emerald-600:hover {
+  background-color: #f59e0b !important;
+}
+.theme-amber .text-emerald-400 {
+  color: #fbbf24 !important;
+}
+.theme-amber .text-emerald-300 {
+  color: #fde68a !important;
+}
+.theme-amber .text-emerald-500 {
+  color: #f59e0b !important;
+}
+.theme-amber .border-emerald-500,
+.theme-amber .border-emerald-500\/50,
+.theme-amber .border-emerald-500\/40,
+.theme-amber .border-emerald-500\/30,
+.theme-amber .border-emerald-700\/80,
+.theme-amber .border-emerald-800\/80 {
+  border-color: rgba(245, 158, 11, 0.45) !important;
+}
+.theme-amber .hover\:border-emerald-500:hover {
+  border-color: #f59e0b !important;
+}
+.theme-amber .bg-emerald-600\/20,
+.theme-amber .bg-emerald-600\/15,
+.theme-amber .bg-emerald-500\/20,
+.theme-amber .bg-emerald-500\/10 {
+  background-color: rgba(245, 158, 11, 0.18) !important;
+  color: #fde68a !important;
+}
+.theme-amber .bg-emerald-950,
+.theme-amber .bg-emerald-950\/80,
+.theme-amber .bg-emerald-950\/90,
+.theme-amber .bg-emerald-950\/60 {
+  background-color: #451a03 !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+}
+.theme-amber .ring-emerald-500,
+.theme-amber .ring-emerald-500\/50 {
+  --tw-ring-color: #f59e0b !important;
+}
+.theme-amber .focus\:ring-emerald-500:focus {
+  --tw-ring-color: #f59e0b !important;
+}
+.theme-amber .shadow-emerald-950,
+.theme-amber .shadow-emerald-950\/60 {
+  --tw-shadow-color: rgba(69, 26, 3, 0.7) !important;
+}
+
+/* --- 5. MONOCHROME SLATE THEME --- */
+.theme-slate .bg-emerald-600 {
+  background-color: #475569 !important;
+}
+.theme-slate .hover\:bg-emerald-500:hover,
+.theme-slate .hover\:bg-emerald-600:hover {
+  background-color: #64748b !important;
+}
+.theme-slate .text-emerald-400 {
+  color: #94a3b8 !important;
+}
+.theme-slate .text-emerald-300 {
+  color: #cbd5e1 !important;
+}
+.theme-slate .text-emerald-500 {
+  color: #64748b !important;
+}
+.theme-slate .border-emerald-500,
+.theme-slate .border-emerald-500\/50,
+.theme-slate .border-emerald-500\/40,
+.theme-slate .border-emerald-500\/30,
+.theme-slate .border-emerald-700\/80,
+.theme-slate .border-emerald-800\/80 {
+  border-color: rgba(148, 163, 184, 0.45) !important;
+}
+.theme-slate .hover\:border-emerald-500:hover {
+  border-color: #94a3b8 !important;
+}
+.theme-slate .bg-emerald-600\/20,
+.theme-slate .bg-emerald-600\/15,
+.theme-slate .bg-emerald-500\/20,
+.theme-slate .bg-emerald-500\/10 {
+  background-color: rgba(148, 163, 184, 0.18) !important;
+  color: #cbd5e1 !important;
+}
+.theme-slate .bg-emerald-950,
+.theme-slate .bg-emerald-950\/80,
+.theme-slate .bg-emerald-950\/90,
+.theme-slate .bg-emerald-950\/60 {
+  background-color: #1e293b !important;
+  border-color: rgba(148, 163, 184, 0.35) !important;
+}
+.theme-slate .ring-emerald-500,
+.theme-slate .ring-emerald-500\/50 {
+  --tw-ring-color: #94a3b8 !important;
+}
+.theme-slate .focus\:ring-emerald-500:focus {
+  --tw-ring-color: #94a3b8 !important;
+}
+.theme-slate .shadow-emerald-950,
+.theme-slate .shadow-emerald-950\/60 {
+  --tw-shadow-color: rgba(15, 23, 42, 0.7) !important;
+}
+
+/* --- GRADIENTS & SHADES FOR ACCENT THEMES --- */
+/* Indigo */
+.theme-indigo .bg-emerald-500 { background-color: #6366f1 !important; }
+.theme-indigo .from-emerald-500 { --tw-gradient-from: #6366f1 var(--tw-gradient-from-position) !important; --tw-gradient-to: rgb(99 102 241 / 0) var(--tw-gradient-to-position) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+.theme-indigo .to-teal-800, .theme-indigo .to-emerald-700, .theme-indigo .to-emerald-800 { --tw-gradient-to: #312e81 var(--tw-gradient-to-position) !important; }
+.theme-indigo .bg-emerald-900, .theme-indigo .bg-emerald-900\/60 { background-color: rgba(49, 46, 129, 0.6) !important; }
+.theme-indigo .border-emerald-800, .theme-indigo .border-emerald-800\/60, .theme-indigo .border-emerald-800\/80 { border-color: rgba(99, 102, 241, 0.35) !important; }
+.theme-indigo .text-emerald-200, .theme-indigo .text-emerald-100 { color: #c7d2fe !important; }
+
+/* Blue */
+.theme-blue .bg-emerald-500 { background-color: #0ea5e9 !important; }
+.theme-blue .from-emerald-500 { --tw-gradient-from: #0ea5e9 var(--tw-gradient-from-position) !important; --tw-gradient-to: rgb(14 165 233 / 0) var(--tw-gradient-to-position) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+.theme-blue .to-teal-800, .theme-blue .to-emerald-700, .theme-blue .to-emerald-800 { --tw-gradient-to: #075985 var(--tw-gradient-to-position) !important; }
+.theme-blue .bg-emerald-900, .theme-blue .bg-emerald-900\/60 { background-color: rgba(7, 89, 133, 0.6) !important; }
+.theme-blue .border-emerald-800, .theme-blue .border-emerald-800\/60, .theme-blue .border-emerald-800\/80 { border-color: rgba(14, 165, 233, 0.35) !important; }
+.theme-blue .text-emerald-200, .theme-blue .text-emerald-100 { color: #bae6fd !important; }
+
+/* Violet */
+.theme-violet .bg-emerald-500 { background-color: #8b5cf6 !important; }
+.theme-violet .from-emerald-500 { --tw-gradient-from: #8b5cf6 var(--tw-gradient-from-position) !important; --tw-gradient-to: rgb(139 92 246 / 0) var(--tw-gradient-to-position) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+.theme-violet .to-teal-800, .theme-violet .to-emerald-700, .theme-violet .to-emerald-800 { --tw-gradient-to: #581c87 var(--tw-gradient-to-position) !important; }
+.theme-violet .bg-emerald-900, .theme-violet .bg-emerald-900\/60 { background-color: rgba(88, 28, 135, 0.6) !important; }
+.theme-violet .border-emerald-800, .theme-violet .border-emerald-800\/60, .theme-violet .border-emerald-800\/80 { border-color: rgba(139, 92, 246, 0.35) !important; }
+.theme-violet .text-emerald-200, .theme-violet .text-emerald-100 { color: #ddd6fe !important; }
+
+/* Amber */
+.theme-amber .bg-emerald-500 { background-color: #f59e0b !important; }
+.theme-amber .from-emerald-500 { --tw-gradient-from: #f59e0b var(--tw-gradient-from-position) !important; --tw-gradient-to: rgb(245 158 11 / 0) var(--tw-gradient-to-position) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+.theme-amber .to-teal-800, .theme-amber .to-emerald-700, .theme-amber .to-emerald-800 { --tw-gradient-to: #78350f var(--tw-gradient-to-position) !important; }
+.theme-amber .bg-emerald-900, .theme-amber .bg-emerald-900\/60 { background-color: rgba(120, 53, 15, 0.6) !important; }
+.theme-amber .border-emerald-800, .theme-amber .border-emerald-800\/60, .theme-amber .border-emerald-800\/80 { border-color: rgba(245, 158, 11, 0.35) !important; }
+.theme-amber .text-emerald-200, .theme-amber .text-emerald-100 { color: #fef3c7 !important; }
+
+/* Slate */
+.theme-slate .bg-emerald-500 { background-color: #64748b !important; }
+.theme-slate .from-emerald-500 { --tw-gradient-from: #64748b var(--tw-gradient-from-position) !important; --tw-gradient-to: rgb(100 116 139 / 0) var(--tw-gradient-to-position) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+.theme-slate .to-teal-800, .theme-slate .to-emerald-700, .theme-slate .to-emerald-800 { --tw-gradient-to: #1e293b var(--tw-gradient-to-position) !important; }
+.theme-slate .bg-emerald-900, .theme-slate .bg-emerald-900\/60 { background-color: rgba(30, 41, 59, 0.6) !important; }
+.theme-slate .border-emerald-800, .theme-slate .border-emerald-800\/60, .theme-slate .border-emerald-800\/80 { border-color: rgba(148, 163, 184, 0.35) !important; }
+.theme-slate .text-emerald-200, .theme-slate .text-emerald-100 { color: #e2e8f0 !important; }
+

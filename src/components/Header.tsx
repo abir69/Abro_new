@@ -30,7 +30,6 @@ interface HeaderProps {
   onOpenAuthModal: () => void;
   onLogout: () => void;
   onEditMyProfile?: () => void;
-  onOpenDepositForm: () => void;
   onOpenApprovalsQueue?: () => void;
   onOpenMaintenanceModal?: () => void;
   onOpenAdminPanel?: () => void;
@@ -52,7 +51,6 @@ export const Header: React.FC<HeaderProps> = ({
   setActiveTab,
   onOpenAuthModal,
   onLogout,
-  onOpenDepositForm,
   onOpenApprovalsQueue,
   onOpenMaintenanceModal,
   onOpenAdminPanel,
@@ -171,16 +169,6 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Action Buttons & User Session */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-          {/* Public Deposit Submission Google Form Button */}
-          <button
-            onClick={onOpenDepositForm}
-            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/40 text-xs font-semibold transition-all cursor-pointer shadow-sm"
-            title="Open Deposit Form for Submitting Deposits"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Deposit Form</span>
-            <span className="sm:hidden font-medium">Deposit</span>
-          </button>
 
           {/* Member Statement Button (When member is logged in - Request 5) */}
           {session.role === 'member' && onViewMyStatement && (
