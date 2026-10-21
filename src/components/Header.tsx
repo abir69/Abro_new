@@ -29,6 +29,7 @@ interface HeaderProps {
   setActiveTab: (tab: 'dashboard' | 'transactions' | 'members' | 'reminders') => void;
   onOpenAuthModal: () => void;
   onLogout: () => void;
+  onViewMyProfile?: () => void;
   onEditMyProfile?: () => void;
   onOpenApprovalsQueue?: () => void;
   onOpenMaintenanceModal?: () => void;
@@ -51,6 +52,8 @@ export const Header: React.FC<HeaderProps> = ({
   setActiveTab,
   onOpenAuthModal,
   onLogout,
+  onViewMyProfile,
+  onEditMyProfile,
   onOpenApprovalsQueue,
   onOpenMaintenanceModal,
   onOpenAdminPanel,
@@ -252,36 +255,43 @@ export const Header: React.FC<HeaderProps> = ({
           {/* User Session Pill with Online status and Logout Icon (Request 4) */}
           {session.isLoggedIn ? (
             <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-900 border border-slate-800 pl-1.5 sm:pl-2 pr-1.5 sm:pr-2 py-1 sm:py-1.5 rounded-xl">
-              {activeMember?.avatar ? (
-                <img
-                  src={activeMember.avatar}
-                  alt={session.memberName}
-                  className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover ring-1 ring-emerald-500/50"
-                />
-              ) : (
-                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-emerald-800 flex items-center justify-center text-xs font-bold text-white">
-                  {session.memberName?.charAt(0) || 'U'}
-                </div>
-              )}
-              
-              <div className="text-left text-xs">
-                <div className="flex items-center gap-1 leading-none">
-                  <span className="font-medium text-slate-100 max-w-[75px] sm:max-w-[120px] truncate">
-                    {session.memberName?.split(' ')[0] || session.memberName}
-                  </span>
-                  {session.role === 'admin' ? (
-                    <span className="text-[9px] font-bold text-emerald-400 bg-emerald-950 px-1 py-0.2 rounded border border-emerald-800">
-                      ADMIN
-                    </span>
-                  ) : null}
-                </div>
+              <button
+                type="button"
+                onClick={onViewMyProfile || onEditMyProfile}
+                className="flex items-center gap-1.5 sm:gap-2 text-left cursor-pointer group focus:outline-none focus:ring-1 focus:ring-emerald-500/50 rounded-lg p-0.5 transition-all"
+                title={`View profile page for ${session.memberName || 'Member'}`}
+              >
+                {activeMember?.avatar ? (
+                  <img
+                    src={activeMember.avatar}
+                    alt={session.memberName}
+                    className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover ring-1 ring-emerald-500/50 group-hover:ring-2 group-hover:ring-emerald-400 group-hover:scale-105 transition-all"
+                  />
+                ) : (
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-emerald-800 group-hover:bg-emerald-700 flex items-center justify-center text-xs font-bold text-white group-hover:scale-105 transition-all">
+                    {session.memberName?.charAt(0) || 'U'}
+                  </div>
+                )}
                 
-                {/* Active Online Indicator (Request 4) */}
-                <div className="flex items-center gap-1 text-[10px] text-emerald-400 mt-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="font-medium">Online</span>
+                <div className="text-left text-xs">
+                  <div className="flex items-center gap-1 leading-none">
+                    <span className="font-semibold text-slate-100 group-hover:text-emerald-300 max-w-[75px] sm:max-w-[120px] truncate transition-colors underline-offset-2 group-hover:underline">
+                      {session.memberName?.split(' ')[0] || session.memberName}
+                    </span>
+                    {session.role === 'admin' ? (
+                      <span className="text-[9px] font-bold text-emerald-400 bg-emerald-950 px-1 py-0.2 rounded border border-emerald-800">
+                        ADMIN
+                      </span>
+                    ) : null}
+                  </div>
+                  
+                  {/* Active Online Indicator (Request 4) */}
+                  <div className="flex items-center gap-1 text-[10px] text-emerald-400 mt-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="font-medium group-hover:text-emerald-300 transition-colors">Profile</span>
+                  </div>
                 </div>
-              </div>
+              </button>
 
               {/* Logout Button (Extra profile switch icon removed as requested in Request 4) */}
               <div className="ml-1 border-l border-slate-800 pl-1.5 flex items-center">

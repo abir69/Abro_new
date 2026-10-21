@@ -215,9 +215,12 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
           </div>
           <button
             onClick={handleClose}
-            className="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+            className="px-2.5 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/50 hover:border-rose-400 transition-all cursor-pointer shadow-sm flex items-center gap-1 font-semibold text-xs shrink-0"
+            title="Close"
+            aria-label="Close"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4 stroke-[2.5]" />
+            <span className="font-bold text-xs">Close</span>
           </button>
         </div>
 

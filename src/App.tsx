@@ -280,7 +280,12 @@ export default function App() {
   const paidMemberIds = new Set(currentMonthTxs.map(t => t.memberId));
   const pendingRemindersCount = members.filter(m => !paidMemberIds.has(m.id)).length;
 
-  const activeMember = members.find(m => m.id === session.memberId) || members[0];
+  const activeMember = members.find(m => m.id === session.memberId)
+    || members.find(m => session.email && m.email?.toLowerCase() === session.email.toLowerCase())
+    || members.find(m => session.memberName && m.name.toLowerCase() === session.memberName.toLowerCase())
+    || (session.role === 'admin' ? members.find(m => m.role === 'admin') || members[0] : members[0]);
+
+  const currentMemberId = session.memberId || activeMember?.id;
   const isAdmin = session.role === 'admin';
 
   // Open WhatsApp Congratulations acknowledgment dialog
@@ -805,9 +810,18 @@ export default function App() {
             updateSession({ isLoggedIn: false, role: 'member' });
             showToast('Signed out of session. Login approval required to re-enter.');
           }}
+          onViewMyProfile={() => {
+            const currentMem = members.find(m => m.id === currentMemberId) || activeMember || members[0];
+            if (currentMem) {
+              setActiveTab('members');
+              setSelectedHistoryMember(currentMem);
+              setIsMemberHistoryModalOpen(true);
+            }
+          }}
           onEditMyProfile={() => {
-            if (session.memberId) {
-              const myProfile = members.find(m => m.id === session.memberId);
+            const targetId = currentMemberId || (session.role === 'admin' ? members.find(m => m.role === 'admin')?.id || members[0]?.id : members[0]?.id);
+            if (targetId) {
+              const myProfile = members.find(m => m.id === targetId);
               if (myProfile) {
                 setEditingMember(myProfile);
                 setIsEditMemberModalOpen(true);
@@ -897,7 +911,7 @@ export default function App() {
             }}
             onExportCSV={handleExportCSV}
             onViewMemberStatement={handleViewMemberStatement}
-            currentMemberId={session.memberId}
+            currentMemberId={currentMemberId}
             onSelectMember={handleSelectMember}
             onSendWhatsAppCongrats={isAdmin ? handleOpenWhatsAppCongrats : undefined}
             onOpenDepositForm={() => handleOpenDepositForm()}
@@ -912,7 +926,7 @@ export default function App() {
             project={project}
             currentMonth={currentMonth}
             isAdmin={isAdmin}
-            currentMemberId={session.memberId}
+            currentMemberId={currentMemberId}
             onSelectMember={handleSelectMember}
             onEditMember={(member) => {
               setEditingMember(member);
@@ -982,7 +996,8 @@ export default function App() {
         <button
           onClick={() => {
             if (isAdmin) {
-              setIsAddModalOpen(true);
+              setEditingTransaction(null);
+              setIsTxModalOpen(true);
             } else {
               handleOpenDepositForm();
             }
@@ -1161,7 +1176,7 @@ export default function App() {
         member={editingMember}
         onSaveMember={handleSaveMember}
         isAdmin={isAdmin}
-        currentMemberId={session.memberId}
+        currentMemberId={currentMemberId}
         transactions={transactions}
         onDeleteTransaction={handleDeleteTransaction}
         onEditTransaction={(tx) => {
@@ -1182,7 +1197,7 @@ export default function App() {
         transactions={transactions}
         project={project}
         isAdmin={isAdmin}
-        currentMemberId={session.memberId}
+        currentMemberId={currentMemberId}
         onEditTransaction={(tx) => {
           setEditingTransaction(tx);
           setIsTxModalOpen(true);
@@ -1210,7 +1225,7 @@ export default function App() {
         member={members.find(m => m.id === selectedReceiptTx?.memberId)}
         project={project}
         isAdmin={isAdmin}
-        currentMemberId={session.memberId}
+        currentMemberId={currentMemberId}
         onSendWhatsAppCongrats={isAdmin ? handleOpenWhatsAppCongrats : undefined}
       />
 
@@ -1225,6 +1240,7 @@ export default function App() {
         transactions={transactions}
         project={project}
         isAdmin={isAdmin}
+        currentMemberId={currentMemberId}
         currentMonth={currentMonth}
         onEditTransaction={(tx) => {
           setEditingTransaction(tx);

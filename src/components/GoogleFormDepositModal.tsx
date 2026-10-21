@@ -204,9 +204,12 @@ Your deposit will be automatically credited to your account upon Admin approval.
           </div>
           <button
             onClick={onClose}
-            className="relative z-10 text-white/80 hover:text-white p-1.5 sm:p-2 rounded-full hover:bg-black/20 transition-colors cursor-pointer shrink-0"
+            className="relative z-10 px-2.5 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-600 text-rose-200 hover:text-white border border-rose-400/50 hover:border-rose-400 transition-all cursor-pointer shadow-sm flex items-center gap-1 font-semibold text-xs shrink-0"
+            title="Close"
+            aria-label="Close"
           >
-            <X className="w-5 h-5 sm:w-6 sm:h-6" />
+            <X className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+            <span className="font-bold text-xs">Close</span>
           </button>
         </div>
 

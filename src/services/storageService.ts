@@ -255,9 +255,23 @@ export const getStoredSession = (): UserSession => {
       const parsed: UserSession = JSON.parse(raw);
       if (parsed && typeof parsed.isLoggedIn === 'boolean') {
         const savedAdmin = getStoredAdminProfile();
-        if (parsed.role === 'admin' && savedAdmin && savedAdmin.name) {
-          parsed.memberName = savedAdmin.name;
-          if (savedAdmin.email) parsed.email = savedAdmin.email;
+        if (parsed.role === 'admin') {
+          if (!parsed.memberId) {
+            parsed.memberId = savedAdmin?.id || 'm1';
+          }
+          if (savedAdmin && savedAdmin.name) {
+            parsed.memberName = savedAdmin.name;
+            if (savedAdmin.email) parsed.email = savedAdmin.email;
+          }
+        } else if (parsed.role === 'member' && !parsed.memberId && parsed.memberName) {
+          const storedMembers = getStoredMembers();
+          const matched = storedMembers.find(
+            m => m.name.toLowerCase() === parsed.memberName?.toLowerCase() ||
+                 (parsed.email && m.email?.toLowerCase() === parsed.email.toLowerCase())
+          );
+          if (matched) {
+            parsed.memberId = matched.id;
+          }
         }
         return parsed;
       }
