@@ -83,7 +83,7 @@ export async function initializeFirestoreDataIfEmpty(): Promise<void> {
       await batch.commit();
       console.log('[Firestore] Initial syndicate data successfully seeded to cloud database.');
     } else {
-      // Ensure project doc exists
+      // Ensure project doc exists without overwriting live data
       const projSnap = await getDoc(doc(db, PROJECT_COL, PROJECT_DOC_ID));
       if (!projSnap.exists()) {
         await setDoc(doc(db, PROJECT_COL, PROJECT_DOC_ID), sanitizeForFirestore(INITIAL_PLOT_PROJECT));
@@ -92,6 +92,35 @@ export async function initializeFirestoreDataIfEmpty(): Promise<void> {
   } catch (error) {
     console.error('[Firestore] Error initializing data:', error);
   }
+}
+
+/**
+ * Restores authentic syndicate data (Project, 11 Members, and verified transactions) to Firestore.
+ */
+export async function restoreOriginalSyndicateDataToCloud(): Promise<void> {
+  const batch = writeBatch(db);
+
+  // Restore Project
+  const projectRef = doc(db, PROJECT_COL, PROJECT_DOC_ID);
+  batch.set(projectRef, sanitizeForFirestore(INITIAL_PLOT_PROJECT), { merge: true });
+
+  // Restore Members
+  INITIAL_MEMBERS.forEach((member) => {
+    const memRef = doc(db, MEMBERS_COL, member.id);
+    batch.set(memRef, sanitizeForFirestore({
+      ...member,
+      approvalStatus: member.approvalStatus || 'approved'
+    }), { merge: true });
+  });
+
+  // Restore Initial Transactions
+  INITIAL_TRANSACTIONS.forEach((tx) => {
+    const txRef = doc(db, TRANSACTIONS_COL, tx.id);
+    batch.set(txRef, sanitizeForFirestore(tx), { merge: true });
+  });
+
+  await batch.commit();
+  console.log('[Firestore] Authentic syndicate records restored to cloud database.');
 }
 
 /**

@@ -47,19 +47,17 @@
     } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
     const firebaseConfig = {
-      projectId: "directed-hydra-v3kqt",
-      appId: "1:531509153426:web:f4d21498c9eee9fccc204b",
-      apiKey: "AIzaSyDryOZuMg2G-IfDdVogBQesasu8LXeRrOU",
-      authDomain: "directed-hydra-v3kqt.firebaseapp.com",
-      firestoreDatabaseId: "ai-studio-aristofutureplot-0bbb5f2e-2153-4594-b593-ae7568d3a361",
-      storageBucket: "directed-hydra-v3kqt.firebasestorage.app",
-      messagingSenderId: "531509153426",
-      measurementId: "",
-      oAuthClientId: "531509153426-rf1g065pejim4c6mti1aimso91mcek1h.apps.googleusercontent.com"
+      projectId: "afpi-ledger-db",
+      appId: "1:830940434956:web:800522ebd5f6de39075429",
+      apiKey: "AIzaSyBMb5eqmNrBv3WjbA8LfskjNY5-X6kCROY",
+      authDomain: "afpi-ledger-db.firebaseapp.com",
+      storageBucket: "afpi-ledger-db.firebasestorage.app",
+      messagingSenderId: "830940434956",
+      measurementId: "G-PT9TSY68S5"
     };
 
     const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-    const db = firebaseConfig.firestoreDatabaseId 
+    const db = (firebaseConfig.firestoreDatabaseId)
       ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
       : getFirestore(app);
 

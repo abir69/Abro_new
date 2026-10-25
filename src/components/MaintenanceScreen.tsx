@@ -132,7 +132,7 @@ export const MaintenanceScreen: React.FC<MaintenanceScreenProps> = ({
               </div>
               <div className="p-2.5 bg-slate-950/80 rounded-xl border border-slate-800/60">
                 <span className="font-bold text-slate-200 text-xs block">
-                  {project.syndicateAdminName || 'Dr. Tariqul Islam'}
+                  {project.syndicateAdminName || 'Md. Mostak Ahmed'}
                 </span>
                 <span className="text-[10px] text-sky-400 block">
                   {project.syndicateAdminDesignation || 'Syndicate Secretary & Treasury Auditor'}

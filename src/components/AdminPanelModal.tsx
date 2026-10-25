@@ -22,7 +22,8 @@ import {
   Layers,
   Shield,
   Gem,
-  KeyRound
+  KeyRound,
+  RotateCcw
 } from 'lucide-react';
 
 interface AdminPanelModalProps {
@@ -37,6 +38,7 @@ interface AdminPanelModalProps {
   onExportCSV?: () => void;
   adminMember?: Member | null;
   onSaveAdminPin?: (newPin: string) => void;
+  onRestoreOriginalData?: () => void;
 }
 
 export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
@@ -50,7 +52,8 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   onExportStandaloneHtml,
   onExportCSV,
   adminMember,
-  onSaveAdminPin
+  onSaveAdminPin,
+  onRestoreOriginalData
 }) => {
   const [activeTab, setActiveTab] = useState<'appearance' | 'branding' | 'directives' | 'maintenance' | 'footer'>(initialTab);
 
@@ -726,8 +729,8 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                 </div>
               </div>
 
-              {/* Data Export Options */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Data Export & Restoration Options */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {onExportStandaloneHtml && (
                   <button
                     type="button"
@@ -752,6 +755,26 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                     <div>
                       <span className="text-xs font-bold text-white block">Download CSV Backup</span>
                       <span className="text-[10px] text-slate-400 block">Full transactions ledger</span>
+                    </div>
+                  </button>
+                )}
+
+                {onRestoreOriginalData && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm('Restore original authentic syndicate data? This will synchronize the 11 original members, plot initiative specs, and verified deposits.')) {
+                        onRestoreOriginalData();
+                        onClose();
+                      }
+                    }}
+                    className="p-3 rounded-xl bg-rose-950/30 hover:bg-rose-900/50 border border-rose-500/40 text-left transition-all cursor-pointer flex items-center gap-2.5 group"
+                    title="Restore authentic syndicate plot initiative data"
+                  >
+                    <RotateCcw className="w-4 h-4 text-rose-400 shrink-0 group-hover:rotate-180 transition-transform duration-500" />
+                    <div>
+                      <span className="text-xs font-bold text-rose-300 block">Restore Old Data</span>
+                      <span className="text-[10px] text-rose-400/80 block">Sync original 11 members</span>
                     </div>
                   </button>
                 )}

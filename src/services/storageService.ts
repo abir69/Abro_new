@@ -29,13 +29,25 @@ export const saveStoredTheme = (theme: ThemeMode): void => {
   }
 };
 
+const isStaleMockName = (name?: string): boolean => {
+  if (!name) return false;
+  const stalePatterns = ['Tariqul', 'Nusrat', 'Shahriar', 'Kamrul', 'Mustafiz', 'Nafisa', 'Farhan Kabir', 'Shakil Anwar', 'Tanvir Hossain'];
+  return stalePatterns.some(pat => name.includes(pat));
+};
+
 /**
  * Direct permanent persistence for Lead Admin profile
  */
 export const getStoredAdminProfile = (): Partial<Member> | null => {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.ADMIN_PROFILE);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && isStaleMockName(parsed.name)) {
+      localStorage.removeItem(STORAGE_KEYS.ADMIN_PROFILE);
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }
@@ -52,35 +64,16 @@ export const saveStoredAdminProfile = (admin: Member): void => {
 export const getStoredMembers = (): Member[] => {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.MEMBERS);
-    const savedAdmin = getStoredAdminProfile();
-    
     if (!raw) {
-      const initial = INITIAL_MEMBERS.map(m => {
-        if ((m.id === 'm1' || m.role === 'admin') && savedAdmin) {
-          return { ...m, ...savedAdmin, id: m.id, role: 'admin' as const };
-        }
-        return m;
-      });
-      localStorage.setItem(STORAGE_KEYS.MEMBERS, JSON.stringify(initial));
-      return initial;
-    }
-    const parsed: Member[] = JSON.parse(raw);
-    if (!Array.isArray(parsed) || parsed.length === 0) {
+      localStorage.setItem(STORAGE_KEYS.MEMBERS, JSON.stringify(INITIAL_MEMBERS));
       return INITIAL_MEMBERS;
     }
-
-    return parsed.map(m => {
-      // If this is the admin member, guarantee that savedAdmin profile fields override defaults
-      if ((m.id === 'm1' || m.role === 'admin') && savedAdmin) {
-        return {
-          ...savedAdmin,
-          ...m,
-          id: m.id,
-          role: 'admin' as const
-        };
-      }
-      return m;
-    });
+    const parsed: Member[] = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0 || parsed.some(m => isStaleMockName(m.name))) {
+      localStorage.setItem(STORAGE_KEYS.MEMBERS, JSON.stringify(INITIAL_MEMBERS));
+      return INITIAL_MEMBERS;
+    }
+    return parsed;
   } catch (e) {
     console.error('Error loading members:', e);
     return INITIAL_MEMBERS;
@@ -90,10 +83,6 @@ export const getStoredMembers = (): Member[] => {
 export const saveStoredMembers = (members: Member[]) => {
   try {
     localStorage.setItem(STORAGE_KEYS.MEMBERS, JSON.stringify(members));
-    const admin = members.find(m => m.id === 'm1' || m.role === 'admin');
-    if (admin) {
-      localStorage.setItem(STORAGE_KEYS.ADMIN_PROFILE, JSON.stringify(admin));
-    }
   } catch (e) {
     console.error('Error saving members:', e);
   }
@@ -110,15 +99,11 @@ export const getStoredTransactions = (): Transaction[] => {
       return INITIAL_TRANSACTIONS;
     }
     const parsed: Transaction[] = JSON.parse(raw);
-    return parsed.map(tx => ({
-      ...tx,
-      memberName: tx.memberName === 'Abir Mia' ? 'Md. Minhazul Islam Abir' : tx.memberName,
-      depositBank: tx.depositBank || DEFAULT_DEPOSIT_BANK,
-      depositAccountNumber: tx.depositAccountNumber || DEFAULT_DEPOSIT_ACCOUNT,
-      bankOrChannel: (tx.bankOrChannel && tx.bankOrChannel.includes('Eastern')) 
-        ? DEFAULT_DEPOSIT_BANK 
-        : (tx.bankOrChannel || DEFAULT_DEPOSIT_BANK)
-    }));
+    if (!Array.isArray(parsed) || parsed.length === 0 || parsed.some(t => isStaleMockName(t.memberName))) {
+      localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(INITIAL_TRANSACTIONS));
+      return INITIAL_TRANSACTIONS;
+    }
+    return parsed;
   } catch (e) {
     console.error('Error loading transactions:', e);
     return INITIAL_TRANSACTIONS;
@@ -141,38 +126,22 @@ export const saveStoredExpenses = (_expenses: SyndicateExpense[]) => {
 export const getStoredProject = (): PlotProject => {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.PROJECT);
-    const savedAdmin = getStoredAdminProfile();
-    
     if (!raw) {
-      const initial: PlotProject = {
-        ...INITIAL_PLOT_PROJECT,
-        leadAdminName: savedAdmin?.name || INITIAL_PLOT_PROJECT.leadAdminName
-      };
-      localStorage.setItem(STORAGE_KEYS.PROJECT, JSON.stringify(initial));
-      return initial;
+      localStorage.setItem(STORAGE_KEYS.PROJECT, JSON.stringify(INITIAL_PLOT_PROJECT));
+      return INITIAL_PLOT_PROJECT;
     }
     const parsed = JSON.parse(raw);
-    const existingBank = parsed.bankDetails || {};
-    const bankName = (existingBank.bankName && !existingBank.bankName.includes('Eastern'))
-      ? existingBank.bankName
-      : DEFAULT_DEPOSIT_BANK;
-    const accountNumber = (existingBank.accountNumber && existingBank.accountNumber !== '104-120-9988771')
-      ? existingBank.accountNumber
-      : DEFAULT_DEPOSIT_ACCOUNT;
-
-    const leadAdminName = parsed.leadAdminName || savedAdmin?.name || INITIAL_PLOT_PROJECT.leadAdminName;
-
-    return {
+    const cleaned = {
       ...INITIAL_PLOT_PROJECT,
       ...parsed,
-      leadAdminName,
+      syndicateAdminName: isStaleMockName(parsed.syndicateAdminName) ? INITIAL_PLOT_PROJECT.syndicateAdminName : (parsed.syndicateAdminName || INITIAL_PLOT_PROJECT.syndicateAdminName),
+      leadAdminName: isStaleMockName(parsed.leadAdminName) ? INITIAL_PLOT_PROJECT.leadAdminName : (parsed.leadAdminName || INITIAL_PLOT_PROJECT.leadAdminName),
       bankDetails: {
         ...INITIAL_PLOT_PROJECT.bankDetails,
-        ...existingBank,
-        bankName,
-        accountNumber
+        ...(parsed.bankDetails || {})
       }
     };
+    return cleaned;
   } catch (e) {
     console.error('Error loading project:', e);
     return INITIAL_PLOT_PROJECT;

@@ -28,8 +28,10 @@ import {
   saveStoredTheme,
   saveStoredAdminProfile,
   getStoredAdminProfile,
-  applyThemeAndStyles
+  applyThemeAndStyles,
+  resetAllDataToDefault
 } from './services/storageService';
+import { INITIAL_MEMBERS, INITIAL_TRANSACTIONS, INITIAL_PLOT_PROJECT } from './data/initialData';
 
 import { Header } from './components/Header';
 import { DashboardStats } from './components/DashboardStats';
@@ -60,7 +62,8 @@ import {
   saveTransactionToCloud,
   deleteTransactionFromCloud,
   saveProjectToCloud,
-  saveReminderToCloud
+  saveReminderToCloud,
+  restoreOriginalSyndicateDataToCloud
 } from './services/firebase';
 
 import { 
@@ -296,25 +299,28 @@ export default function App() {
     setIsWhatsAppCongratsModalOpen(true);
   };
 
-  // Transaction CRUD Handlers (Synchronized to Live Cloud Database)
+  // Transaction CRUD Handlers (Synchronized to Live Cloud Database without state overrides)
   const handleSaveTransaction = (txData: Partial<Transaction>) => {
     const targetId = txData.id || editingTransaction?.id;
     if (targetId) {
       // Update existing
       let updatedTxObj: Transaction | null = null;
-      const updated = transactions.map(t => {
-        if (t.id === targetId) {
-          updatedTxObj = {
-            ...t,
-            ...txData,
-            id: t.id,
-            updatedAt: new Date().toISOString()
-          } as Transaction;
-          return updatedTxObj;
-        }
-        return t;
+      setTransactions(prev => {
+        const updated = prev.map(t => {
+          if (t.id === targetId) {
+            updatedTxObj = {
+              ...t,
+              ...txData,
+              id: t.id,
+              updatedAt: new Date().toISOString()
+            } as Transaction;
+            return updatedTxObj;
+          }
+          return t;
+        });
+        saveStoredTransactions(updated);
+        return updated;
       });
-      updateTransactions(updated);
       if (updatedTxObj) {
         saveTransactionToCloud(updatedTxObj).catch(err => console.error('[Firestore] Tx update error:', err));
       }
@@ -324,12 +330,12 @@ export default function App() {
       // Create new
       const newTx: Transaction = {
         id: `tx-${Date.now()}`,
-        memberId: txData.memberId || members[0].id,
-        memberName: txData.memberName || members[0].name,
+        memberId: txData.memberId || members[0]?.id || 'm1',
+        memberName: txData.memberName || members.find(m => m.id === txData.memberId)?.name || members[0]?.name || 'Member',
         date: txData.date || new Date().toISOString().split('T')[0],
-        amount: txData.amount || project.monthlyPerMemberExpected,
+        amount: txData.amount || project.monthlyPerMemberExpected || 2000,
         deductionOrFee: 0,
-        netAmount: txData.amount || project.monthlyPerMemberExpected,
+        netAmount: txData.amount || project.monthlyPerMemberExpected || 2000,
         method: txData.method || 'Bank Transfer',
         depositBank: txData.depositBank || project.bankDetails?.bankName || 'The City Bank PLC',
         depositAccountNumber: txData.depositAccountNumber || project.bankDetails?.accountNumber || '1781580054174',
@@ -341,7 +347,11 @@ export default function App() {
         createdAt: new Date().toISOString(),
         editedBy: session.memberName
       };
-      updateTransactions([newTx, ...transactions]);
+      setTransactions(prev => {
+        const updated = [newTx, ...prev.filter(t => t.id !== newTx.id)];
+        saveStoredTransactions(updated);
+        return updated;
+      });
       saveTransactionToCloud(newTx).catch(err => console.error('[Firestore] Tx create error:', err));
       showToast(`New deposit of ${formatCurrency(newTx.amount, project.symbol)} recorded and synced to cloud.`);
 
@@ -355,11 +365,16 @@ export default function App() {
   };
 
   const handleDeleteTransaction = (transactionId: string) => {
-    const target = transactions.find(t => t.id === transactionId);
-    const updated = transactions.filter(t => t.id !== transactionId);
-    updateTransactions(updated);
+    let deletedRef = transactionId;
+    setTransactions(prev => {
+      const target = prev.find(t => t.id === transactionId);
+      if (target?.referenceNumber) deletedRef = target.referenceNumber;
+      const updated = prev.filter(t => t.id !== transactionId);
+      saveStoredTransactions(updated);
+      return updated;
+    });
     deleteTransactionFromCloud(transactionId).catch(err => console.error('[Firestore] Tx delete error:', err));
-    showToast(`Transaction ${target?.referenceNumber || transactionId} deleted from cloud.`);
+    showToast(`Transaction ${deletedRef} deleted from cloud.`);
   };
 
   // Open Deposit Form with automatic selection of logged-in member
@@ -376,7 +391,7 @@ export default function App() {
     const newTx: Transaction = {
       id: `tx-form-${Date.now()}`,
       memberId: txData.memberId || members[0]?.id || 'm1',
-      memberName: txData.memberName || members[0]?.name || 'Member',
+      memberName: txData.memberName || members.find(m => m.id === txData.memberId)?.name || 'Member',
       date: txData.date || new Date().toISOString().split('T')[0],
       amount: txData.amount || project.monthlyPerMemberExpected || 2000,
       deductionOrFee: 0,
@@ -395,7 +410,11 @@ export default function App() {
       submittedVia: 'google_form',
       createdAt: new Date().toISOString()
     };
-    updateTransactions([newTx, ...transactions]);
+    setTransactions(prev => {
+      const updated = [newTx, ...prev.filter(t => t.id !== newTx.id)];
+      saveStoredTransactions(updated);
+      return updated;
+    });
     saveTransactionToCloud(newTx).catch(err => console.error('[Firestore] Form submit error:', err));
     showToast(`Deposit submitted for ${newTx.memberName}. Synced live & awaiting Admin Approval.`);
   };
@@ -408,8 +427,11 @@ export default function App() {
       verifiedAt: new Date().toISOString(),
       verifiedBy: session.memberName || project.leadAdminName || 'Md. Minhazul Islam Abir'
     };
-    const updated = transactions.map(t => t.id === tx.id ? approvedTx : t);
-    updateTransactions(updated);
+    setTransactions(prev => {
+      const updated = prev.map(t => t.id === tx.id ? approvedTx : t);
+      saveStoredTransactions(updated);
+      return updated;
+    });
     saveTransactionToCloud(approvedTx).catch(err => console.error('[Firestore] Approve error:', err));
     showToast(`Deposit for ${tx.memberName} (${formatCurrency(tx.amount, project.symbol)}) approved and credited across all devices!`);
 
@@ -423,18 +445,21 @@ export default function App() {
   // Admin Rejection for Flagged Submissions (Synced live)
   const handleRejectDeposit = (txId: string, reason?: string) => {
     let rejectedTxObj: Transaction | null = null;
-    const updated = transactions.map(t => {
-      if (t.id === txId) {
-        rejectedTxObj = {
-          ...t,
-          status: 'Flagged' as const,
-          rejectionReason: reason || 'Details could not be verified with bank'
-        };
-        return rejectedTxObj;
-      }
-      return t;
+    setTransactions(prev => {
+      const updated = prev.map(t => {
+        if (t.id === txId) {
+          rejectedTxObj = {
+            ...t,
+            status: 'Flagged' as const,
+            rejectionReason: reason || 'Details could not be verified with bank'
+          };
+          return rejectedTxObj;
+        }
+        return t;
+      });
+      saveStoredTransactions(updated);
+      return updated;
     });
-    updateTransactions(updated);
     if (rejectedTxObj) {
       saveTransactionToCloud(rejectedTxObj).catch(err => console.error('[Firestore] Reject error:', err));
     }
@@ -443,16 +468,22 @@ export default function App() {
 
   // Member Registration / Access Request Handler (Synced live)
   const handleRequestAccess = (newMember: Member) => {
-    const updated = [...members, newMember];
-    updateMembers(updated);
+    setMembers(prev => {
+      const updated = [...prev.filter(m => m.id !== newMember.id), newMember];
+      saveStoredMembers(updated);
+      return updated;
+    });
     saveMemberToCloud(newMember).catch(err => console.error('[Firestore] Member request access error:', err));
     showToast(`Access request received for ${newMember.name}. Synced to Admin live.`);
   };
 
   // Member CRUD Handler (Email, Mobile, Display Image, Nominee, Notes - Synced live)
   const handleSaveMember = (updatedMember: Member) => {
-    const updated = members.map(m => m.id === updatedMember.id ? updatedMember : m);
-    updateMembers(updated);
+    setMembers(prev => {
+      const updated = prev.map(m => m.id === updatedMember.id ? updatedMember : m);
+      saveStoredMembers(updated);
+      return updated;
+    });
     saveMemberToCloud(updatedMember).catch(err => console.error('[Firestore] Save member error:', err));
     
     // If admin profile is updated, keep project lead admin, pin & contact in sync so it NEVER reverts on logout or reload
@@ -481,6 +512,21 @@ export default function App() {
       });
     }
     showToast(`Member profile for ${updatedMember.name} updated live in database.`);
+  };
+
+  // Handler to restore original syndicate data (11 original members, plot project specs, 88 verified deposits)
+  const handleRestoreOriginalData = async () => {
+    try {
+      resetAllDataToDefault();
+      setMembers(INITIAL_MEMBERS);
+      setTransactions(INITIAL_TRANSACTIONS);
+      setProject(INITIAL_PLOT_PROJECT);
+      await restoreOriginalSyndicateDataToCloud();
+      showToast('Authentic syndicate data successfully restored and synced to cloud.');
+    } catch (err) {
+      console.error('Error restoring data:', err);
+      showToast('Error restoring original data.');
+    }
   };
 
   // Combined Bank & Service Charge Handler (Manual adjustment on total combined net balance with decimal support)
@@ -1292,6 +1338,7 @@ export default function App() {
         onExportCSV={handleExportCSV}
         adminMember={members.find(m => m.id === 'm1' || m.role === 'admin')}
         onSaveAdminPin={handleSaveAdminPin}
+        onRestoreOriginalData={handleRestoreOriginalData}
       />
     </div>
   );

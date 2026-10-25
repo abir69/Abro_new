@@ -15,7 +15,7 @@ export function generateMemberStatementHtml(options: GenerateStatementOptions): 
   const { member, transactions, project } = options;
   const leadName = options.leadName || project.leadAdminName || 'Md. Minhazul Islam Abir';
   const leadDesignation = options.leadDesignation || project.leadAdminDesignation || 'Chief Administrator & Trustee';
-  const syndicateName = options.syndicateName || project.syndicateAdminName || 'Dr. Tariqul Islam';
+  const syndicateName = options.syndicateName || project.syndicateAdminName || 'Md. Mostak Ahmed';
   const syndicateDesignation = options.syndicateDesignation || project.syndicateAdminDesignation || 'Syndicate Secretary & Treasury Auditor';
 
   // Strictly filter only this selected member's verified deposits

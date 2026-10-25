@@ -35,7 +35,7 @@ export const MemberStatementModal: React.FC<MemberStatementModalProps> = ({
   const [isEditingSignatories, setIsEditingSignatories] = useState<boolean>(false);
   const [leadName, setLeadName] = useState<string>(project.leadAdminName || 'Md. Minhazul Islam Abir');
   const [leadDesignation, setLeadDesignation] = useState<string>(project.leadAdminDesignation || 'Chief Administrator & Trustee');
-  const [syndicateName, setSyndicateName] = useState<string>(project.syndicateAdminName || 'Dr. Tariqul Islam');
+  const [syndicateName, setSyndicateName] = useState<string>(project.syndicateAdminName || 'Md. Mostak Ahmed');
   const [syndicateDesignation, setSyndicateDesignation] = useState<string>(project.syndicateAdminDesignation || 'Syndicate Secretary & Treasury Auditor');
   const [savedToast, setSavedToast] = useState<boolean>(false);
 
@@ -43,7 +43,7 @@ export const MemberStatementModal: React.FC<MemberStatementModalProps> = ({
     if (isOpen) {
       setLeadName(project.leadAdminName || 'Md. Minhazul Islam Abir');
       setLeadDesignation(project.leadAdminDesignation || 'Chief Administrator & Trustee');
-      setSyndicateName(project.syndicateAdminName || 'Dr. Tariqul Islam');
+      setSyndicateName(project.syndicateAdminName || 'Md. Mostak Ahmed');
       setSyndicateDesignation(project.syndicateAdminDesignation || 'Syndicate Secretary & Treasury Auditor');
       setIsEditingSignatories(false);
       setSavedToast(false);
@@ -120,7 +120,7 @@ export const MemberStatementModal: React.FC<MemberStatementModalProps> = ({
       ...project,
       leadAdminName: leadName.trim() || 'Md. Minhazul Islam Abir',
       leadAdminDesignation: leadDesignation.trim() || 'Chief Administrator & Trustee',
-      syndicateAdminName: syndicateName.trim() || 'Dr. Tariqul Islam',
+      syndicateAdminName: syndicateName.trim() || 'Md. Mostak Ahmed',
       syndicateAdminDesignation: syndicateDesignation.trim() || 'Syndicate Secretary & Treasury Auditor'
     };
 
@@ -314,7 +314,7 @@ export const MemberStatementModal: React.FC<MemberStatementModalProps> = ({
                       type="text"
                       value={syndicateName}
                       onChange={(e) => setSyndicateName(e.target.value)}
-                      placeholder="e.g. Dr. Tariqul Islam"
+                      placeholder="e.g. Md. Mostak Ahmed"
                       className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-sky-500 font-mono"
                       required
                     />
@@ -345,7 +345,7 @@ export const MemberStatementModal: React.FC<MemberStatementModalProps> = ({
                     onClick={() => {
                       setLeadName(project.leadAdminName || 'Md. Minhazul Islam Abir');
                       setLeadDesignation(project.leadAdminDesignation || 'Chief Administrator & Trustee');
-                      setSyndicateName(project.syndicateAdminName || 'Dr. Tariqul Islam');
+                      setSyndicateName(project.syndicateAdminName || 'Md. Mostak Ahmed');
                       setSyndicateDesignation(project.syndicateAdminDesignation || 'Syndicate Secretary & Treasury Auditor');
                       setIsEditingSignatories(false);
                     }}

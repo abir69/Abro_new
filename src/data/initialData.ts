@@ -12,7 +12,7 @@ export const INITIAL_PLOT_PROJECT: PlotProject = {
   combinedChargeNotes: 'The City Bank PLC ledger & account maintenance charge',
   leadAdminName: 'Md. Minhazul Islam Abir',
   leadAdminDesignation: 'Lead Admin & Chief Trustee',
-  syndicateAdminName: 'Dr. Tariqul Islam',
+  syndicateAdminName: 'Md. Mostak Ahmed',
   syndicateAdminDesignation: 'Syndicate Admin & Treasury Officer',
   currency: 'BDT',
   symbol: '৳',
@@ -53,18 +53,18 @@ export const INITIAL_MEMBERS: Member[] = [
     pin: '2026',
     approvalStatus: 'approved',
     manualNetAdjustment: 0,
-    notes: 'Initiative Coordinator & Primary Custodian'
+    notes: 'Initiative Coordinator & Primary Custodian (Admin)'
   },
   {
     id: 'm2',
-    name: 'Dr. Tariqul Islam',
-    email: 'tariqul.islam.dr@gmail.com',
+    name: 'Md. Mostak Ahmed',
+    email: 'mostak.ahmed@gmail.com',
     mobile: '+880 1819-234567',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
     role: 'member',
-    nomineeName: 'Dr. Ayesha Tariq',
+    nomineeName: 'Rasheda Ahmed',
     nomineeRelation: 'Spouse',
-    emergencyContactName: 'Dr. Ayesha Tariq',
+    emergencyContactName: 'Rasheda Ahmed',
     emergencyContactRelation: 'Spouse',
     emergencyContactPhone: '+880 1819-998877',
     nidOrId: 'NID-1988-392810481',
@@ -72,37 +72,37 @@ export const INITIAL_MEMBERS: Member[] = [
     pin: '1234',
     approvalStatus: 'approved',
     manualNetAdjustment: 0,
-    notes: 'Advisory Committee Member'
+    notes: 'Syndicate Member & Participant'
   },
   {
     id: 'm3',
-    name: 'Syeda Nusrat Jahan',
-    email: 'nusrat.jahan.arch@gmail.com',
+    name: 'Md. Mahmudul Hasan',
+    email: 'mahmudul.hasan@gmail.com',
     mobile: '+880 1914-567890',
-    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
     role: 'member',
-    nomineeName: 'Syed Anwar Jahan',
-    nomineeRelation: 'Father',
-    emergencyContactName: 'Syed Anwar Jahan',
-    emergencyContactRelation: 'Father',
+    nomineeName: 'Fatema Hasan',
+    nomineeRelation: 'Mother',
+    emergencyContactName: 'Fatema Hasan',
+    emergencyContactRelation: 'Mother',
     emergencyContactPhone: '+880 1914-112233',
     nidOrId: 'NID-1993-847291847',
     joinedDate: '2025-01-15',
     pin: '1234',
     approvalStatus: 'approved',
     manualNetAdjustment: 0,
-    notes: 'Planning Lead'
+    notes: 'Syndicate Member & Participant'
   },
   {
     id: 'm4',
-    name: 'Kamrul Hassan',
-    email: 'kamrul.hassan.fin@gmail.com',
+    name: 'Naeem Hasan',
+    email: 'naeem.hasan@gmail.com',
     mobile: '+880 1711-345678',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
     role: 'member',
-    nomineeName: 'Farhana Kamrul',
+    nomineeName: 'Farzana Naeem',
     nomineeRelation: 'Spouse',
-    emergencyContactName: 'Farhana Kamrul',
+    emergencyContactName: 'Farzana Naeem',
     emergencyContactRelation: 'Spouse',
     emergencyContactPhone: '+880 1711-445566',
     nidOrId: 'NID-1985-182947192',
@@ -110,18 +110,18 @@ export const INITIAL_MEMBERS: Member[] = [
     pin: '1234',
     approvalStatus: 'approved',
     manualNetAdjustment: 0,
-    notes: 'Internal Accounts Reviewer'
+    notes: 'Syndicate Member & Participant'
   },
   {
     id: 'm5',
-    name: 'Mahmudur Rahman',
-    email: 'mahmud.rahman.dev@gmail.com',
+    name: 'Md. Mehedi Hasan Shawon',
+    email: 'mehedi.shawon@gmail.com',
     mobile: '+880 1622-456789',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
     role: 'member',
-    nomineeName: 'Roksana Mahmud',
+    nomineeName: 'Roksana Begum',
     nomineeRelation: 'Mother',
-    emergencyContactName: 'Roksana Mahmud',
+    emergencyContactName: 'Roksana Begum',
     emergencyContactRelation: 'Mother',
     emergencyContactPhone: '+880 1622-778899',
     nidOrId: 'NID-1994-472918401',
@@ -129,37 +129,37 @@ export const INITIAL_MEMBERS: Member[] = [
     pin: '1234',
     approvalStatus: 'approved',
     manualNetAdjustment: 0,
-    notes: 'Technical & System Coordinator'
+    notes: 'Syndicate Member & Participant'
   },
   {
     id: 'm6',
-    name: 'Nafisa Chowdhury',
-    email: 'nafisa.chowdhury.law@gmail.com',
+    name: 'Md. Nadim Khan',
+    email: 'nadim.khan@gmail.com',
     mobile: '+880 1833-567891',
-    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80',
+    avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80',
     role: 'member',
-    nomineeName: 'Barrister Iftekhar Chowdhury',
-    nomineeRelation: 'Brother',
-    emergencyContactName: 'Barrister Iftekhar Chowdhury',
-    emergencyContactRelation: 'Brother',
+    nomineeName: 'Farida Khan',
+    nomineeRelation: 'Mother',
+    emergencyContactName: 'Farida Khan',
+    emergencyContactRelation: 'Mother',
     emergencyContactPhone: '+880 1833-223344',
     nidOrId: 'NID-1991-382910482',
     joinedDate: '2025-01-20',
     pin: '1234',
     approvalStatus: 'approved',
     manualNetAdjustment: 0,
-    notes: 'Legal & Documentation Advisor'
+    notes: 'Syndicate Member & Participant'
   },
   {
     id: 'm7',
-    name: 'Engr. Rezaul Karim',
-    email: 'engr.rezaul.karim@gmail.com',
+    name: 'Shamim Osman',
+    email: 'shamim.osman@gmail.com',
     mobile: '+880 1922-678912',
-    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
+    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
     role: 'member',
-    nomineeName: 'Nasrin Karim',
+    nomineeName: 'Nasrin Sultana',
     nomineeRelation: 'Spouse',
-    emergencyContactName: 'Nasrin Karim',
+    emergencyContactName: 'Nasrin Sultana',
     emergencyContactRelation: 'Spouse',
     emergencyContactPhone: '+880 1922-556677',
     nidOrId: 'NID-1987-928471039',
@@ -167,18 +167,18 @@ export const INITIAL_MEMBERS: Member[] = [
     pin: '1234',
     approvalStatus: 'approved',
     manualNetAdjustment: 0,
-    notes: 'Infrastructure Specialist'
+    notes: 'Syndicate Member & Participant'
   },
   {
     id: 'm8',
-    name: 'Zubair Ahmed',
-    email: 'zubair.ahmed.biz@gmail.com',
+    name: 'Naruttam Chandra Sarker',
+    email: 'naruttam.sarker@gmail.com',
     mobile: '+880 1733-789023',
-    avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     role: 'member',
-    nomineeName: 'Tasnim Zubair',
+    nomineeName: 'Anjali Sarker',
     nomineeRelation: 'Spouse',
-    emergencyContactName: 'Tasnim Zubair',
+    emergencyContactName: 'Anjali Sarker',
     emergencyContactRelation: 'Spouse',
     emergencyContactPhone: '+880 1733-889900',
     nidOrId: 'NID-1990-284910382',
@@ -186,56 +186,56 @@ export const INITIAL_MEMBERS: Member[] = [
     pin: '1234',
     approvalStatus: 'approved',
     manualNetAdjustment: 0,
-    notes: 'Procurement Specialist'
+    notes: 'Syndicate Member & Participant'
   },
   {
     id: 'm9',
-    name: 'Farhan Kabir',
-    email: 'farhan.kabir.mkt@gmail.com',
+    name: 'Sukhen Chandra Mondal',
+    email: 'sukhen.mondal@gmail.com',
     mobile: '+880 1844-890134',
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
+    avatar: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150&auto=format&fit=crop&q=80',
     role: 'member',
-    nomineeName: 'Laila Kabir',
-    nomineeRelation: 'Mother',
-    emergencyContactName: 'Laila Kabir',
-    emergencyContactRelation: 'Mother',
+    nomineeName: 'Mita Mondal',
+    nomineeRelation: 'Spouse',
+    emergencyContactName: 'Mita Mondal',
+    emergencyContactRelation: 'Spouse',
     emergencyContactPhone: '+880 1844-334455',
     nidOrId: 'NID-1995-182930491',
     joinedDate: '2025-01-28',
     pin: '1234',
     approvalStatus: 'approved',
     manualNetAdjustment: 0,
-    notes: 'Communications Coordinator'
+    notes: 'Syndicate Member & Participant'
   },
   {
     id: 'm10',
-    name: 'Shakil Anwar',
-    email: 'shakil.anwar.bd@gmail.com',
+    name: 'Didar-E-Mosnobi Rumi',
+    email: 'didar.rumi@gmail.com',
     mobile: '+880 1933-901245',
     avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
     role: 'member',
-    nomineeName: 'Shaila Anwar',
-    nomineeRelation: 'Sister',
-    emergencyContactName: 'Shaila Anwar',
-    emergencyContactRelation: 'Sister',
+    nomineeName: 'Sultana Rumi',
+    nomineeRelation: 'Spouse',
+    emergencyContactName: 'Sultana Rumi',
+    emergencyContactRelation: 'Spouse',
     emergencyContactPhone: '+880 1933-667788',
     nidOrId: 'NID-1992-629104829',
     joinedDate: '2025-02-01',
     pin: '1234',
     approvalStatus: 'approved',
     manualNetAdjustment: 0,
-    notes: 'Member Relations Liaison'
+    notes: 'Syndicate Member & Participant'
   },
   {
     id: 'm11',
-    name: 'Tanvir Hossain',
-    email: 'tanvir.hossain.mgt@gmail.com',
+    name: 'Mehedi Hasan',
+    email: 'mehedi.hasan11@gmail.com',
     mobile: '+880 1744-012356',
-    avatar: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150&auto=format&fit=crop&q=80',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
     role: 'member',
-    nomineeName: 'Fariha Tanvir',
+    nomineeName: 'Fariha Hasan',
     nomineeRelation: 'Spouse',
-    emergencyContactName: 'Fariha Tanvir',
+    emergencyContactName: 'Fariha Hasan',
     emergencyContactRelation: 'Spouse',
     emergencyContactPhone: '+880 1744-990011',
     nidOrId: 'NID-1989-729104820',
@@ -243,15 +243,15 @@ export const INITIAL_MEMBERS: Member[] = [
     pin: '1234',
     approvalStatus: 'approved',
     manualNetAdjustment: 0,
-    notes: 'Operations Coordinator'
+    notes: 'Syndicate Member & Participant'
   }
 ];
 
 // No expenses in the initiative!
 export const INITIAL_EXPENSES: SyndicateExpense[] = [];
 
-// Months list from March to October 2026
-const MONTHS_MARCH_TO_OCTOBER = [
+// Initiative cycles from March to October 2026
+export const MONTHS_MARCH_TO_OCTOBER = [
   { month: 'March 2026', prefix: '2026-03' },
   { month: 'April 2026', prefix: '2026-04' },
   { month: 'May 2026', prefix: '2026-05' },
@@ -262,7 +262,10 @@ const MONTHS_MARCH_TO_OCTOBER = [
   { month: 'October 2026', prefix: '2026-10' }
 ];
 
-// Generate 2000 BDT deposits from March to October for all 11 members (No fee charge on member deposits)
+export const DEFAULT_DEPOSIT_BANK = 'The City Bank PLC';
+export const DEFAULT_DEPOSIT_ACCOUNT = '1781580054174';
+
+// Generate 2,000 BDT regular verified syndicate deposits from March to October for all 11 exact members
 export const INITIAL_TRANSACTIONS: Transaction[] = MONTHS_MARCH_TO_OCTOBER.flatMap((mObj, mIdx) => {
   return INITIAL_MEMBERS.map((member, memIdx) => {
     const day = (5 + ((memIdx * 2) % 6)).toString().padStart(2, '0');
@@ -278,17 +281,17 @@ export const INITIAL_TRANSACTIONS: Transaction[] = MONTHS_MARCH_TO_OCTOBER.flatM
       memberId: member.id,
       memberName: member.name,
       date,
-      amount: 2000, // 2,000 BDT deposit as requested
-      deductionOrFee: 0, // Fee charge removed for members
-      netAmount: 2000, // Clean Net balance 2,000 BDT
+      amount: 2000,
+      deductionOrFee: 0,
+      netAmount: 2000,
       method,
       referenceNumber: `CITY-${mObj.month.slice(0, 3).toUpperCase()}${date.slice(2, 4)}-${(100 + memIdx + mIdx * 11)}`,
-      depositBank: 'The City Bank PLC',
-      depositAccountNumber: '1781580054174',
-      bankOrChannel: method === 'Bank Transfer' ? 'The City Bank PLC' : method === 'bKash / MFS' ? 'bKash to City Bank' : 'The City Bank PLC',
+      depositBank: DEFAULT_DEPOSIT_BANK,
+      depositAccountNumber: DEFAULT_DEPOSIT_ACCOUNT,
+      bankOrChannel: method === 'Bank Transfer' ? DEFAULT_DEPOSIT_BANK : method === 'bKash / MFS' ? 'bKash to City Bank' : DEFAULT_DEPOSIT_BANK,
       monthPeriod: mObj.month,
       status: 'Verified' as const,
-      notes: `${mObj.month} monthly contribution (2,000 BDT) deposited to The City Bank PLC (Acc: 1781580054174)`,
+      notes: `${mObj.month} monthly contribution (2,000 BDT) deposited to ${DEFAULT_DEPOSIT_BANK} (Acc: ${DEFAULT_DEPOSIT_ACCOUNT})`,
       createdAt: `${date}T10:00:00Z`
     };
   });
