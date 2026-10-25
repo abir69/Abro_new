@@ -64,14 +64,33 @@ export const saveStoredAdminProfile = (admin: Member): void => {
 export const getStoredMembers = (): Member[] => {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.MEMBERS);
+    let parsed: Member[];
     if (!raw) {
       localStorage.setItem(STORAGE_KEYS.MEMBERS, JSON.stringify(INITIAL_MEMBERS));
-      return INITIAL_MEMBERS;
+      parsed = INITIAL_MEMBERS;
+    } else {
+      const loaded: Member[] = JSON.parse(raw);
+      if (!Array.isArray(loaded) || loaded.length === 0 || loaded.some(m => isStaleMockName(m.name))) {
+        localStorage.setItem(STORAGE_KEYS.MEMBERS, JSON.stringify(INITIAL_MEMBERS));
+        parsed = INITIAL_MEMBERS;
+      } else {
+        parsed = loaded;
+      }
     }
-    const parsed: Member[] = JSON.parse(raw);
-    if (!Array.isArray(parsed) || parsed.length === 0 || parsed.some(m => isStaleMockName(m.name))) {
-      localStorage.setItem(STORAGE_KEYS.MEMBERS, JSON.stringify(INITIAL_MEMBERS));
-      return INITIAL_MEMBERS;
+
+    // Always merge saved admin profile so admin custom avatar/phone/email/name is never lost on refresh
+    const savedAdmin = getStoredAdminProfile();
+    if (savedAdmin && (savedAdmin.avatar || savedAdmin.name)) {
+      parsed = parsed.map(m => {
+        if (m.id === 'm1' || m.role === 'admin') {
+          return {
+            ...m,
+            ...savedAdmin,
+            avatar: savedAdmin.avatar || m.avatar
+          };
+        }
+        return m;
+      });
     }
     return parsed;
   } catch (e) {
@@ -164,17 +183,26 @@ export const getStoredProject = (): PlotProject => {
 };
 
 export const saveStoredProject = (project: PlotProject) => {
-  localStorage.setItem(STORAGE_KEYS.PROJECT, JSON.stringify(project));
+  try {
+    localStorage.setItem(STORAGE_KEYS.PROJECT, JSON.stringify(project));
+  } catch (e) {
+    console.warn('Error saving project to localStorage:', e);
+  }
   if (project.leadAdminName) {
     const savedAdmin = getStoredAdminProfile();
     if (savedAdmin) {
-      localStorage.setItem(STORAGE_KEYS.ADMIN_PROFILE, JSON.stringify({
-        ...savedAdmin,
-        name: project.leadAdminName,
-        pin: project.adminPin || savedAdmin.pin,
-        email: project.supportContactEmail || savedAdmin.email,
-        mobile: project.supportContactPhone || savedAdmin.mobile
-      }));
+      try {
+        localStorage.setItem(STORAGE_KEYS.ADMIN_PROFILE, JSON.stringify({
+          ...savedAdmin,
+          name: project.leadAdminName,
+          pin: project.adminPin || savedAdmin.pin,
+          email: project.supportContactEmail || savedAdmin.email,
+          mobile: project.supportContactPhone || savedAdmin.mobile,
+          avatar: project.leadAdminAvatar || savedAdmin.avatar
+        }));
+      } catch (e) {
+        console.warn('Error syncing admin profile in localStorage:', e);
+      }
     }
   }
 };

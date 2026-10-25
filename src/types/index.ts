@@ -85,6 +85,7 @@ export interface PlotProject {
   totalCombinedBankCharge?: number; // Manual bank and service charge on total combined balance
   combinedChargeNotes?: string;
   leadAdminName?: string;
+  leadAdminAvatar?: string; // Persistent Admin Profile Picture
   leadAdminDesignation?: string;
   syndicateAdminName?: string;
   syndicateAdminDesignation?: string;

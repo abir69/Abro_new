@@ -205,8 +205,12 @@ export default function App() {
 
     const unsubMembers = subscribeToMembers((liveMembers) => {
       if (liveMembers && liveMembers.length > 0) {
-        setMembers(liveMembers);
-        saveStoredMembers(liveMembers);
+        const savedAdmin = getStoredAdminProfile();
+        const mergedMembers = savedAdmin && (savedAdmin.avatar || savedAdmin.name)
+          ? liveMembers.map(m => (m.id === 'm1' || m.role === 'admin') ? { ...m, ...savedAdmin, avatar: savedAdmin.avatar || m.avatar } : m)
+          : liveMembers;
+        setMembers(mergedMembers);
+        saveStoredMembers(mergedMembers);
         setIsCloudSynced(true);
       }
     });
@@ -222,6 +226,9 @@ export default function App() {
         setProject(liveProj);
         saveStoredProject(liveProj);
         applyThemeAndStyles(liveProj.appTheme, liveProj.fontFamily, liveProj.borderRadiusStyle);
+        if (liveProj.leadAdminAvatar) {
+          setMembers(prev => prev.map(m => (m.id === 'm1' || m.role === 'admin') ? { ...m, avatar: liveProj.leadAdminAvatar || m.avatar } : m));
+        }
         setIsCloudSynced(true);
       }
     });
@@ -521,6 +528,7 @@ export default function App() {
       const updatedProject: PlotProject = {
         ...project,
         leadAdminName: updatedMember.name,
+        leadAdminAvatar: updatedMember.avatar,
         adminPin: updatedMember.pin || project.adminPin,
         supportContactEmail: updatedMember.email || project.supportContactEmail,
         supportContactPhone: updatedMember.mobile || project.supportContactPhone,
@@ -575,9 +583,12 @@ export default function App() {
   // Update Project Initiative & Statement Signatories
   const handleUpdateProject = (updatedProject: PlotProject, newAdminPin?: string) => {
     const pinToUse = (newAdminPin && newAdminPin.trim()) || (updatedProject.adminPin && updatedProject.adminPin.trim()) || project.adminPin;
+    const savedAdmin = getStoredAdminProfile();
+    const adminAvatarToUse = updatedProject.leadAdminAvatar || savedAdmin?.avatar || project.leadAdminAvatar;
     const sanitizedProject: PlotProject = {
       ...updatedProject,
       adminPin: pinToUse,
+      leadAdminAvatar: adminAvatarToUse,
       maintenanceStartedAt: updatedProject.isMaintenanceMode 
         ? (updatedProject.maintenanceStartedAt || new Date().toISOString()) 
         : ''
@@ -587,11 +598,12 @@ export default function App() {
     saveProjectToCloud(sanitizedProject).catch(err => console.error('[Firestore] Update project error:', err));
     applyThemeAndStyles(sanitizedProject.appTheme, sanitizedProject.fontFamily, sanitizedProject.borderRadiusStyle);
 
-    // CRITICAL: Synchronize admin member profile AND PIN so old PIN is permanently removed
+    // CRITICAL: Synchronize admin member profile AND PIN so old PIN and old avatar are never reverted
     const adminMember = members.find(m => m.id === 'm1' || m.role === 'admin');
     if (adminMember) {
       const updatedAdmin: Member = {
         ...adminMember,
+        avatar: adminAvatarToUse || adminMember.avatar,
         pin: pinToUse || adminMember.pin || '2026',
         name: sanitizedProject.leadAdminName || adminMember.name,
         email: sanitizedProject.supportContactEmail || adminMember.email,
@@ -619,10 +631,12 @@ export default function App() {
   const handleSaveAdminPin = (newPin: string) => {
     if (!newPin.trim()) return;
     const cleanPin = newPin.trim();
+    const savedAdmin = getStoredAdminProfile();
     const adminMember = members.find(m => m.id === 'm1' || m.role === 'admin');
     if (adminMember) {
       const updatedAdmin: Member = {
         ...adminMember,
+        avatar: savedAdmin?.avatar || project.leadAdminAvatar || adminMember.avatar,
         pin: cleanPin
       };
       saveStoredAdminProfile(updatedAdmin);

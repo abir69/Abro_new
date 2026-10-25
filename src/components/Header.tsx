@@ -19,7 +19,8 @@ import {
   AlertTriangle,
   Settings,
   Smartphone,
-  Database
+  Database,
+  Camera
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -312,6 +313,17 @@ export const Header: React.FC<HeaderProps> = ({
                   </div>
                 </div>
               </button>
+
+              {onEditMyProfile && (
+                <button
+                  type="button"
+                  onClick={onEditMyProfile}
+                  className="p-1 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer shrink-0"
+                  title="Update profile picture & details"
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                </button>
+              )}
 
               {/* Logout Button (Extra profile switch icon removed as requested in Request 4) */}
               <div className="ml-1 border-l border-slate-800 pl-1.5 flex items-center">

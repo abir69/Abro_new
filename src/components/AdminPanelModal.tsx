@@ -41,7 +41,10 @@ import {
   RefreshCw,
   Server,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Upload,
+  Camera,
+  Loader2
 } from 'lucide-react';
 
 interface AdminPanelModalProps {
@@ -122,6 +125,11 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
   // Header & Footer States
   const [leadAdminName, setLeadAdminName] = useState(project.leadAdminName || '');
+  const [leadAdminAvatar, setLeadAdminAvatar] = useState(
+    project.leadAdminAvatar || adminMember?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+  );
+  const [isProcessingAdminAvatar, setIsProcessingAdminAvatar] = useState(false);
+  const [adminAvatarSizeNote, setAdminAvatarSizeNote] = useState<string | null>(null);
   const [leadAdminDesignation, setLeadAdminDesignation] = useState(project.leadAdminDesignation || 'Lead Admin & Chief Trustee');
   const [syndicateAdminName, setSyndicateAdminName] = useState(project.syndicateAdminName || '');
   const [syndicateAdminDesignation, setSyndicateAdminDesignation] = useState(project.syndicateAdminDesignation || 'Syndicate Admin & Treasury Officer');
@@ -165,6 +173,8 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       setMaintenanceMessage(project.maintenanceMessage || 'Scheduled Syndicate Treasury Audit & Maintenance. Member access will resume shortly.');
       setMaintenanceEstimatedTime(project.maintenanceEstimatedTime || 'October 17, 2026, 6:00 PM BST');
       setLeadAdminName(project.leadAdminName || '');
+      setLeadAdminAvatar(project.leadAdminAvatar || adminMember?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80');
+      setAdminAvatarSizeNote(null);
       setLeadAdminDesignation(project.leadAdminDesignation || 'Lead Admin & Chief Trustee');
       setSyndicateAdminName(project.syndicateAdminName || '');
       setSyndicateAdminDesignation(project.syndicateAdminDesignation || 'Syndicate Admin & Treasury Officer');
@@ -181,6 +191,52 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     // Revert preview to saved project styles if dismissed without saving
     applyThemeAndStyles(project.appTheme, project.fontFamily, project.borderRadiusStyle);
     onClose();
+  };
+
+  const handleAdminAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+
+    setIsProcessingAdminAvatar(true);
+    setAdminAvatarSizeNote(null);
+    try {
+      const reader = new FileReader();
+      const compressed: string = await new Promise((resolve, reject) => {
+        reader.onerror = reject;
+        reader.onload = () => {
+          const img = new Image();
+          img.onerror = reject;
+          img.onload = () => {
+            const targetDim = 256;
+            const canvas = document.createElement('canvas');
+            canvas.width = targetDim;
+            canvas.height = targetDim;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              resolve(reader.result as string);
+              return;
+            }
+            const minSide = Math.min(img.width, img.height);
+            const sx = (img.width - minSide) / 2;
+            const sy = (img.height - minSide) / 2;
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, targetDim, targetDim);
+            ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, targetDim, targetDim);
+            resolve(canvas.toDataURL('image/jpeg', 0.85));
+          };
+          img.src = reader.result as string;
+        };
+        reader.readAsDataURL(file);
+      });
+      setLeadAdminAvatar(compressed);
+      const approxKb = Math.round((compressed.length * 3) / 4 / 1024);
+      setAdminAvatarSizeNote(`Optimized (${approxKb} KB)`);
+    } catch (err) {
+      console.error('Admin avatar upload error:', err);
+    } finally {
+      setIsProcessingAdminAvatar(false);
+      e.target.value = '';
+    }
   };
 
   const handleSaveAll = (e?: React.FormEvent) => {
@@ -213,6 +269,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       maintenanceEstimatedTime: maintenanceEstimatedTime.trim(),
       maintenanceStartedAt: isMaintenanceMode ? (project.maintenanceStartedAt || new Date().toISOString()) : '',
       leadAdminName: leadAdminName.trim() || project.leadAdminName,
+      leadAdminAvatar: leadAdminAvatar.trim() || project.leadAdminAvatar || adminMember?.avatar,
       leadAdminDesignation: leadAdminDesignation.trim(),
       syndicateAdminName: syndicateAdminName.trim(),
       syndicateAdminDesignation: syndicateAdminDesignation.trim(),
@@ -915,6 +972,82 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                     </div>
                   </button>
                 )}
+              </div>
+
+              {/* Admin Profile Picture Section */}
+              <div className="p-4 bg-slate-950/70 rounded-xl border border-slate-800 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="relative shrink-0">
+                      <img
+                        src={leadAdminAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
+                        alt="Admin Avatar"
+                        onError={(e) => {
+                          const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(leadAdminName || 'Admin')}&background=059669&color=fff&size=256`;
+                          (e.target as HTMLImageElement).src = fallback;
+                        }}
+                        className="w-14 h-14 rounded-full object-cover ring-2 ring-emerald-500 shadow-md bg-slate-800"
+                      />
+                      {isProcessingAdminAvatar && (
+                        <div className="absolute inset-0 bg-slate-950/80 rounded-full flex items-center justify-center">
+                          <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-white">Lead Admin Profile Picture</span>
+                        {adminAvatarSizeNote && (
+                          <span className="text-[10px] bg-emerald-950 text-emerald-300 font-semibold px-2 py-0.5 rounded-full border border-emerald-800 flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                            {adminAvatarSizeNote}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        Shown on ledger headers, statement signatories, and member portal.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 self-start sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(leadAdminName || 'Admin')}&background=059669&color=fff&size=256&bold=true`;
+                        setLeadAdminAvatar(fallbackUrl);
+                        setAdminAvatarSizeNote('Initials Set');
+                      }}
+                      className="text-[11px] bg-slate-800 hover:bg-slate-700 text-emerald-300 px-2.5 py-1.5 rounded-lg border border-slate-700 transition-colors flex items-center gap-1 cursor-pointer"
+                      title="Use initials monogram"
+                    >
+                      <Sparkles className="w-3 h-3 text-emerald-400" />
+                      <span>Initials</span>
+                    </button>
+                    <label className="text-[11px] bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Upload Photo</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAdminAvatarUpload}
+                        disabled={isProcessingAdminAvatar}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 pt-1 border-t border-slate-800/80">
+                  <input
+                    type="url"
+                    value={leadAdminAvatar}
+                    onChange={(e) => setLeadAdminAvatar(e.target.value)}
+                    placeholder="https://... or paste direct image URL"
+                    className="flex-1 bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
+                  <span className="text-[10px] text-slate-400">Direct Link</span>
+                </div>
               </div>
 
               {/* Signatories & Support Info */}
