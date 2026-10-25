@@ -65,6 +65,7 @@ import {
   saveReminderToCloud,
   restoreOriginalSyndicateDataToCloud
 } from './services/firebase';
+import { testSupabaseHealth } from './services/supabase';
 
 import { 
   CheckCircle2, 
@@ -126,9 +127,9 @@ export default function App() {
   // Theme & Admin Panel Customization States
   const [themeMode, setThemeMode] = useState<ThemeMode>(getStoredTheme());
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
-  const [adminPanelTab, setAdminPanelTab] = useState<'appearance' | 'branding' | 'directives' | 'maintenance' | 'footer'>('appearance');
+  const [adminPanelTab, setAdminPanelTab] = useState<'appearance' | 'branding' | 'directives' | 'maintenance' | 'footer' | 'supabase'>('appearance');
 
-  const handleOpenAdminPanel = (tab: 'appearance' | 'branding' | 'directives' | 'maintenance' | 'footer' = 'appearance') => {
+  const handleOpenAdminPanel = (tab: 'appearance' | 'branding' | 'directives' | 'maintenance' | 'footer' | 'supabase' = 'appearance') => {
     setAdminPanelTab(tab);
     setIsAdminPanelOpen(true);
   };
@@ -193,6 +194,13 @@ export default function App() {
     // 3. Ensure cloud collections are seeded and connect live Firestore onSnapshot listeners
     initializeFirestoreDataIfEmpty().then(() => {
       setIsCloudSynced(true);
+    });
+
+    // 4. Test Supabase database reachability on boot
+    testSupabaseHealth().then(res => {
+      console.log('[Supabase] Boot check:', res.message);
+    }).catch(err => {
+      console.warn('[Supabase] Boot check warning:', err);
     });
 
     const unsubMembers = subscribeToMembers((liveMembers) => {
@@ -877,6 +885,7 @@ export default function App() {
           onOpenApprovalsQueue={() => setIsApprovalsModalOpen(true)}
           onOpenMaintenanceModal={() => handleOpenAdminPanel('maintenance')}
           onOpenAdminPanel={() => handleOpenAdminPanel('appearance')}
+          onOpenSupabaseModal={() => handleOpenAdminPanel('supabase')}
           onViewMyStatement={() => {
             const myProfile = members.find(m => m.id === session.memberId);
             if (myProfile) {
@@ -1339,6 +1348,9 @@ export default function App() {
         adminMember={members.find(m => m.id === 'm1' || m.role === 'admin')}
         onSaveAdminPin={handleSaveAdminPin}
         onRestoreOriginalData={handleRestoreOriginalData}
+        members={members}
+        transactions={transactions}
+        onShowToast={showToast}
       />
     </div>
   );

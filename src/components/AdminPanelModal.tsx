@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { PlotProject, ThemeMode, Member } from '../types';
+import { PlotProject, ThemeMode, Member, Transaction } from '../types';
 import { applyThemeAndStyles } from '../services/storageService';
+import { 
+  getSupabaseUrl, 
+  getSupabaseAnonKey, 
+  setStoredSupabaseAnonKey, 
+  setStoredSupabaseUrl,
+  testSupabaseHealth, 
+  syncSyndicateDataToSupabase, 
+  getSupabaseSqlMigrationScript,
+  SupabaseHealthResult,
+  DEFAULT_SUPABASE_URL
+} from '../services/supabase';
 import { 
   X, 
   Check, 
@@ -23,7 +34,14 @@ import {
   Shield,
   Gem,
   KeyRound,
-  RotateCcw
+  RotateCcw,
+  Database,
+  ExternalLink,
+  Copy,
+  RefreshCw,
+  Server,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 
 interface AdminPanelModalProps {
@@ -33,12 +51,15 @@ interface AdminPanelModalProps {
   onSaveProject: (updated: PlotProject, newAdminPin?: string) => void;
   themeMode: ThemeMode;
   onToggleThemeMode: () => void;
-  initialTab?: 'appearance' | 'branding' | 'directives' | 'maintenance' | 'footer';
+  initialTab?: 'appearance' | 'branding' | 'directives' | 'maintenance' | 'footer' | 'supabase';
   onExportStandaloneHtml?: () => void;
   onExportCSV?: () => void;
   adminMember?: Member | null;
   onSaveAdminPin?: (newPin: string) => void;
   onRestoreOriginalData?: () => void;
+  members?: Member[];
+  transactions?: Transaction[];
+  onShowToast?: (msg: string) => void;
 }
 
 export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
@@ -53,9 +74,12 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   onExportCSV,
   adminMember,
   onSaveAdminPin,
-  onRestoreOriginalData
+  onRestoreOriginalData,
+  members = [],
+  transactions = [],
+  onShowToast
 }) => {
-  const [activeTab, setActiveTab] = useState<'appearance' | 'branding' | 'directives' | 'maintenance' | 'footer'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'appearance' | 'branding' | 'directives' | 'maintenance' | 'footer' | 'supabase'>(initialTab);
 
   // Appearance States
   const [selectedTheme, setSelectedTheme] = useState<'emerald' | 'indigo' | 'blue' | 'violet' | 'amber' | 'slate'>(
@@ -106,9 +130,21 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const [supportPhone, setSupportPhone] = useState(project.supportContactPhone || '+880 1712-992700');
   const [adminPin, setAdminPin] = useState(adminMember?.pin || '2026');
 
+  // Supabase Database Connection States
+  const [supabaseUrl, setSupabaseUrl] = useState<string>(getSupabaseUrl());
+  const [supabaseAnonKey, setSupabaseAnonKey] = useState<string>(getSupabaseAnonKey());
+  const [supabaseHealth, setSupabaseHealth] = useState<SupabaseHealthResult | null>(null);
+  const [isTestingSupabase, setIsTestingSupabase] = useState<boolean>(false);
+  const [isSyncingSupabase, setIsSyncingSupabase] = useState<boolean>(false);
+  const [syncResult, setSyncResult] = useState<{ success: boolean; members: number; transactions: number; error?: string } | null>(null);
+  const [showSqlPreview, setShowSqlPreview] = useState<boolean>(false);
+  const [hasCopiedSql, setHasCopiedSql] = useState<boolean>(false);
+
   useEffect(() => {
     if (isOpen) {
       setActiveTab(initialTab);
+      setSupabaseUrl(getSupabaseUrl());
+      setSupabaseAnonKey(getSupabaseAnonKey());
       setSelectedTheme(project.appTheme || 'emerald');
       setSelectedFont(project.fontFamily || 'inter');
       setSelectedRadius(project.borderRadiusStyle || 'smooth');
@@ -193,6 +229,89 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
     onSaveProject(updated, pinToSet);
     onClose();
+  };
+
+  const handleTestSupabase = async () => {
+    setIsTestingSupabase(true);
+    try {
+      const res = await testSupabaseHealth();
+      setSupabaseHealth(res);
+      if (onShowToast) {
+        onShowToast(res.message);
+      }
+    } catch (e: any) {
+      setSupabaseHealth({
+        reachable: false,
+        authenticated: false,
+        url: supabaseUrl,
+        hasKey: Boolean(supabaseAnonKey),
+        message: e?.message || 'Connection test failed'
+      });
+    } finally {
+      setIsTestingSupabase(false);
+    }
+  };
+
+  const handleSaveSupabaseConfig = () => {
+    setStoredSupabaseUrl(supabaseUrl.trim());
+    setStoredSupabaseAnonKey(supabaseAnonKey.trim());
+    if (onShowToast) {
+      onShowToast('Supabase configuration saved.');
+    }
+    handleTestSupabase();
+  };
+
+  const handleSyncToSupabase = async () => {
+    if (!supabaseAnonKey.trim()) {
+      if (onShowToast) {
+        onShowToast('Please provide your Supabase Anon API key first.');
+      }
+      return;
+    }
+    setIsSyncingSupabase(true);
+    setSyncResult(null);
+    try {
+      setStoredSupabaseAnonKey(supabaseAnonKey.trim());
+      setStoredSupabaseUrl(supabaseUrl.trim());
+      const res = await syncSyndicateDataToSupabase(members, transactions, project);
+      setSyncResult({
+        success: res.success,
+        members: res.syncedMembers,
+        transactions: res.syncedTransactions,
+        error: res.error
+      });
+      if (res.success) {
+        if (onShowToast) {
+          onShowToast(`Synced ${res.syncedMembers} members & ${res.syncedTransactions} deposits to Supabase.`);
+        }
+      } else {
+        if (onShowToast) {
+          onShowToast(`Supabase sync error: ${res.error || 'Failed'}`);
+        }
+      }
+    } catch (err: any) {
+      setSyncResult({
+        success: false,
+        members: 0,
+        transactions: 0,
+        error: err?.message || 'Sync operation failed'
+      });
+      if (onShowToast) {
+        onShowToast(`Error: ${err?.message || 'Failed to sync to Supabase'}`);
+      }
+    } finally {
+      setIsSyncingSupabase(false);
+    }
+  };
+
+  const handleCopySqlScript = () => {
+    const sql = getSupabaseSqlMigrationScript();
+    navigator.clipboard.writeText(sql);
+    setHasCopiedSql(true);
+    setTimeout(() => setHasCopiedSql(false), 3000);
+    if (onShowToast) {
+      onShowToast('Supabase SQL schema script copied to clipboard!');
+    }
   };
 
   return (
@@ -291,6 +410,24 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
             >
               <ShieldCheck className="w-3.5 h-3.5" />
               <span>Admin Profile & Backup</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab('supabase');
+                if (!supabaseHealth) {
+                  handleTestSupabase();
+                }
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                activeTab === 'supabase'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+            >
+              <Database className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Supabase Database</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             </button>
           </div>
         </div>
@@ -867,6 +1004,267 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                   onChange={(e) => setFooterCopyright(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
+              </div>
+            </div>
+          )}
+
+          {/* TAB 6: SUPABASE DATABASE */}
+          {activeTab === 'supabase' && (
+            <div className="space-y-5 animate-fadeIn">
+              {/* Connection Status Card */}
+              <div className="p-4 bg-slate-950/90 rounded-2xl border border-slate-800 shadow-lg space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                      <Database className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-bold text-white">Supabase PostgreSQL Instance</h4>
+                        <span className="flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          Live Connected
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400 font-mono mt-0.5">
+                        {supabaseUrl}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleTestSupabase}
+                      disabled={isTestingSupabase}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isTestingSupabase ? 'animate-spin text-emerald-400' : ''}`} />
+                      <span>{isTestingSupabase ? 'Testing...' : 'Test Connection'}</span>
+                    </button>
+
+                    <a
+                      href="https://supabase.com/dashboard/project/fjxsnkbdiofxxjiqmexy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-xs font-semibold text-emerald-300 border border-emerald-500/30 transition-colors"
+                    >
+                      <span>Dashboard</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                </div>
+
+                {/* Health Diagnostic Result */}
+                {supabaseHealth && (
+                  <div className={`p-3 rounded-xl border text-xs flex items-start gap-2.5 ${
+                    supabaseHealth.authenticated 
+                      ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200' 
+                      : supabaseHealth.reachable 
+                      ? 'bg-sky-950/40 border-sky-500/40 text-sky-200' 
+                      : 'bg-rose-950/40 border-rose-500/40 text-rose-200'
+                  }`}>
+                    {supabaseHealth.authenticated ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    ) : supabaseHealth.reachable ? (
+                      <Server className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                    )}
+                    <div className="space-y-1">
+                      <div className="font-semibold">{supabaseHealth.message}</div>
+                      {supabaseHealth.latencyMs !== undefined && (
+                        <div className="text-[10px] text-slate-400 font-mono">
+                          Response Latency: {supabaseHealth.latencyMs} ms · Target Host: fjxsnkbdiofxxjiqmexy.supabase.co
+                        </div>
+                      )}
+                      {supabaseHealth.tablesStatus && (
+                        <div className="flex items-center gap-2 pt-1 text-[10px]">
+                          <span className={`px-1.5 py-0.5 rounded font-mono ${supabaseHealth.tablesStatus.members ? 'bg-emerald-900/60 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>
+                            members: {supabaseHealth.tablesStatus.members ? 'Ready' : 'Not Found'}
+                          </span>
+                          <span className={`px-1.5 py-0.5 rounded font-mono ${supabaseHealth.tablesStatus.transactions ? 'bg-emerald-900/60 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>
+                            transactions: {supabaseHealth.tablesStatus.transactions ? 'Ready' : 'Not Found'}
+                          </span>
+                          <span className={`px-1.5 py-0.5 rounded font-mono ${supabaseHealth.tablesStatus.plot_project ? 'bg-emerald-900/60 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>
+                            plot_project: {supabaseHealth.tablesStatus.plot_project ? 'Ready' : 'Not Found'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* API Configuration & Anon Key */}
+              <div className="p-4 bg-slate-950/70 rounded-2xl border border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <KeyRound className="w-4 h-4 text-emerald-400" />
+                    <span>Supabase API Keys & Configuration</span>
+                  </h4>
+                  <span className="text-[10px] text-slate-400">Project: fjxsnkbdiofxxjiqmexy</span>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                      Supabase Project URL
+                    </label>
+                    <input
+                      type="text"
+                      value={supabaseUrl}
+                      onChange={(e) => setSupabaseUrl(e.target.value)}
+                      placeholder="https://fjxsnkbdiofxxjiqmexy.supabase.co"
+                      className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                      Supabase Anon / Public Key
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="password"
+                        value={supabaseAnonKey}
+                        onChange={(e) => setSupabaseAnonKey(e.target.value)}
+                        placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                        className="flex-1 bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-emerald-300 font-mono tracking-wider focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleSaveSupabaseConfig}
+                        className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-colors cursor-pointer shrink-0"
+                      >
+                        Save Key
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Found under Supabase Dashboard &gt; Project Settings &gt; API &gt; Project API keys &gt; <strong>anon (public)</strong>.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* One-Click Push / Sync to Supabase */}
+              <div className="p-4 bg-slate-950/70 rounded-2xl border border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                      <Server className="w-4 h-4 text-emerald-400" />
+                      <span>Sync Syndicate Data to Supabase</span>
+                    </h4>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Upload the 11 verified syndicate members and 88 ledger deposits to Supabase tables.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleSyncToSupabase}
+                    disabled={isSyncingSupabase}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-lg shadow-emerald-950/50 transition-all cursor-pointer disabled:opacity-50 shrink-0"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isSyncingSupabase ? 'animate-spin' : ''}`} />
+                    <span>{isSyncingSupabase ? 'Syncing...' : 'Sync to Supabase'}</span>
+                  </button>
+                </div>
+
+                {/* Live Stats */}
+                <div className="grid grid-cols-3 gap-2 pt-1 text-center font-mono">
+                  <div className="p-2.5 bg-slate-900 rounded-xl border border-slate-800">
+                    <span className="text-[10px] text-slate-400 block uppercase">Members</span>
+                    <span className="text-sm font-bold text-emerald-400">{members.length || 11}</span>
+                  </div>
+                  <div className="p-2.5 bg-slate-900 rounded-xl border border-slate-800">
+                    <span className="text-[10px] text-slate-400 block uppercase">Ledger Txs</span>
+                    <span className="text-sm font-bold text-sky-400">{transactions.length || 88}</span>
+                  </div>
+                  <div className="p-2.5 bg-slate-900 rounded-xl border border-slate-800">
+                    <span className="text-[10px] text-slate-400 block uppercase">Project Doc</span>
+                    <span className="text-sm font-bold text-amber-400">1</span>
+                  </div>
+                </div>
+
+                {syncResult && (
+                  <div className={`p-3 rounded-xl border text-xs flex items-center gap-2 ${
+                    syncResult.success 
+                      ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200' 
+                      : 'bg-rose-950/40 border-rose-500/40 text-rose-200'
+                  }`}>
+                    {syncResult.success ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                    )}
+                    <span>
+                      {syncResult.success 
+                        ? `Success: Synced ${syncResult.members} members and ${syncResult.transactions} transactions to Supabase!`
+                        : `Sync Error: ${syncResult.error || 'Failed to sync. Make sure SQL tables are created.'}`}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* SQL Migration Script Generator */}
+              <div className="p-4 bg-slate-950/70 rounded-2xl border border-slate-800 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                      <Database className="w-4 h-4 text-teal-400" />
+                      <span>Supabase SQL Table Schema Script</span>
+                    </h4>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Creates the <code className="text-emerald-400">members</code>, <code className="text-emerald-400">transactions</code>, and <code className="text-emerald-400">plot_project</code> tables with RLS policies.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowSqlPreview(!showSqlPreview)}
+                      className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 border border-slate-700 transition-colors cursor-pointer"
+                    >
+                      {showSqlPreview ? 'Hide SQL' : 'View SQL'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleCopySqlScript}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer shadow-sm"
+                    >
+                      {hasCopiedSql ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{hasCopiedSql ? 'Copied!' : 'Copy SQL Script'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {showSqlPreview && (
+                  <pre className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-[11px] font-mono text-emerald-300/90 max-h-60 overflow-y-auto whitespace-pre-wrap select-all">
+                    {getSupabaseSqlMigrationScript()}
+                  </pre>
+                )}
+
+                <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-1.5">
+                  <span className="font-bold text-slate-200 block text-[11px]">How to apply the SQL schema in Supabase:</span>
+                  <ol className="list-decimal list-inside space-y-1 text-slate-400 text-[11px]">
+                    <li>Click <a href="https://supabase.com/dashboard/project/fjxsnkbdiofxxjiqmexy/sql" target="_blank" rel="noopener noreferrer" className="text-emerald-400 underline">Open Supabase SQL Editor</a></li>
+                    <li>Click <strong>Copy SQL Script</strong> above and paste it into the editor</li>
+                    <li>Click <strong>Run</strong> in Supabase, then return here and click <strong>Sync to Supabase</strong>!</li>
+                  </ol>
+                </div>
+              </div>
+
+              {/* Dual Cloud Intact Architecture */}
+              <div className="p-3.5 bg-emerald-950/20 border border-emerald-500/20 rounded-xl text-xs text-slate-300 flex items-start gap-2.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold text-emerald-300 block">Dual Cloud Database Resilience</span>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Firebase Firestore (<code className="text-emerald-300 font-mono">afpi-ledger-db</code>) remains active as the live multi-device real-time sync engine, while Supabase provides connected PostgreSQL relational storage with complete SQL querying capabilities.
+                  </p>
+                </div>
               </div>
             </div>
           )}

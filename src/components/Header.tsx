@@ -18,7 +18,8 @@ import {
   Wrench,
   AlertTriangle,
   Settings,
-  Smartphone
+  Smartphone,
+  Database
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -34,6 +35,7 @@ interface HeaderProps {
   onOpenApprovalsQueue?: () => void;
   onOpenMaintenanceModal?: () => void;
   onOpenAdminPanel?: () => void;
+  onOpenSupabaseModal?: () => void;
   onViewMyStatement?: () => void;
   themeMode: ThemeMode;
   onToggleThemeMode: () => void;
@@ -57,6 +59,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenApprovalsQueue,
   onOpenMaintenanceModal,
   onOpenAdminPanel,
+  onOpenSupabaseModal,
   onViewMyStatement,
   themeMode,
   onToggleThemeMode,
@@ -209,6 +212,19 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Settings className="w-3.5 h-3.5 text-emerald-400" />
               <span className="hidden md:inline">Admin Panel</span>
+            </button>
+          )}
+
+          {/* Supabase Database Button */}
+          {session.role === 'admin' && onOpenSupabaseModal && (
+            <button
+              onClick={onOpenSupabaseModal}
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-emerald-300 border border-slate-700/80 text-xs font-semibold transition-all cursor-pointer shadow-sm"
+              title="Supabase Database: https://fjxsnkbdiofxxjiqmexy.supabase.co"
+            >
+              <Database className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden xl:inline">Supabase</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             </button>
           )}
 
