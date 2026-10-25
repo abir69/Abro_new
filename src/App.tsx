@@ -311,29 +311,29 @@ export default function App() {
   const handleSaveTransaction = (txData: Partial<Transaction>) => {
     const targetId = txData.id || editingTransaction?.id;
     if (targetId) {
-      // Update existing
-      let updatedTxObj: Transaction | null = null;
+      // Synchronously find existing transaction to merge
+      const existing = transactions.find(t => t.id === targetId);
+      const updatedTxObj: Transaction = {
+        ...(existing || {}),
+        ...txData,
+        id: targetId,
+        updatedAt: new Date().toISOString()
+      } as Transaction;
+
+      // Update state and local storage
       setTransactions(prev => {
-        const updated = prev.map(t => {
-          if (t.id === targetId) {
-            updatedTxObj = {
-              ...t,
-              ...txData,
-              id: t.id,
-              updatedAt: new Date().toISOString()
-            } as Transaction;
-            return updatedTxObj;
-          }
-          return t;
-        });
+        const updated = prev.map(t => t.id === targetId ? updatedTxObj : t);
         saveStoredTransactions(updated);
         return updated;
       });
-      if (updatedTxObj) {
-        saveTransactionToCloud(updatedTxObj).catch(err => console.error('[Firestore] Tx update error:', err));
-      }
+
+      // Synchronize immediately to Cloud Firestore!
+      saveTransactionToCloud(updatedTxObj)
+        .then(() => console.log('[Firestore] Tx successfully saved to cloud:', targetId))
+        .catch(err => console.error('[Firestore] Tx update error:', err));
+
       const ref = txData.referenceNumber || editingTransaction?.referenceNumber || targetId;
-      showToast(`Transaction ${ref} updated and synced live.`);
+      showToast(`Transaction ${ref} updated and saved successfully.`);
     } else {
       // Create new
       const newTx: Transaction = {
@@ -360,8 +360,10 @@ export default function App() {
         saveStoredTransactions(updated);
         return updated;
       });
-      saveTransactionToCloud(newTx).catch(err => console.error('[Firestore] Tx create error:', err));
-      showToast(`New deposit of ${formatCurrency(newTx.amount, project.symbol)} recorded and synced to cloud.`);
+      saveTransactionToCloud(newTx)
+        .then(() => console.log('[Firestore] New tx successfully saved to cloud:', newTx.id))
+        .catch(err => console.error('[Firestore] Tx create error:', err));
+      showToast(`New deposit of ${formatCurrency(newTx.amount, project.symbol)} recorded and saved.`);
 
       // Automatic trigger: Launch WhatsApp congratulations acknowledgment modal right after deposit!
       const targetMember = members.find(m => m.id === newTx.memberId) || null;
@@ -452,25 +454,22 @@ export default function App() {
 
   // Admin Rejection for Flagged Submissions (Synced live)
   const handleRejectDeposit = (txId: string, reason?: string) => {
-    let rejectedTxObj: Transaction | null = null;
+    const existing = transactions.find(t => t.id === txId);
+    const rejectedTxObj: Transaction = {
+      ...(existing || {}),
+      id: txId,
+      status: 'Flagged' as const,
+      rejectionReason: reason || 'Details could not be verified with bank',
+      updatedAt: new Date().toISOString()
+    } as Transaction;
+
     setTransactions(prev => {
-      const updated = prev.map(t => {
-        if (t.id === txId) {
-          rejectedTxObj = {
-            ...t,
-            status: 'Flagged' as const,
-            rejectionReason: reason || 'Details could not be verified with bank'
-          };
-          return rejectedTxObj;
-        }
-        return t;
-      });
+      const updated = prev.map(t => t.id === txId ? rejectedTxObj : t);
       saveStoredTransactions(updated);
       return updated;
     });
-    if (rejectedTxObj) {
-      saveTransactionToCloud(rejectedTxObj).catch(err => console.error('[Firestore] Reject error:', err));
-    }
+
+    saveTransactionToCloud(rejectedTxObj).catch(err => console.error('[Firestore] Reject error:', err));
     showToast('Deposit submission rejected and flagged in live database.');
   };
 
@@ -494,6 +493,28 @@ export default function App() {
     });
     saveMemberToCloud(updatedMember).catch(err => console.error('[Firestore] Save member error:', err));
     
+    // Synchronize memberName across all existing transactions for this member if name was changed
+    setTransactions(prev => {
+      let changed = false;
+      const updated = prev.map(t => {
+        if (t.memberId === updatedMember.id && t.memberName !== updatedMember.name) {
+          changed = true;
+          const updatedTx: Transaction = {
+            ...t,
+            memberName: updatedMember.name,
+            updatedAt: new Date().toISOString()
+          };
+          saveTransactionToCloud(updatedTx).catch(err => console.error('[Firestore] Sync tx memberName error:', err));
+          return updatedTx;
+        }
+        return t;
+      });
+      if (changed) {
+        saveStoredTransactions(updated);
+      }
+      return updated;
+    });
+
     // If admin profile is updated, keep project lead admin, pin & contact in sync so it NEVER reverts on logout or reload
     if (updatedMember.id === 'm1' || updatedMember.role === 'admin') {
       saveStoredAdminProfile(updatedMember);
@@ -577,9 +598,11 @@ export default function App() {
         mobile: sanitizedProject.supportContactPhone || adminMember.mobile
       };
       saveStoredAdminProfile(updatedAdmin);
-      const updatedMembers = members.map(m => m.id === adminMember.id ? updatedAdmin : m);
-      setMembers(updatedMembers);
-      saveStoredMembers(updatedMembers);
+      setMembers(prev => {
+        const updatedMembers = prev.map(m => m.id === adminMember.id ? updatedAdmin : m);
+        saveStoredMembers(updatedMembers);
+        return updatedMembers;
+      });
       saveMemberToCloud(updatedAdmin).catch(err => console.error('[Firestore] Sync admin member error:', err));
       if (session.role === 'admin') {
         updateSession({
@@ -603,9 +626,11 @@ export default function App() {
         pin: cleanPin
       };
       saveStoredAdminProfile(updatedAdmin);
-      const updatedMembers = members.map(m => m.id === adminMember.id ? updatedAdmin : m);
-      setMembers(updatedMembers);
-      saveStoredMembers(updatedMembers);
+      setMembers(prev => {
+        const updatedMembers = prev.map(m => m.id === adminMember.id ? updatedAdmin : m);
+        saveStoredMembers(updatedMembers);
+        return updatedMembers;
+      });
       saveMemberToCloud(updatedAdmin).catch(err => console.error('[Firestore] Update admin PIN err:', err));
 
       const updatedProject: PlotProject = {
@@ -659,16 +684,23 @@ export default function App() {
     const targetMember = members.find(m => m.id === memberId);
     if (targetMember) {
       const updatedMem = { ...targetMember, customMonthlyDeposit: targetAmount };
-      const updated = members.map(m => m.id === memberId ? updatedMem : m);
-      updateMembers(updated);
-      saveMemberToCloud(updatedMem).catch(err => console.error(err));
+      setMembers(prev => {
+        const updated = prev.map(m => m.id === memberId ? updatedMem : m);
+        saveStoredMembers(updated);
+        return updated;
+      });
+      saveMemberToCloud(updatedMem).catch(err => console.error('[Firestore] Target update err:', err));
       showToast(`Monthly contribution target for ${targetMember.name} set to ${formatCurrency(targetAmount, project.symbol)}/month.`);
     }
   };
 
   // Reminders Handler
   const handleAddReminderLog = (newLog: ReminderLog) => {
-    updateReminders([newLog, ...remindersLog]);
+    setRemindersLog(prev => {
+      const updated = [newLog, ...prev];
+      saveStoredReminders(updated);
+      return updated;
+    });
     saveReminderToCloud(newLog).catch(err => console.error('[Firestore] Save reminder error:', err));
   };
 

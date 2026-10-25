@@ -100,6 +100,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     const selectedMember = members.find(m => m.id === memberId);
 
     const payload: Partial<Transaction> = {
+      id: editingTransaction?.id || undefined,
       memberId,
       memberName: selectedMember?.name || 'Unknown Member',
       date,
