@@ -281,6 +281,10 @@ export const Header: React.FC<HeaderProps> = ({
                   <img
                     src={activeMember.avatar}
                     alt={session.memberName}
+                    onError={(e) => {
+                      const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(session.memberName || 'Member')}&background=059669&color=fff&size=128`;
+                      (e.target as HTMLImageElement).src = fallback;
+                    }}
                     className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover ring-1 ring-emerald-500/50 group-hover:ring-2 group-hover:ring-emerald-400 group-hover:scale-105 transition-all"
                   />
                 ) : (

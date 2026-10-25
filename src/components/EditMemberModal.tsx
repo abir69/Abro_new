@@ -17,7 +17,11 @@ import {
   SlidersHorizontal,
   CheckCircle2,
   Plus,
-  AlertCircle
+  AlertCircle,
+  Loader2,
+  RotateCcw,
+  Sparkles,
+  Image as ImageIcon
 } from 'lucide-react';
 
 interface EditMemberModalProps {
@@ -49,6 +53,58 @@ const PRESET_AVATARS = [
   'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'
 ];
 
+/**
+ * Client-side Canvas Image Compressor & Square-Cropper.
+ * Transforms photos (up to 15MB) into lightweight 256x256 Web-safe JPEGs (~15-25KB).
+ * Prevents localStorage QuotaExceededError and Firestore 1MB document size limits!
+ */
+const compressImageFile = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith('image/')) {
+      reject(new Error('Please select a valid image file (JPG, PNG, WebP).'));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Failed to read image file.'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Unable to parse image. Please try another photo.'));
+      img.onload = () => {
+        try {
+          const targetDim = 256;
+          const canvas = document.createElement('canvas');
+          canvas.width = targetDim;
+          canvas.height = targetDim;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(reader.result as string);
+            return;
+          }
+          // Square center-crop
+          const minSide = Math.min(img.width, img.height);
+          const sx = (img.width - minSide) / 2;
+          const sy = (img.height - minSide) / 2;
+
+          // Fill dark slate background in case of transparent PNG
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(0, 0, targetDim, targetDim);
+
+          // Draw cropped and scaled
+          ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, targetDim, targetDim);
+
+          // High-efficiency JPEG at 0.85 quality (~15-25KB)
+          const compressed = canvas.toDataURL('image/jpeg', 0.85);
+          resolve(compressed);
+        } catch (err) {
+          reject(err);
+        }
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+};
+
 export const EditMemberModal: React.FC<EditMemberModalProps> = ({
   isOpen,
   onClose,
@@ -78,8 +134,13 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
   const [approvalStatus, setApprovalStatus] = useState<'approved' | 'pending' | 'rejected'>('approved');
   const [pin, setPin] = useState('1234');
   const [customUrlInput, setCustomUrlInput] = useState('');
-  const [imageTab, setImageTab] = useState<'preset' | 'url' | 'file'>('preset');
+  const [imageTab, setImageTab] = useState<'preset' | 'url' | 'file'>('file');
   const [confirmDeleteTxId, setConfirmDeleteTxId] = useState<string | null>(null);
+
+  // Image upload and optimization states
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [imageSizeNote, setImageSizeNote] = useState<string | null>(null);
 
   useEffect(() => {
     if (member) {
@@ -98,6 +159,8 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
       setApprovalStatus(member.approvalStatus || 'approved');
       setPin(member.pin || '1234');
       setCustomUrlInput(member.avatar || '');
+      setImageError(null);
+      setImageSizeNote(null);
     }
   }, [member, isOpen]);
 
@@ -136,23 +199,44 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
   const memberGross = memberTxs.reduce((sum, t) => sum + t.amount, 0);
   const memberNet = memberTxs.reduce((sum, t) => sum + (t.netAmount !== undefined ? t.netAmount : t.amount), 0) + (member.manualNetAdjustment || 0);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          setAvatar(reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    setImageError(null);
+    setIsProcessingImage(true);
+    setImageSizeNote(null);
+
+    try {
+      const compressedDataUrl = await compressImageFile(file);
+      setAvatar(compressedDataUrl);
+      setCustomUrlInput('');
+      const approxKb = Math.round((compressedDataUrl.length * 3) / 4 / 1024);
+      setImageSizeNote(`Optimized (${approxKb} KB)`);
+    } catch (err: any) {
+      console.error('Image compression error:', err);
+      setImageError(err?.message || 'Could not process image file. Please try another photo.');
+    } finally {
+      setIsProcessingImage(false);
+      e.target.value = '';
     }
   };
 
   const handleApplyUrl = () => {
     if (customUrlInput.trim()) {
       setAvatar(customUrlInput.trim());
+      setImageError(null);
+      setImageSizeNote('Custom URL set');
     }
+  };
+
+  const handleSetInitialsAvatar = () => {
+    const fallbackName = name.trim() || member.name;
+    const initialsUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(fallbackName)}&background=059669&color=fff&size=256&bold=true`;
+    setAvatar(initialsUrl);
+    setCustomUrlInput(initialsUrl);
+    setImageError(null);
+    setImageSizeNote('Clean Monogram Set');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -161,12 +245,22 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
       return;
     }
 
+    // Determine the exact avatar to persist:
+    // If user entered a URL in the Image URL tab, prioritize it directly!
+    let finalAvatar = avatar.trim();
+    if (imageTab === 'url' && customUrlInput.trim()) {
+      finalAvatar = customUrlInput.trim();
+    }
+    if (!finalAvatar) {
+      finalAvatar = member.avatar || PRESET_AVATARS[0];
+    }
+
     const updated: Member = {
       ...member,
       name: name.trim(),
       email: email.trim(),
       mobile: mobile.trim(),
-      avatar: avatar.trim() || member.avatar,
+      avatar: finalAvatar,
       nomineeName: nomineeName.trim(),
       nomineeRelation: nomineeRelation.trim(),
       emergencyContactName: emergencyContactName.trim(),
@@ -252,90 +346,201 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
           <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
             <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
             {/* Avatar Preview & Selection */}
-            <div className="p-4 bg-slate-950/60 rounded-xl border border-slate-800">
-              <div className="flex items-center gap-4 mb-3">
-                <img
-                  src={avatar || PRESET_AVATARS[0]}
-                  alt={name}
-                  className="w-16 h-16 rounded-full object-cover ring-2 ring-emerald-500 shrink-0 shadow-lg"
-                />
-                <div>
-                  <span className="text-xs font-semibold text-slate-200 block">Member Display Picture</span>
-                  <span className="text-[11px] text-slate-400 block mb-2">
-                    Choose from presets, enter an image URL, or upload from your device.
-                  </span>
-                  <div className="flex items-center gap-1.5 text-xs">
-                    <button
-                      type="button"
-                      onClick={() => setImageTab('preset')}
-                      className={`px-2.5 py-1 rounded-lg transition-colors ${imageTab === 'preset' ? 'bg-emerald-600 text-white font-medium' : 'text-slate-400 hover:text-white bg-slate-800'}`}
-                    >
-                      Presets
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setImageTab('url')}
-                      className={`px-2.5 py-1 rounded-lg transition-colors ${imageTab === 'url' ? 'bg-emerald-600 text-white font-medium' : 'text-slate-400 hover:text-white bg-slate-800'}`}
-                    >
-                      Image URL
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setImageTab('file')}
-                      className={`px-2.5 py-1 rounded-lg transition-colors ${imageTab === 'file' ? 'bg-emerald-600 text-white font-medium' : 'text-slate-400 hover:text-white bg-slate-800'}`}
-                    >
-                      Upload File
-                    </button>
+            <div className="p-4 bg-slate-950/60 rounded-xl border border-slate-800 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3.5">
+                  <div className="relative shrink-0">
+                    <img
+                      src={avatar || PRESET_AVATARS[0]}
+                      alt={name}
+                      onError={(e) => {
+                        // Fallback gracefully to UI Avatars initials
+                        const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(name || member.name)}&background=059669&color=fff&size=256`;
+                        (e.target as HTMLImageElement).src = fallback;
+                      }}
+                      className="w-16 h-16 rounded-full object-cover ring-2 ring-emerald-500 shrink-0 shadow-lg bg-slate-800"
+                    />
+                    {isProcessingImage && (
+                      <div className="absolute inset-0 bg-slate-950/80 rounded-full flex items-center justify-center">
+                        <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
+                      </div>
+                    )}
                   </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-100">Member Profile Picture</span>
+                      {imageSizeNote && (
+                        <span className="text-[10px] bg-emerald-950 text-emerald-300 font-semibold px-2 py-0.5 rounded-full border border-emerald-800 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                          {imageSizeNote}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Choose a photo, preset, or paste a link. Photos are automatically compressed for cloud sync.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Reset or Monogram Quick Actions */}
+                <div className="flex items-center gap-1.5 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={handleSetInitialsAvatar}
+                    className="text-[11px] bg-slate-800 hover:bg-slate-700 text-emerald-300 hover:text-emerald-200 px-2.5 py-1.5 rounded-lg border border-slate-700 transition-colors flex items-center gap-1 cursor-pointer"
+                    title="Generate clean monogram avatar with your initials"
+                  >
+                    <Sparkles className="w-3 h-3 text-emerald-400" />
+                    <span>Use Initials</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAvatar(member.avatar);
+                      setCustomUrlInput(member.avatar);
+                      setImageSizeNote(null);
+                      setImageError(null);
+                    }}
+                    className="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-2.5 py-1.5 rounded-lg border border-slate-700 transition-colors flex items-center gap-1 cursor-pointer"
+                    title="Revert to previously saved picture"
+                  >
+                    <RotateCcw className="w-3 h-3 text-slate-400" />
+                    <span>Reset</span>
+                  </button>
                 </div>
               </div>
 
-              {imageTab === 'preset' && (
-                <div className="grid grid-cols-6 gap-2 pt-2 border-t border-slate-800">
-                  {PRESET_AVATARS.map((url, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setAvatar(url)}
-                      className={`relative rounded-full overflow-hidden p-0.5 border-2 transition-all ${avatar === url ? 'border-emerald-400 scale-105' : 'border-transparent hover:border-slate-600'}`}
-                    >
-                      <img src={url} alt={`Preset ${i}`} className="w-10 h-10 rounded-full object-cover" />
-                    </button>
-                  ))}
-                </div>
-              )}
+              {/* Source Tabs */}
+              <div className="flex items-center gap-1 text-xs border-b border-slate-800 pb-2">
+                <button
+                  type="button"
+                  onClick={() => setImageTab('file')}
+                  className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                    imageTab === 'file' 
+                      ? 'bg-emerald-600 text-white font-semibold shadow-sm' 
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Upload from Device</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImageTab('preset')}
+                  className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                    imageTab === 'preset' 
+                      ? 'bg-emerald-600 text-white font-semibold shadow-sm' 
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  <ImageIcon className="w-3.5 h-3.5" />
+                  <span>Preset Avatars</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImageTab('url')}
+                  className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                    imageTab === 'url' 
+                      ? 'bg-emerald-600 text-white font-semibold shadow-sm' 
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Image URL</span>
+                </button>
+              </div>
 
-              {imageTab === 'url' && (
-                <div className="flex items-center gap-2 pt-2 border-t border-slate-800">
-                  <input
-                    type="url"
-                    value={customUrlInput}
-                    onChange={(e) => setCustomUrlInput(e.target.value)}
-                    placeholder="https://images.unsplash.com/..."
-                    className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleApplyUrl}
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-semibold"
-                  >
-                    Apply
-                  </button>
-                </div>
-              )}
-
+              {/* TAB 1: File Upload with Automatic Compression */}
               {imageTab === 'file' && (
-                <div className="pt-2 border-t border-slate-800">
-                  <label className="flex items-center justify-center gap-2 border border-dashed border-slate-700 rounded-xl p-3 cursor-pointer hover:border-emerald-500 transition-colors text-xs text-slate-300">
-                    <Upload className="w-4 h-4 text-emerald-400" />
-                    <span>Choose Image File (PNG, JPG, WebP)</span>
+                <div className="pt-1">
+                  <label className="flex flex-col sm:flex-row items-center justify-center gap-3 border-2 border-dashed border-slate-700 hover:border-emerald-500 rounded-xl p-4 cursor-pointer transition-all bg-slate-950/40 hover:bg-emerald-950/10 group">
+                    <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      {isProcessingImage ? (
+                        <Loader2 className="w-5 h-5 animate-spin text-emerald-400" />
+                      ) : (
+                        <Upload className="w-5 h-5 text-emerald-400" />
+                      )}
+                    </div>
+                    <div className="text-center sm:text-left">
+                      <span className="text-xs font-semibold text-slate-200 block group-hover:text-emerald-300 transition-colors">
+                        {isProcessingImage ? 'Optimizing photo for cloud storage...' : 'Click or tap to choose a photo'}
+                      </span>
+                      <span className="text-[11px] text-slate-400 block mt-0.5">
+                        Supports JPEG, PNG, WebP (camera photos are auto-cropped & compressed to &lt; 25KB)
+                      </span>
+                    </div>
                     <input
                       type="file"
                       accept="image/*"
                       onChange={handleFileUpload}
+                      disabled={isProcessingImage}
                       className="hidden"
                     />
                   </label>
+                </div>
+              )}
+
+              {/* TAB 2: Preset Gallery */}
+              {imageTab === 'preset' && (
+                <div className="pt-1 space-y-2">
+                  <div className="grid grid-cols-6 sm:grid-cols-6 gap-2.5">
+                    {PRESET_AVATARS.map((url, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => {
+                          setAvatar(url);
+                          setCustomUrlInput(url);
+                          setImageSizeNote(null);
+                          setImageError(null);
+                        }}
+                        className={`relative rounded-full overflow-hidden p-0.5 border-2 transition-all cursor-pointer ${
+                          avatar === url ? 'border-emerald-400 ring-2 ring-emerald-500/50 scale-105' : 'border-transparent hover:border-slate-600 opacity-80 hover:opacity-100'
+                        }`}
+                      >
+                        <img src={url} alt={`Preset ${i + 1}`} className="w-10 h-10 rounded-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: Custom URL with Auto-Sync */}
+              {imageTab === 'url' && (
+                <div className="pt-1 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="url"
+                      value={customUrlInput}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCustomUrlInput(val);
+                        if (val.trim().startsWith('http://') || val.trim().startsWith('https://') || val.trim().startsWith('data:')) {
+                          setAvatar(val.trim());
+                        }
+                      }}
+                      placeholder="https://images.unsplash.com/... or web image link"
+                      className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyUrl}
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-xl text-xs font-semibold shrink-0 transition-colors cursor-pointer"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                  <span className="text-[11px] text-slate-400 block">
+                    Tip: Direct URLs ending with .jpg, .png or Unsplash portrait links work best.
+                  </span>
+                </div>
+              )}
+
+              {/* Error Banner */}
+              {imageError && (
+                <div className="p-2.5 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span>{imageError}</span>
                 </div>
               )}
             </div>

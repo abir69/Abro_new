@@ -126,6 +126,10 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({
                     <img
                       src={member.avatar}
                       alt={member.name}
+                      onError={(e) => {
+                        const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=059669&color=fff&size=256`;
+                        (e.target as HTMLImageElement).src = fallback;
+                      }}
                       className="w-12 h-12 rounded-full object-cover ring-2 ring-emerald-500/40 group-hover/title:ring-emerald-400 shadow-md shrink-0 transition-all"
                     />
                     <div>

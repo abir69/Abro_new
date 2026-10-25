@@ -27,7 +27,8 @@ import {
   Calculator,
   FileText,
   Lock,
-  ShieldCheck
+  ShieldCheck,
+  Camera
 } from 'lucide-react';
 
 interface MemberDetailHistoryModalProps {
@@ -171,11 +172,30 @@ export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> =
         {/* Top Header Bar */}
         <div className="p-4 sm:p-5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-950/60 shrink-0">
           <div className="flex items-center gap-3.5">
-            <img
-              src={member.avatar}
-              alt={member.name}
-              className="w-12 h-12 rounded-full object-cover ring-2 ring-emerald-500/50 shadow-md shrink-0"
-            />
+            <div className="relative group/avatar shrink-0">
+              <img
+                src={member.avatar}
+                alt={member.name}
+                onError={(e) => {
+                  const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=059669&color=fff&size=256`;
+                  (e.target as HTMLImageElement).src = fallback;
+                }}
+                className="w-12 h-12 rounded-full object-cover ring-2 ring-emerald-500/50 shadow-md shrink-0"
+              />
+              {(isAdmin || isSelf) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenEditProfile(member);
+                  }}
+                  className="absolute inset-0 rounded-full bg-slate-950/60 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-opacity cursor-pointer text-white"
+                  title="Click to update profile photo"
+                >
+                  <Camera className="w-4 h-4 text-emerald-400" />
+                </button>
+              )}
+            </div>
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-bold text-white">{member.name}</h3>

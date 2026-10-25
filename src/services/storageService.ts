@@ -84,7 +84,22 @@ export const saveStoredMembers = (members: Member[]) => {
   try {
     localStorage.setItem(STORAGE_KEYS.MEMBERS, JSON.stringify(members));
   } catch (e) {
-    console.error('Error saving members:', e);
+    console.warn('Error saving members to localStorage, applying quota safeguard:', e);
+    try {
+      // If quota is exceeded, replace any oversized data URLs (> 64KB) with lightweight initials avatars
+      const pruned = members.map(m => {
+        if (m.avatar && m.avatar.startsWith('data:image/') && m.avatar.length > 65536) {
+          return {
+            ...m,
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&background=059669&color=fff&size=256`
+          };
+        }
+        return m;
+      });
+      localStorage.setItem(STORAGE_KEYS.MEMBERS, JSON.stringify(pruned));
+    } catch (innerErr) {
+      console.error('Critical localStorage quota failure:', innerErr);
+    }
   }
 };
 
