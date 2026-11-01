@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Member, Transaction, PaymentMethod, TransactionStatus, PlotProject } from '../types';
-import { formatCurrency } from '../services/storageService';
+import { formatCurrency, getCurrentCycleMonth, INITIATIVE_CYCLES } from '../services/storageService';
 import { X, Check, DollarSign, Calendar, FileText, Landmark, Hash, AlertCircle, Edit2 } from 'lucide-react';
 
 interface TransactionModalProps {
@@ -33,7 +33,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const [depositAccountNumber, setDepositAccountNumber] = useState<string>('1781580054174');
   const [bankOrChannel, setBankOrChannel] = useState<string>('The City Bank PLC');
   const [referenceNumber, setReferenceNumber] = useState<string>('');
-  const [monthPeriod, setMonthPeriod] = useState<string>('October 2026');
+  const [monthPeriod, setMonthPeriod] = useState<string>(getCurrentCycleMonth());
   const [status, setStatus] = useState<TransactionStatus>('Verified');
   const [notes, setNotes] = useState<string>('');
   const [error, setError] = useState<string>('');
@@ -67,7 +67,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       setDepositAccountNumber(project.bankDetails?.accountNumber || '1781580054174');
       setBankOrChannel('The City Bank PLC');
       setReferenceNumber(`CITY-TX-${Date.now().toString().slice(-6)}`);
-      setMonthPeriod('October 2026');
+      setMonthPeriod(getCurrentCycleMonth());
       setStatus('Verified');
       setNotes('Monthly contribution deposit (2,000 BDT)');
     }
@@ -275,15 +275,11 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                 onChange={(e) => setMonthPeriod(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               >
-                <option value="March 2026">March 2026</option>
-                <option value="April 2026">April 2026</option>
-                <option value="May 2026">May 2026</option>
-                <option value="June 2026">June 2026</option>
-                <option value="July 2026">July 2026</option>
-                <option value="August 2026">August 2026</option>
-                <option value="September 2026">September 2026</option>
-                <option value="October 2026">October 2026</option>
-                <option value="November 2026">November 2026</option>
+                {INITIATIVE_CYCLES.map(cycle => (
+                  <option key={cycle} value={cycle}>
+                    {cycle} {cycle === getCurrentCycleMonth() ? '(Current Month)' : ''}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

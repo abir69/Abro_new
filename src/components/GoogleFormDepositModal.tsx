@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Member, Transaction, PlotProject, PaymentMethod } from '../types';
-import { formatCurrency, INITIATIVE_CYCLES } from '../services/storageService';
+import { formatCurrency, INITIATIVE_CYCLES, getCurrentCycleMonth } from '../services/storageService';
 import { 
   X, 
   CheckCircle2, 
@@ -44,7 +44,7 @@ export const GoogleFormDepositModal: React.FC<GoogleFormDepositModalProps> = ({
     preselectedMemberId || members[0]?.id || ''
   );
   const [amount, setAmount] = useState<string>('2000');
-  const [monthPeriod, setMonthPeriod] = useState<string>('October 2026');
+  const [monthPeriod, setMonthPeriod] = useState<string>(getCurrentCycleMonth());
   const [method, setMethod] = useState<PaymentMethod>('Bank Transfer');
   const [referenceNumber, setReferenceNumber] = useState<string>('');
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -62,6 +62,7 @@ export const GoogleFormDepositModal: React.FC<GoogleFormDepositModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
+      setMonthPeriod(getCurrentCycleMonth());
       const targetId = preselectedMemberId || selectedMemberId || members[0]?.id || '';
       if (targetId) {
         setSelectedMemberId(targetId);
@@ -182,6 +183,7 @@ Your deposit will be automatically credited to your account upon Admin approval.
   const handleResetForm = () => {
     setIsSubmitted(false);
     setReferenceNumber('');
+    setMonthPeriod(getCurrentCycleMonth());
     setNotes('');
     setReceiptUrl('');
     setErrorMessage('');
@@ -441,7 +443,7 @@ Your deposit will be automatically credited to your account upon Admin approval.
                 >
                   {INITIATIVE_CYCLES.map((cycle) => (
                     <option key={cycle} value={cycle}>
-                      {cycle} {cycle === 'October 2026' ? '(Current Month)' : ''}
+                      {cycle} {cycle === getCurrentCycleMonth() ? '(Current Month)' : ''}
                     </option>
                   ))}
                 </select>

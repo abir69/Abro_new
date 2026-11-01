@@ -1,6 +1,6 @@
 import React from 'react';
 import { Member, Transaction, PlotProject } from '../types';
-import { formatCurrency } from '../services/storageService';
+import { formatCurrency, getMonthsFromMarchToCurrent } from '../services/storageService';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -58,17 +58,8 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
   const paidCount = members.filter(m => paidMemberIds.has(m.id)).length;
   const pendingMembers = members.filter(m => !paidMemberIds.has(m.id));
 
-  // Monthly Breakdown Data for Visual Trend (March to October 2026)
-  const monthsList = [
-    'March 2026', 
-    'April 2026', 
-    'May 2026', 
-    'June 2026', 
-    'July 2026', 
-    'August 2026', 
-    'September 2026', 
-    'October 2026'
-  ];
+  // Monthly Breakdown Data for Visual Trend
+  const monthsList = getMonthsFromMarchToCurrent(currentMonth);
   const monthlyData = monthsList.map(month => {
     const txs = transactions.filter(t => t.monthPeriod === month);
     const gross = txs.reduce((sum, t) => sum + t.amount, 0);
@@ -227,7 +218,7 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
             <div className="flex items-center gap-2">
               <h2 className="text-base font-bold text-white">Initiative Treasury & Contribution Summary</h2>
               <span className="text-xs px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 font-mono">
-                March – October 2026 Cleared
+                March – {currentMonth} Active
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-1">

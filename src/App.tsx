@@ -29,7 +29,8 @@ import {
   saveStoredAdminProfile,
   getStoredAdminProfile,
   applyThemeAndStyles,
-  resetAllDataToDefault
+  resetAllDataToDefault,
+  getCurrentCycleMonth
 } from './services/storageService';
 import { INITIAL_MEMBERS, INITIAL_TRANSACTIONS, INITIAL_PLOT_PROJECT } from './data/initialData';
 
@@ -293,7 +294,7 @@ export default function App() {
   }, [transactions]);
 
   // Current Month calculation for automated reminders
-  const currentMonth = 'October 2026';
+  const currentMonth = getCurrentCycleMonth();
   const currentMonthTxs = transactions.filter(t => t.monthPeriod === currentMonth);
   const paidMemberIds = new Set(currentMonthTxs.map(t => t.memberId));
   const pendingRemindersCount = members.filter(m => !paidMemberIds.has(m.id)).length;
@@ -669,7 +670,7 @@ export default function App() {
   const handleAddNewDepositForMember = (memberId: string, monthPeriod?: string, amount?: number) => {
     const member = members.find(m => m.id === memberId);
     if (!member) return;
-    const targetMonth = monthPeriod || 'October 2026';
+    const targetMonth = monthPeriod || getCurrentCycleMonth();
     const targetAmount = amount || member.customMonthlyDeposit || project.monthlyPerMemberExpected || 2000;
     
     setEditingTransaction({

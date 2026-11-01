@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Member, Transaction, PlotProject, ReminderLog } from '../types';
-import { formatCurrency } from '../services/storageService';
+import { formatCurrency, INITIATIVE_CYCLES, getCurrentCycleMonth } from '../services/storageService';
 import { 
   BellRing, 
   Send, 
@@ -41,11 +41,17 @@ export const RemindersPanel: React.FC<RemindersPanelProps> = ({
   onOpenDirectivesEdit,
   isAdmin = false
 }) => {
-  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
+  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth || getCurrentCycleMonth());
   const [copiedMemberId, setCopiedMemberId] = useState<string | null>(null);
   const [isAutoSending, setIsAutoSending] = useState(false);
   const [autoSentToast, setAutoSentToast] = useState<string | null>(null);
   const [activeTemplateTab, setActiveTemplateTab] = useState<'preview' | 'edit'>('preview');
+
+  useEffect(() => {
+    if (currentMonth) {
+      setSelectedMonth(currentMonth);
+    }
+  }, [currentMonth]);
 
   // Custom template state
   const [customMessageTemplate, setCustomMessageTemplate] = useState<string>(
@@ -198,15 +204,11 @@ export const RemindersPanel: React.FC<RemindersPanelProps> = ({
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 className="bg-transparent text-slate-200 font-medium focus:outline-none"
               >
-                <option value="March 2026">March 2026</option>
-                <option value="April 2026">April 2026</option>
-                <option value="May 2026">May 2026</option>
-                <option value="June 2026">June 2026</option>
-                <option value="July 2026">July 2026</option>
-                <option value="August 2026">August 2026</option>
-                <option value="September 2026">September 2026</option>
-                <option value="October 2026">October 2026</option>
-                <option value="November 2026">November 2026</option>
+                {INITIATIVE_CYCLES.map(cycle => (
+                  <option key={cycle} value={cycle} className="bg-slate-900 text-slate-100">
+                    {cycle} {cycle === getCurrentCycleMonth() ? '(Current Month)' : ''}
+                  </option>
+                ))}
               </select>
             </div>
 

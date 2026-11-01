@@ -367,34 +367,80 @@ Thank you for your dedicated contribution towards the joint initiative!
 — Aristo Future Initiative`;
 };
 
-// Initiative cycles definition starting from March 2026
+// Dynamic initiative cycles definition starting from March 2026
 export const INITIATIVE_START_MONTH = 'March 2026';
 
-export const INITIATIVE_CYCLES = [
-  'March 2026',
-  'April 2026',
-  'May 2026',
-  'June 2026',
-  'July 2026',
-  'August 2026',
-  'September 2026',
-  'October 2026',
-  'November 2026',
-  'December 2026'
-];
+/**
+ * Returns the current calendar month formatted as 'Month YYYY', e.g. 'November 2026'.
+ * When a month ends and a new month begins, this automatically updates.
+ */
+export const getCurrentCycleMonth = (): string => {
+  const now = new Date();
+  const monthName = now.toLocaleString('en-US', { month: 'long' });
+  const year = now.getFullYear();
+  return `${monthName} ${year}`;
+};
+
+/**
+ * Dynamically generates all initiative cycles from March 2026 up to at least
+ * 12 months ahead of the current calendar date (or through 2027 minimum).
+ */
+export const generateInitiativeCycles = (): string[] => {
+  const startYear = 2026;
+  const startMonthIndex = 2; // March is index 2 (0-based)
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonthIndex = now.getMonth();
+  
+  // Ensure we cover at least through December of next year or 12 months in advance
+  const endYear = Math.max(2027, currentYear + 1);
+  const endMonthIndex = 11; // December
+
+  const cycles: string[] = [];
+  let y = startYear;
+  let m = startMonthIndex;
+
+  while (y < endYear || (y === endYear && m <= endMonthIndex)) {
+    const d = new Date(y, m, 1);
+    const label = `${d.toLocaleString('en-US', { month: 'long' })} ${y}`;
+    cycles.push(label);
+    m++;
+    if (m > 11) {
+      m = 0;
+      y++;
+    }
+  }
+
+  // Ensure current month is always present if system date is even further
+  const currentMonthLabel = getCurrentCycleMonth();
+  if (!cycles.includes(currentMonthLabel)) {
+    cycles.push(currentMonthLabel);
+  }
+
+  return cycles;
+};
+
+export const INITIATIVE_CYCLES = generateInitiativeCycles();
 
 /**
  * Returns all month periods starting from March 2026 up to the specified current month.
+ * Defaults automatically to the current real-time month.
  */
-export const getMonthsFromMarchToCurrent = (currentMonth = 'October 2026'): string[] => {
-  const startIndex = INITIATIVE_CYCLES.indexOf(INITIATIVE_START_MONTH);
-  const currentIndex = INITIATIVE_CYCLES.indexOf(currentMonth);
+export const getMonthsFromMarchToCurrent = (currentMonth: string = getCurrentCycleMonth()): string[] => {
+  const allCycles = generateInitiativeCycles();
+  const startIndex = allCycles.indexOf(INITIATIVE_START_MONTH);
+  const currentIndex = allCycles.indexOf(currentMonth);
 
   if (currentIndex >= 0 && currentIndex >= (startIndex >= 0 ? startIndex : 0)) {
-    return INITIATIVE_CYCLES.slice(startIndex >= 0 ? startIndex : 0, currentIndex + 1);
+    return allCycles.slice(startIndex >= 0 ? startIndex : 0, currentIndex + 1);
   }
 
-  // Fallback default: March 2026 to October 2026 (8 months)
+  // If index found before start or fallback:
+  if (currentIndex >= 0) {
+    return allCycles.slice(0, currentIndex + 1);
+  }
+
+  // Fallback: up to November 2026
   return [
     'March 2026',
     'April 2026',
@@ -403,19 +449,21 @@ export const getMonthsFromMarchToCurrent = (currentMonth = 'October 2026'): stri
     'July 2026',
     'August 2026',
     'September 2026',
-    'October 2026'
+    'October 2026',
+    'November 2026'
   ];
 };
 
 /**
  * Calculates due amount from March to the current month for a member.
  * Calculates every month individually (expected vs deposited vs due) and returns a complete audit summary.
+ * Automatically defaults to the real-time calendar month.
  */
 export const calculateMemberDueSummary = (
   member: Member,
   transactions: Transaction[],
   project: PlotProject,
-  currentMonth = 'October 2026'
+  currentMonth: string = getCurrentCycleMonth()
 ): MemberDueSummary => {
   const evaluatedMonths = getMonthsFromMarchToCurrent(currentMonth);
   // Only consider active deposits for this member

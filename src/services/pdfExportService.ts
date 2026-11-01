@@ -1,5 +1,5 @@
 import { Member, Transaction, PlotProject } from '../types';
-import { formatCurrency, formatDate, calculateMemberDueSummary } from './storageService';
+import { formatCurrency, formatDate, calculateMemberDueSummary, getCurrentCycleMonth } from './storageService';
 
 export interface GenerateStatementOptions {
   member: Member;
@@ -24,7 +24,8 @@ export function generateMemberStatementHtml(options: GenerateStatementOptions): 
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   const grossDeposited = memberTxs.reduce((sum, t) => sum + t.amount, 0);
-  const dueSummary = calculateMemberDueSummary(member, transactions, project, 'October 2026');
+  const currentCycle = getCurrentCycleMonth();
+  const dueSummary = calculateMemberDueSummary(member, transactions, project, currentCycle);
   const issueDate = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   const statementId = `STMT-${member.id.toUpperCase()}-2026-REV`;
 
@@ -340,11 +341,11 @@ export function generateMemberStatementHtml(options: GenerateStatementOptions): 
       </div>
     </div>
 
-    <!-- Financial Performance Metrics (March to October 2026) -->
+    <!-- Financial Performance Metrics (March to Current Month) -->
     <div class="summary-grid">
       <div class="summary-box">
         <div class="summary-label">Evaluation Period</div>
-        <div class="summary-val" style="font-size: 11px;">Mar – Oct 2026</div>
+        <div class="summary-val" style="font-size: 11px;">Mar – ${currentCycle}</div>
         <div class="summary-sub">${dueSummary.totalMonthsCount} Active Project Cycles</div>
       </div>
       <div class="summary-box">

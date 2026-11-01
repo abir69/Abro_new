@@ -4,7 +4,8 @@ import {
   formatCurrency, 
   formatDate, 
   calculateMemberDueSummary, 
-  INITIATIVE_CYCLES 
+  INITIATIVE_CYCLES,
+  getCurrentCycleMonth
 } from '../services/storageService';
 import { 
   X, 
@@ -50,18 +51,7 @@ interface MemberDetailHistoryModalProps {
   onSendWhatsAppCongrats?: (tx: Transaction) => void;
 }
 
-const ALL_CYCLES = [
-  'March 2026',
-  'April 2026',
-  'May 2026',
-  'June 2026',
-  'July 2026',
-  'August 2026',
-  'September 2026',
-  'October 2026',
-  'November 2026',
-  'December 2026'
-];
+const ALL_CYCLES = INITIATIVE_CYCLES;
 
 export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> = ({
   isOpen,
@@ -71,7 +61,7 @@ export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> =
   project,
   isAdmin,
   currentMemberId,
-  currentMonth = 'October 2026',
+  currentMonth = getCurrentCycleMonth(),
   onEditTransaction,
   onDeleteTransaction,
   onAddNewDepositForMember,
@@ -98,7 +88,7 @@ export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> =
 
   if (!isOpen || !member) return null;
 
-  const effectiveCurrentMonth = currentMonth || 'October 2026';
+  const effectiveCurrentMonth = currentMonth || getCurrentCycleMonth();
   const currentExpectedMonthly = member.customMonthlyDeposit || project.monthlyPerMemberExpected || 2000;
 
   const isSelf = !!currentMemberId && currentMemberId === member.id;

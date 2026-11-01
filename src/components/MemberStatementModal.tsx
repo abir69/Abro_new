@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Member, Transaction, PlotProject } from '../types';
-import { formatCurrency, formatDate, calculateMemberDueSummary } from '../services/storageService';
+import { formatCurrency, formatDate, calculateMemberDueSummary, getCurrentCycleMonth } from '../services/storageService';
 import { exportMemberStatementPDF, downloadMemberStatementHtml } from '../services/pdfExportService';
 import { X, Printer, CheckCircle2, Building2, Edit3, Trash2, ShieldCheck, UserCheck, Calculator, AlertTriangle, Download, FileText } from 'lucide-react';
 
@@ -82,7 +82,8 @@ export const MemberStatementModal: React.FC<MemberStatementModalProps> = ({
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   const grossDeposited = memberTxs.reduce((sum, t) => sum + t.amount, 0);
-  const dueSummary = calculateMemberDueSummary(member, transactions, project, 'October 2026');
+  const currentCycle = getCurrentCycleMonth();
+  const dueSummary = calculateMemberDueSummary(member, transactions, project, currentCycle);
 
   const handleExportPdf = () => {
     if (!isAuthorized) {
@@ -556,7 +557,7 @@ export const MemberStatementModal: React.FC<MemberStatementModalProps> = ({
             <div className="bg-slate-950/70 print:bg-gray-50 p-3.5 rounded-xl border border-slate-800 print:border-black/40 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               <div>
                 <span className="text-[10px] text-slate-400 print:text-gray-600 block uppercase font-semibold">Evaluation Cycle</span>
-                <span className="font-bold text-white print:text-black block text-xs mt-0.5">March to October 2026</span>
+                <span className="font-bold text-white print:text-black block text-xs mt-0.5">March to {currentCycle}</span>
                 <span className="text-[10px] text-slate-400 print:text-gray-500 font-mono block">{dueSummary.totalMonthsCount} Monthly Cycles</span>
               </div>
               <div>
