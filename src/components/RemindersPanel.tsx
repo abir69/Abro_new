@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Member, Transaction, PlotProject, ReminderLog } from '../types';
-import { formatCurrency, INITIATIVE_CYCLES, getCurrentCycleMonth } from '../services/storageService';
+import { formatCurrency, getMonthsFromMarchToCurrent, getCurrentCycleMonth } from '../services/storageService';
 import { 
   BellRing, 
   Send, 
@@ -204,7 +204,7 @@ export const RemindersPanel: React.FC<RemindersPanelProps> = ({
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 className="bg-transparent text-slate-200 font-medium focus:outline-none"
               >
-                {INITIATIVE_CYCLES.map(cycle => (
+                {getMonthsFromMarchToCurrent(currentMonth).map(cycle => (
                   <option key={cycle} value={cycle} className="bg-slate-900 text-slate-100">
                     {cycle} {cycle === getCurrentCycleMonth() ? '(Current Month)' : ''}
                   </option>

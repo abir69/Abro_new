@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Member, Transaction, PlotProject, PaymentMethod } from '../types';
-import { formatCurrency, INITIATIVE_CYCLES, getCurrentCycleMonth } from '../services/storageService';
+import { 
+  formatCurrency, 
+  getCurrentCycleMonth, 
+  getAvailableDepositCycles, 
+  calculateMemberDueSummary 
+} from '../services/storageService';
 import { 
   X, 
   CheckCircle2, 
@@ -28,7 +33,10 @@ interface GoogleFormDepositModalProps {
   onClose: () => void;
   members: Member[];
   project: PlotProject;
+  transactions?: Transaction[];
   preselectedMemberId?: string;
+  preselectedMonth?: string;
+  preselectedAmount?: number;
   onSubmitDeposit: (txData: Partial<Transaction>) => void;
 }
 
@@ -37,7 +45,10 @@ export const GoogleFormDepositModal: React.FC<GoogleFormDepositModalProps> = ({
   onClose,
   members,
   project,
+  transactions,
   preselectedMemberId,
+  preselectedMonth,
+  preselectedAmount,
   onSubmitDeposit
 }) => {
   const [selectedMemberId, setSelectedMemberId] = useState<string>(
@@ -62,7 +73,16 @@ export const GoogleFormDepositModal: React.FC<GoogleFormDepositModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setMonthPeriod(getCurrentCycleMonth());
+      if (preselectedMonth) {
+        setMonthPeriod(preselectedMonth);
+      } else {
+        setMonthPeriod(getCurrentCycleMonth());
+      }
+
+      if (preselectedAmount) {
+        setAmount(String(preselectedAmount));
+      }
+
       const targetId = preselectedMemberId || selectedMemberId || members[0]?.id || '';
       if (targetId) {
         setSelectedMemberId(targetId);
@@ -70,10 +90,13 @@ export const GoogleFormDepositModal: React.FC<GoogleFormDepositModalProps> = ({
         if (mem) {
           setDepositorName(mem.name);
           setDepositorPhone(mem.mobile);
+          if (!preselectedAmount && mem.customMonthlyDeposit) {
+            setAmount(String(mem.customMonthlyDeposit));
+          }
         }
       }
     }
-  }, [isOpen, preselectedMemberId]);
+  }, [isOpen, preselectedMemberId, preselectedMonth, preselectedAmount]);
 
   const handleSelectMember = (id: string) => {
     setSelectedMemberId(id);
@@ -81,6 +104,9 @@ export const GoogleFormDepositModal: React.FC<GoogleFormDepositModalProps> = ({
     if (mem) {
       setDepositorName(mem.name);
       setDepositorPhone(mem.mobile);
+      if (mem.customMonthlyDeposit) {
+        setAmount(String(mem.customMonthlyDeposit));
+      }
     }
   };
 
@@ -90,6 +116,12 @@ export const GoogleFormDepositModal: React.FC<GoogleFormDepositModalProps> = ({
   const depositAccount = project.bankDetails?.accountNumber || '1781580054174';
   const depositAccountName = project.bankDetails?.accountName || 'Aristo Future Initiative (Joint Escrow)';
   const selectedMember = members.find(m => m.id === selectedMemberId);
+
+  const currentCycle = getCurrentCycleMonth();
+  const availableCycles = getAvailableDepositCycles(currentCycle);
+  const dueSummary = (transactions && selectedMember)
+    ? calculateMemberDueSummary(selectedMember, transactions, project, currentCycle)
+    : null;
 
   // Generate shareable link
   const currentBaseUrl = window.location.origin + window.location.pathname;
@@ -441,12 +473,77 @@ Your deposit will be automatically credited to your account upon Admin approval.
                   className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-base sm:text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
                   required
                 >
-                  {INITIATIVE_CYCLES.map((cycle) => (
-                    <option key={cycle} value={cycle}>
-                      {cycle} {cycle === getCurrentCycleMonth() ? '(Current Month)' : ''}
-                    </option>
-                  ))}
+                  {availableCycles.map((cycle) => {
+                    const isCurrent = cycle === currentCycle;
+                    const item = dueSummary?.monthlyBreakdown.find(b => b.month.toLowerCase() === cycle.toLowerCase());
+                    const isPaid = item?.isPaid;
+                    const dueAmt = item?.due ?? 0;
+
+                    let statusTag = '';
+                    if (isCurrent) {
+                      statusTag = isPaid 
+                        ? '(Current Month · Cleared)' 
+                        : dueAmt > 0 
+                        ? `(Current Month · Due: ৳ ${dueAmt.toLocaleString()})` 
+                        : '(Current Month)';
+                    } else if (isPaid) {
+                      statusTag = '(Paid / Cleared)';
+                    } else if (dueAmt > 0) {
+                      statusTag = `⚠️ (Due Month · ৳ ${dueAmt.toLocaleString()})`;
+                    }
+
+                    return (
+                      <option key={cycle} value={cycle}>
+                        {cycle} {statusTag}
+                      </option>
+                    );
+                  })}
                 </select>
+
+                {/* Quick Due Months Selector: Allows depositing for any past due month with 1 click */}
+                {dueSummary && dueSummary.dueMonths.length > 0 && (
+                  <div className="mt-2.5 p-3 rounded-xl bg-amber-950/40 border border-amber-800/60 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-amber-300 font-semibold flex items-center gap-1.5">
+                        <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        Outstanding Due Months:
+                      </span>
+                      <span className="text-amber-400/90 font-mono text-[11px] font-bold">
+                        {dueSummary.dueMonths.length} Months Due
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5 pt-0.5">
+                      {dueSummary.dueMonths.map((dueMonth) => {
+                        const dueItem = dueSummary.monthlyBreakdown.find(b => b.month === dueMonth);
+                        const isSelected = monthPeriod === dueMonth;
+                        return (
+                          <button
+                            key={dueMonth}
+                            type="button"
+                            onClick={() => {
+                              setMonthPeriod(dueMonth);
+                              if (dueItem && dueItem.due > 0) {
+                                setAmount(String(dueItem.due));
+                              }
+                            }}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1 ${
+                              isSelected
+                                ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold shadow-md'
+                                : 'bg-slate-900 hover:bg-slate-800 text-amber-200 border-amber-700/60 hover:border-amber-500'
+                            }`}
+                            title={`Select ${dueMonth} (Due: ৳ ${dueItem?.due || 2000})`}
+                          >
+                            <span>{dueMonth}</span>
+                            <span className="text-[10px] font-mono opacity-80">
+                              (৳ {dueItem?.due || 2000})
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* QUESTION 4: Payment Channel */}

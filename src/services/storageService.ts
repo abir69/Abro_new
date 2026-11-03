@@ -455,6 +455,15 @@ export const getMonthsFromMarchToCurrent = (currentMonth: string = getCurrentCyc
 };
 
 /**
+ * Returns strictly the cycles eligible for deposits: from March 2026 up to the active current calendar month.
+ * Future months are NEVER included, ensuring past due months and the current month are visible for deposit,
+ * but no future months are shown.
+ */
+export const getAvailableDepositCycles = (currentMonth: string = getCurrentCycleMonth()): string[] => {
+  return getMonthsFromMarchToCurrent(currentMonth);
+};
+
+/**
  * Calculates due amount from March to the current month for a member.
  * Calculates every month individually (expected vs deposited vs due) and returns a complete audit summary.
  * Automatically defaults to the real-time calendar month.

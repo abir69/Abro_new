@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Member, Transaction, PaymentMethod, TransactionStatus, PlotProject } from '../types';
-import { formatCurrency, getCurrentCycleMonth, INITIATIVE_CYCLES } from '../services/storageService';
+import { formatCurrency, getCurrentCycleMonth, getAvailableDepositCycles } from '../services/storageService';
 import { X, Check, DollarSign, Calendar, FileText, Landmark, Hash, AlertCircle, Edit2 } from 'lucide-react';
 
 interface TransactionModalProps {
@@ -275,11 +275,17 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                 onChange={(e) => setMonthPeriod(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               >
-                {INITIATIVE_CYCLES.map(cycle => (
-                  <option key={cycle} value={cycle}>
-                    {cycle} {cycle === getCurrentCycleMonth() ? '(Current Month)' : ''}
-                  </option>
-                ))}
+                {(() => {
+                  const availableCycles = getAvailableDepositCycles();
+                  const options = (editingTransaction?.monthPeriod && !availableCycles.includes(editingTransaction.monthPeriod))
+                    ? [editingTransaction.monthPeriod, ...availableCycles]
+                    : availableCycles;
+                  return options.map(cycle => (
+                    <option key={cycle} value={cycle}>
+                      {cycle} {cycle === getCurrentCycleMonth() ? '(Current Month)' : ''}
+                    </option>
+                  ));
+                })()}
               </select>
             </div>
           </div>

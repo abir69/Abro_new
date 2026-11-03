@@ -4,7 +4,7 @@ import {
   formatCurrency, 
   formatDate, 
   calculateMemberDueSummary, 
-  INITIATIVE_CYCLES,
+  getMonthsFromMarchToCurrent,
   getCurrentCycleMonth
 } from '../services/storageService';
 import { 
@@ -50,8 +50,6 @@ interface MemberDetailHistoryModalProps {
   onSaveTransaction?: (txData: Partial<Transaction>) => void;
   onSendWhatsAppCongrats?: (tx: Transaction) => void;
 }
-
-const ALL_CYCLES = INITIATIVE_CYCLES;
 
 export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> = ({
   isOpen,
@@ -104,6 +102,7 @@ export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> =
 
   // Calculate Due Summary from March to Current Month across all months
   const dueSummary = calculateMemberDueSummary(member, transactions, project, effectiveCurrentMonth);
+  const profileCycles = getMonthsFromMarchToCurrent(effectiveCurrentMonth);
 
   // Map transactions by month for the monthly deposit control
   const txByMonth = new Map<string, Transaction>();
@@ -348,7 +347,7 @@ export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> =
             <span className={`text-[10px] font-semibold ${
               dueSummary.isAllCleared ? 'text-emerald-400' : 'text-amber-400'
             }`}>
-              {dueSummary.isAllCleared ? 'March – Oct Cleared' : `${dueSummary.dueMonthsCount} Months Pending`}
+              {dueSummary.isAllCleared ? `March – ${effectiveCurrentMonth.split(' ')[0]} Cleared` : `${dueSummary.dueMonthsCount} Months Pending`}
             </span>
           </div>
 
@@ -403,7 +402,7 @@ export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> =
               : 'bg-rose-950/40 border-rose-800'
           }`}>
             <span className="text-[10px] uppercase font-semibold text-slate-400 block truncate" title="Due amount calculated from March to current month">
-              Due Amount (March – Oct)
+              Due Amount (March – {effectiveCurrentMonth.split(' ')[0]})
             </span>
             <span className={`text-base font-bold font-mono block mt-0.5 ${
               dueSummary.totalDue === 0 ? 'text-emerald-400' : 'text-rose-400 font-black'
@@ -414,7 +413,7 @@ export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> =
               dueSummary.totalDue === 0 ? 'text-emerald-400' : 'text-rose-300'
             }`}>
               {dueSummary.totalDue === 0
-                ? '✓ All 8 Months Cleared (0 Due)'
+                ? `✓ All ${dueSummary.totalMonthsCount} Months Cleared (0 Due)`
                 : `⚠️ ${dueSummary.dueMonthsCount} Mo. Due (${dueSummary.dueMonths.join(', ')})`}
             </span>
           </div>
@@ -444,7 +443,7 @@ export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> =
               {dueSummary.totalDue === 0 ? (
                 <div className="px-3 py-1 bg-emerald-950/90 text-emerald-300 font-bold text-xs rounded-xl border border-emerald-800 flex items-center gap-1.5 shadow-sm">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>March–Oct Due: ৳ 0 (Fully Cleared)</span>
+                  <span>March – {effectiveCurrentMonth.split(' ')[0]} Due: ৳ 0 (Fully Cleared)</span>
                 </div>
               ) : (
                 <div className="px-3 py-1 bg-rose-950/90 text-rose-300 font-bold text-xs rounded-xl border border-rose-800 flex items-center gap-1.5 shadow-sm animate-pulse">
@@ -708,9 +707,9 @@ export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> =
               </div>
             </div>
 
-            {/* Grid of Months */}
+            {/* Grid of Months (March to Current Month only) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              {ALL_CYCLES.map((cycleMonth) => {
+              {profileCycles.map((cycleMonth) => {
                 const tx = txByMonth.get(cycleMonth);
                 const isPaid = !!tx;
                 const isInlineEditing = inlineEditingMonth === cycleMonth && inlineEditValues;
@@ -946,11 +945,12 @@ export const MemberDetailHistoryModal: React.FC<MemberDetailHistoryModalProps> =
                               )}
                             </>
                           ) : (
-                            isAdmin && (
+                            (isAdmin || isSelf) && (
                               <button
                                 type="button"
                                 onClick={() => onAddNewDepositForMember(member.id, cycleMonth, currentExpectedMonthly)}
                                 className="px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold flex items-center gap-1 shadow-sm transition-all cursor-pointer"
+                                title={`Deposit for ${cycleMonth} (${formatCurrency(currentExpectedMonthly, project.symbol)})`}
                               >
                                 <Plus className="w-3.5 h-3.5" />
                                 <span>+ Deposit {formatCurrency(currentExpectedMonthly, project.symbol)}</span>

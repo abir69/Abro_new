@@ -119,6 +119,8 @@ export default function App() {
   const [isGoogleFormModalOpen, setIsGoogleFormModalOpen] = useState(false);
   const [isApprovalsModalOpen, setIsApprovalsModalOpen] = useState(false);
   const [preselectedFormMemberId, setPreselectedFormMemberId] = useState<string | undefined>(undefined);
+  const [preselectedFormMonth, setPreselectedFormMonth] = useState<string | undefined>(undefined);
+  const [preselectedFormAmount, setPreselectedFormAmount] = useState<number | undefined>(undefined);
 
   // WhatsApp Congratulations Modal State
   const [isWhatsAppCongratsModalOpen, setIsWhatsAppCongratsModalOpen] = useState(false);
@@ -395,12 +397,14 @@ export default function App() {
     showToast(`Transaction ${deletedRef} deleted from cloud.`);
   };
 
-  // Open Deposit Form with automatic selection of logged-in member
-  const handleOpenDepositForm = (memberIdOverride?: string) => {
+  // Open Deposit Form with automatic selection of logged-in member and optional month/amount
+  const handleOpenDepositForm = (memberIdOverride?: string, monthOverride?: string, amountOverride?: number) => {
     const targetId = memberIdOverride || (session.isLoggedIn && session.memberId ? session.memberId : preselectedFormMemberId || members[0]?.id);
     if (targetId) {
       setPreselectedFormMemberId(targetId);
     }
+    setPreselectedFormMonth(monthOverride);
+    setPreselectedFormAmount(amountOverride);
     setIsGoogleFormModalOpen(true);
   };
 
@@ -673,6 +677,11 @@ export default function App() {
     const targetMonth = monthPeriod || getCurrentCycleMonth();
     const targetAmount = amount || member.customMonthlyDeposit || project.monthlyPerMemberExpected || 2000;
     
+    if (session.role !== 'admin') {
+      handleOpenDepositForm(member.id, targetMonth, targetAmount);
+      return;
+    }
+
     setEditingTransaction({
       id: '',
       memberId: member.id,
@@ -880,7 +889,10 @@ export default function App() {
           onClose={() => setIsGoogleFormModalOpen(false)}
           members={members}
           project={project}
+          transactions={transactions}
           preselectedMemberId={preselectedFormMemberId}
+          preselectedMonth={preselectedFormMonth}
+          preselectedAmount={preselectedFormAmount}
           onSubmitDeposit={handleGoogleFormDepositSubmit}
         />
       </div>
@@ -1233,7 +1245,10 @@ export default function App() {
         onClose={() => setIsGoogleFormModalOpen(false)}
         members={members}
         project={project}
+        transactions={transactions}
         preselectedMemberId={preselectedFormMemberId}
+        preselectedMonth={preselectedFormMonth}
+        preselectedAmount={preselectedFormAmount}
         onSubmitDeposit={handleGoogleFormDepositSubmit}
       />
 
